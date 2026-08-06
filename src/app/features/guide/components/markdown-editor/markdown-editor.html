@@ -1,0 +1,87 @@
+<div class="flex flex-col gap-2">
+  <div class="flex flex-wrap items-center gap-1" role="toolbar" aria-label="Formatting">
+    <button
+      mat-icon-button
+      type="button"
+      aria-label="Bold"
+      [disabled]="previewing() || disabled()"
+      (click)="applyBold()"
+    >
+      <mat-icon>format_bold</mat-icon>
+    </button>
+    <button
+      mat-icon-button
+      type="button"
+      aria-label="Italic"
+      [disabled]="previewing() || disabled()"
+      (click)="applyItalic()"
+    >
+      <mat-icon>format_italic</mat-icon>
+    </button>
+    <button
+      mat-icon-button
+      type="button"
+      aria-label="Heading"
+      [disabled]="previewing() || disabled()"
+      (click)="applyHeading()"
+    >
+      <mat-icon>title</mat-icon>
+    </button>
+    <button
+      mat-icon-button
+      type="button"
+      aria-label="Bulleted list"
+      [disabled]="previewing() || disabled()"
+      (click)="applyBulletedList()"
+    >
+      <mat-icon>format_list_bulleted</mat-icon>
+    </button>
+    <button
+      mat-icon-button
+      type="button"
+      aria-label="Numbered list"
+      [disabled]="previewing() || disabled()"
+      (click)="applyNumberedList()"
+    >
+      <mat-icon>format_list_numbered</mat-icon>
+    </button>
+    <button
+      mat-icon-button
+      type="button"
+      aria-label="Link"
+      [disabled]="previewing() || disabled()"
+      (click)="applyLink()"
+    >
+      <mat-icon>link</mat-icon>
+    </button>
+
+    <button
+      mat-stroked-button
+      type="button"
+      class="ml-auto"
+      data-testid="preview-toggle"
+      [attr.aria-pressed]="previewing()"
+      (click)="togglePreview()"
+    >
+      {{ previewing() ? 'Edit' : 'Preview' }}
+    </button>
+  </div>
+
+  @if (previewing()) {
+    <div
+      data-testid="markdown-preview"
+      class="min-h-32 rounded border border-gray-300 p-3"
+      [innerHTML]="renderedHtml()"
+    ></div>
+  } @else {
+    <textarea
+      #textarea
+      data-testid="markdown-textarea"
+      class="min-h-32 w-full rounded border border-gray-300 p-2 font-mono text-sm"
+      [value]="value()"
+      [disabled]="disabled()"
+      (input)="onInput(textarea.value)"
+      (blur)="onBlur()"
+    ></textarea>
+  }
+</div>

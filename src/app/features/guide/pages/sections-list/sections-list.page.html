@@ -7,7 +7,7 @@
 
   <mat-drawer-content class="p-6">
     <div class="flex items-center justify-between mb-4">
-      <h1 class="text-xl font-semibold">Sections</h1>
+      <h1 class="text-xl font-semibold">Guide</h1>
       <button
         mat-flat-button
         type="button"
@@ -27,21 +27,36 @@
         class="flex flex-col gap-2"
         (cdkDropListDropped)="onDrop($event)"
       >
-        @for (section of sections(); track section.id) {
+        @for (section of sections(); track section.slug) {
           <li
             cdkDrag
             tabindex="0"
             [attr.aria-label]="'Reorder ' + section.title + '. Press space to lift, arrow keys to move, space to drop.'"
             class="flex items-center gap-4 rounded border border-gray-200 p-3"
           >
+            <span
+              cdkDragHandle
+              data-testid="drag-handle"
+              aria-hidden="true"
+              class="cursor-move text-gray-400"
+            >
+              <mat-icon>drag_indicator</mat-icon>
+            </span>
+
             @if (section.imageUrl) {
               <img [src]="section.imageUrl" alt="" class="h-12 w-12 rounded object-cover" />
             } @else {
-              <div class="h-12 w-12 rounded bg-gray-100"></div>
+              <div
+                data-testid="thumbnail-placeholder"
+                class="flex h-12 w-12 items-center justify-center rounded bg-gray-100 text-gray-400"
+              >
+                <mat-icon>image</mat-icon>
+              </div>
             }
 
             <div class="flex-1">
               <p data-testid="section-title" class="font-medium">{{ section.title }}</p>
+              <p data-testid="section-slug" class="font-mono text-xs text-gray-500">{{ section.slug }}</p>
               <p class="text-sm text-gray-600">{{ section.description }}</p>
             </div>
 
@@ -63,7 +78,7 @@
             <button
               mat-stroked-button
               type="button"
-              [attr.data-testid]="'status-action-' + section.id"
+              [attr.data-testid]="'status-action-' + section.slug"
               (click)="onStatusAction(section)"
             >
               {{ statusActionLabel(section.status) }}

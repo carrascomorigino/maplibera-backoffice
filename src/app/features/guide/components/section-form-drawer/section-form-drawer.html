@@ -1,18 +1,25 @@
-<form [formGroup]="form" class="flex flex-col gap-4 p-6 w-80">
+<form [formGroup]="form" class="flex flex-col gap-4 p-6 w-96">
   <h2 class="text-lg font-semibold">{{ section() ? 'Edit section' : 'New section' }}</h2>
 
   <mat-form-field>
     <mat-label>Title</mat-label>
     <input matInput formControlName="title" />
-    @if (form.controls.title.hasError('duplicateTitle')) {
-      <mat-error>A section with this title already exists</mat-error>
-    }
   </mat-form-field>
 
   <mat-form-field>
-    <mat-label>Description</mat-label>
-    <textarea matInput formControlName="description"></textarea>
+    <mat-label>Slug</mat-label>
+    <input matInput formControlName="slug" />
+    @if (form.controls.slug.hasError('pattern')) {
+      <mat-error>Use lowercase letters, numbers, and hyphens only</mat-error>
+    } @else if (form.controls.slug.hasError('duplicateSlug')) {
+      <mat-error>A section with this slug already exists</mat-error>
+    }
   </mat-form-field>
+
+  <div>
+    <label class="mb-1 block text-sm font-medium text-gray-700">Description</label>
+    <app-markdown-editor formControlName="description" />
+  </div>
 
   <mat-form-field>
     <mat-label>Image URL</mat-label>

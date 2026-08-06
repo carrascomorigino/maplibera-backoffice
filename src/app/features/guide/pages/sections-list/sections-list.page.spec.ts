@@ -20,11 +20,17 @@ describe('SectionsListPage', () => {
     return fixture;
   }
 
+  it('shows "Guide" as the page heading', () => {
+    const fixture = createFixture();
+
+    expect(fixture.nativeElement.querySelector('h1')?.textContent?.trim()).toBe('Guide');
+  });
+
   it('renders sections from the service sorted by order', () => {
-    service.create({ title: 'First', description: '', imageUrl: '' });
-    const second = service.create({ title: 'Second', description: '', imageUrl: '' });
+    service.create({ slug: 'first', title: 'First', description: '', imageUrl: '' });
+    const second = service.create({ slug: 'second', title: 'Second', description: '', imageUrl: '' });
     const first = service.sections()[0];
-    service.reorder([second.id, first.id]);
+    service.reorder([second.slug, first.slug]);
 
     const fixture = createFixture();
 
@@ -40,12 +46,48 @@ describe('SectionsListPage', () => {
     expect(fixture.nativeElement.textContent).toContain('No sections yet');
   });
 
+  it('shows the slug for each section', () => {
+    service.create({ slug: 'getting-started', title: 'Getting started', description: '', imageUrl: '' });
+    const fixture = createFixture();
+
+    const slug = fixture.nativeElement.querySelector('[data-testid="section-slug"]') as HTMLElement;
+    expect(slug.textContent?.trim()).toBe('getting-started');
+  });
+
+  it('shows a placeholder icon when a section has no image', () => {
+    service.create({ slug: 'no-image', title: 'No image', description: '', imageUrl: '' });
+    const fixture = createFixture();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="thumbnail-placeholder"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('img')).toBeNull();
+  });
+
+  it('shows the image and no placeholder when a section has an image', () => {
+    service.create({
+      slug: 'with-image',
+      title: 'With image',
+      description: '',
+      imageUrl: 'https://example.com/image.png',
+    });
+    const fixture = createFixture();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="thumbnail-placeholder"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('img')).not.toBeNull();
+  });
+
+  it('shows a drag handle for each section', () => {
+    service.create({ slug: 'a', title: 'A', description: '', imageUrl: '' });
+    const fixture = createFixture();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="drag-handle"]')).not.toBeNull();
+  });
+
   it('shows a Publish button for draft sections and publishes on click', () => {
-    const section = service.create({ title: 'Draft one', description: '', imageUrl: '' });
+    const section = service.create({ slug: 'draft-one', title: 'Draft one', description: '', imageUrl: '' });
     const fixture = createFixture();
 
     const button = fixture.nativeElement.querySelector(
-      `[data-testid="status-action-${section.id}"]`,
+      `[data-testid="status-action-${section.slug}"]`,
     ) as HTMLButtonElement;
     expect(button.textContent?.trim()).toBe('Publish');
 
@@ -56,12 +98,12 @@ describe('SectionsListPage', () => {
   });
 
   it('shows a Pause button for published sections and pauses on click', () => {
-    const section = service.create({ title: 'Live one', description: '', imageUrl: '' });
-    service.publish(section.id);
+    const section = service.create({ slug: 'live-one', title: 'Live one', description: '', imageUrl: '' });
+    service.publish(section.slug);
     const fixture = createFixture();
 
     const button = fixture.nativeElement.querySelector(
-      `[data-testid="status-action-${section.id}"]`,
+      `[data-testid="status-action-${section.slug}"]`,
     ) as HTMLButtonElement;
     expect(button.textContent?.trim()).toBe('Pause');
 
@@ -72,20 +114,20 @@ describe('SectionsListPage', () => {
   });
 
   it('shows a Publish button again for paused sections', () => {
-    const section = service.create({ title: 'Paused one', description: '', imageUrl: '' });
-    service.publish(section.id);
-    service.pause(section.id);
+    const section = service.create({ slug: 'paused-one', title: 'Paused one', description: '', imageUrl: '' });
+    service.publish(section.slug);
+    service.pause(section.slug);
     const fixture = createFixture();
 
     const button = fixture.nativeElement.querySelector(
-      `[data-testid="status-action-${section.id}"]`,
+      `[data-testid="status-action-${section.slug}"]`,
     ) as HTMLButtonElement;
     expect(button.textContent?.trim()).toBe('Publish');
   });
 
   it('binds the rendered drop list data to the current sections so real drops carry data', () => {
-    service.create({ title: 'A', description: '', imageUrl: '' });
-    service.create({ title: 'B', description: '', imageUrl: '' });
+    service.create({ slug: 'a', title: 'A', description: '', imageUrl: '' });
+    service.create({ slug: 'b', title: 'B', description: '', imageUrl: '' });
     const fixture = createFixture();
 
     const dropList = fixture.debugElement.query(By.directive(CdkDropList))
@@ -95,9 +137,9 @@ describe('SectionsListPage', () => {
   });
 
   it('reorders sections through the service when a drop occurs', () => {
-    const a = service.create({ title: 'A', description: '', imageUrl: '' });
-    const b = service.create({ title: 'B', description: '', imageUrl: '' });
-    const c = service.create({ title: 'C', description: '', imageUrl: '' });
+    const a = service.create({ slug: 'a', title: 'A', description: '', imageUrl: '' });
+    const b = service.create({ slug: 'b', title: 'B', description: '', imageUrl: '' });
+    const c = service.create({ slug: 'c', title: 'C', description: '', imageUrl: '' });
     const fixture = createFixture();
     const component = fixture.componentInstance;
 
@@ -108,7 +150,7 @@ describe('SectionsListPage', () => {
       container: { data: sections },
     } as CdkDragDrop<Section[]>);
 
-    expect(service.sections().map((s) => s.id)).toEqual([b.id, c.id, a.id]);
+    expect(service.sections().map((s) => s.slug)).toEqual([b.slug, c.slug, a.slug]);
   });
 
   it('opens the drawer in create mode when "New section" is clicked', () => {
@@ -125,7 +167,7 @@ describe('SectionsListPage', () => {
   });
 
   it('opens the drawer in edit mode with the selected section when Edit is clicked', () => {
-    service.create({ title: 'Editable', description: 'desc', imageUrl: '' });
+    service.create({ slug: 'editable', title: 'Editable', description: 'desc', imageUrl: '' });
     const fixture = createFixture();
 
     const editButton = fixture.nativeElement.querySelector(

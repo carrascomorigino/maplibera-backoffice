@@ -3,7 +3,7 @@ import { Section } from '../models/section.model';
 
 const STORAGE_KEY = 'guide-sections';
 
-export type SectionInput = Pick<Section, 'title' | 'description' | 'imageUrl'>;
+export type SectionInput = Pick<Section, 'slug' | 'title' | 'description' | 'imageUrl'>;
 export type SectionUpdate = Partial<SectionInput>;
 
 @Injectable({ providedIn: 'root' })
@@ -17,7 +17,7 @@ export class SectionService {
   create(input: SectionInput): Section {
     const now = new Date().toISOString();
     const section: Section = {
-      id: crypto.randomUUID(),
+      slug: input.slug,
       title: input.title,
       description: input.description,
       imageUrl: input.imageUrl,
@@ -32,10 +32,10 @@ export class SectionService {
     return section;
   }
 
-  update(id: string, changes: SectionUpdate): void {
+  update(slug: string, changes: SectionUpdate): void {
     this.state.update((sections) =>
       sections.map((section) =>
-        section.id === id
+        section.slug === slug
           ? { ...section, ...changes, updatedAt: new Date().toISOString() }
           : section,
       ),
@@ -43,29 +43,29 @@ export class SectionService {
     this.persist();
   }
 
-  publish(id: string): void {
-    this.setStatus(id, 'published');
+  publish(slug: string): void {
+    this.setStatus(slug, 'published');
   }
 
-  pause(id: string): void {
-    this.setStatus(id, 'paused');
+  pause(slug: string): void {
+    this.setStatus(slug, 'paused');
   }
 
-  reorder(orderedIds: string[]): void {
-    const orderById = new Map(orderedIds.map((id, index) => [id, index]));
+  reorder(orderedSlugs: string[]): void {
+    const orderBySlug = new Map(orderedSlugs.map((slug, index) => [slug, index]));
     this.state.update((sections) =>
       sections.map((section) => ({
         ...section,
-        order: orderById.get(section.id) ?? section.order,
+        order: orderBySlug.get(section.slug) ?? section.order,
       })),
     );
     this.persist();
   }
 
-  private setStatus(id: string, status: Section['status']): void {
+  private setStatus(slug: string, status: Section['status']): void {
     this.state.update((sections) =>
       sections.map((section) =>
-        section.id === id
+        section.slug === slug
           ? { ...section, status, updatedAt: new Date().toISOString() }
           : section,
       ),
@@ -90,7 +90,13 @@ export class SectionService {
     }
     try {
       const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+      return parsed.filter(
+        (section): section is Section =>
+          typeof section?.slug === 'string' && section.slug.length > 0,
+      );
     } catch {
       return [];
     }

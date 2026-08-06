@@ -80,8 +80,13 @@ describe('SectionFormDrawer', () => {
   });
 
   it('updates an existing section on Save without changing its status', () => {
-    const existing = service.create({ title: 'Original', description: 'Original desc', imageUrl: '' });
-    service.publish(existing.id);
+    const existing = service.create({
+      slug: 'original',
+      title: 'Original',
+      description: 'Original desc',
+      imageUrl: '',
+    });
+    service.publish(existing.slug);
     const fixture = TestBed.createComponent(SectionFormDrawer);
     fixture.componentRef.setInput('section', service.sections()[0]);
     fixture.detectChanges();
@@ -97,7 +102,12 @@ describe('SectionFormDrawer', () => {
   });
 
   it('hides the Publish button when editing an existing section', () => {
-    const existing = service.create({ title: 'Original', description: 'Original desc', imageUrl: '' });
+    const existing = service.create({
+      slug: 'original',
+      title: 'Original',
+      description: 'Original desc',
+      imageUrl: '',
+    });
     const fixture = TestBed.createComponent(SectionFormDrawer);
     fixture.componentRef.setInput('section', existing);
     fixture.detectChanges();
@@ -109,43 +119,6 @@ describe('SectionFormDrawer', () => {
     const fixture = createFixture();
 
     expect(buttons(fixture).publish).not.toBeNull();
-  });
-
-  it('blocks submission with a case-insensitive duplicate title', () => {
-    service.create({ title: 'Existing Section', description: 'Existing desc', imageUrl: '' });
-    const fixture = createFixture();
-    const component = fixture.componentInstance;
-
-    component.form.controls.title.setValue('EXISTING section');
-    component.form.controls.title.markAsTouched();
-    component.form.controls.description.setValue('A description');
-    fixture.detectChanges();
-
-    expect(component.form.controls.title.hasError('duplicateTitle')).toBe(true);
-    expect(buttons(fixture).save.disabled).toBe(true);
-    expect(
-      fixture.nativeElement.querySelector('mat-error')?.textContent?.trim(),
-    ).toBe('A section with this title already exists');
-
-    component.form.controls.title.setValue('A unique title');
-    fixture.detectChanges();
-
-    expect(component.form.controls.title.hasError('duplicateTitle')).toBe(false);
-    expect(buttons(fixture).save.disabled).toBe(false);
-  });
-
-  it('allows keeping the same title when editing the section that already owns it', () => {
-    const existing = service.create({ title: 'Original', description: 'Original desc', imageUrl: '' });
-    const fixture = TestBed.createComponent(SectionFormDrawer);
-    fixture.componentRef.setInput('section', existing);
-    fixture.detectChanges();
-    const component = fixture.componentInstance;
-
-    component.form.controls.title.setValue('ORIGINAL');
-    fixture.detectChanges();
-
-    expect(component.form.controls.title.hasError('duplicateTitle')).toBe(false);
-    expect(buttons(fixture).save.disabled).toBe(false);
   });
 
   it('does not call the service on Cancel', () => {
@@ -184,5 +157,126 @@ describe('SectionFormDrawer', () => {
     ) as HTMLImageElement;
     expect(preview).not.toBeNull();
     expect(preview.src).toBe('https://example.com/image.png');
+  });
+
+  describe('slug', () => {
+    it('auto-suggests a slug from the title until the user edits the slug directly', () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      component.form.controls.title.setValue('Getting Started');
+      fixture.detectChanges();
+      expect(component.form.controls.slug.value).toBe('getting-started');
+
+      component.form.controls.title.setValue('Getting Started Fast');
+      fixture.detectChanges();
+      expect(component.form.controls.slug.value).toBe('getting-started-fast');
+
+      component.form.controls.slug.setValue('custom-slug');
+      fixture.detectChanges();
+
+      component.form.controls.title.setValue('A Totally Different Title');
+      fixture.detectChanges();
+      expect(component.form.controls.slug.value).toBe('custom-slug');
+    });
+
+    it('blocks submission with a duplicate slug', () => {
+      service.create({
+        slug: 'existing-section',
+        title: 'Existing Section',
+        description: 'Existing desc',
+        imageUrl: '',
+      });
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      component.form.controls.title.setValue('A title');
+      component.form.controls.description.setValue('A description');
+      component.form.controls.slug.setValue('existing-section');
+      component.form.controls.slug.markAsTouched();
+      fixture.detectChanges();
+
+      expect(component.form.controls.slug.hasError('duplicateSlug')).toBe(true);
+      expect(buttons(fixture).save.disabled).toBe(true);
+      expect(
+        fixture.nativeElement.querySelector('mat-error')?.textContent?.trim(),
+      ).toBe('A section with this slug already exists');
+
+      component.form.controls.slug.setValue('a-unique-slug');
+      fixture.detectChanges();
+
+      expect(component.form.controls.slug.hasError('duplicateSlug')).toBe(false);
+      expect(buttons(fixture).save.disabled).toBe(false);
+    });
+
+    it('allows keeping the same slug when editing the section that already owns it', () => {
+      const existing = service.create({
+        slug: 'original-slug',
+        title: 'Original',
+        description: 'Original desc',
+        imageUrl: '',
+      });
+      const fixture = TestBed.createComponent(SectionFormDrawer);
+      fixture.componentRef.setInput('section', existing);
+      fixture.detectChanges();
+      const component = fixture.componentInstance;
+
+      component.form.controls.slug.setValue('original-slug');
+      fixture.detectChanges();
+
+      expect(component.form.controls.slug.hasError('duplicateSlug')).toBe(false);
+      expect(buttons(fixture).save.disabled).toBe(false);
+    });
+
+    it('rejects slugs that are not lowercase kebab-case', () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      component.form.controls.title.setValue('A title');
+      component.form.controls.description.setValue('A description');
+      component.form.controls.slug.setValue('Not A Slug!');
+      fixture.detectChanges();
+
+      expect(component.form.controls.slug.hasError('pattern')).toBe(true);
+      expect(buttons(fixture).save.disabled).toBe(true);
+
+      component.form.controls.slug.setValue('a-valid-slug');
+      fixture.detectChanges();
+
+      expect(component.form.controls.slug.hasError('pattern')).toBe(false);
+      expect(buttons(fixture).save.disabled).toBe(false);
+    });
+
+    it('allows duplicate titles across different sections', () => {
+      service.create({
+        slug: 'first-section',
+        title: 'Same Title',
+        description: 'A',
+        imageUrl: '',
+      });
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      component.form.controls.title.setValue('Same Title');
+      component.form.controls.description.setValue('B');
+      component.form.controls.slug.setValue('second-section');
+      fixture.detectChanges();
+
+      expect(component.form.controls.title.valid).toBe(true);
+      expect(buttons(fixture).save.disabled).toBe(false);
+    });
+
+    it('persists the slug on save and keys updates by the section slug', () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      component.form.controls.title.setValue('New section');
+      component.form.controls.description.setValue('Description');
+      component.form.controls.slug.setValue('new-section');
+      fixture.detectChanges();
+      buttons(fixture).save.click();
+
+      expect(service.sections()[0].slug).toBe('new-section');
+    });
   });
 });
