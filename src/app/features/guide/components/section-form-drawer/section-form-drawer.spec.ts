@@ -22,7 +22,7 @@ describe('SectionFormDrawer', () => {
       save: fixture.nativeElement.querySelector('[data-testid="save-button"]') as HTMLButtonElement,
       publish: fixture.nativeElement.querySelector(
         '[data-testid="publish-button"]',
-      ) as HTMLButtonElement,
+      ) as HTMLButtonElement | null,
       cancel: fixture.nativeElement.querySelector(
         '[data-testid="cancel-button"]',
       ) as HTMLButtonElement,
@@ -35,7 +35,7 @@ describe('SectionFormDrawer', () => {
 
     let { save, publish } = buttons(fixture);
     expect(save.disabled).toBe(true);
-    expect(publish.disabled).toBe(true);
+    expect(publish?.disabled).toBe(true);
 
     component.form.controls.title.setValue('A title');
     fixture.detectChanges();
@@ -46,7 +46,7 @@ describe('SectionFormDrawer', () => {
     fixture.detectChanges();
     ({ save, publish } = buttons(fixture));
     expect(save.disabled).toBe(false);
-    expect(publish.disabled).toBe(false);
+    expect(publish?.disabled).toBe(false);
   });
 
   it('creates a draft section on Save for a new section', () => {
@@ -73,7 +73,7 @@ describe('SectionFormDrawer', () => {
     component.form.controls.title.setValue('New section');
     component.form.controls.description.setValue('Description');
     fixture.detectChanges();
-    buttons(fixture).publish.click();
+    buttons(fixture).publish?.click();
 
     expect(service.sections()).toHaveLength(1);
     expect(service.sections()[0].status).toBe('published');
@@ -94,6 +94,58 @@ describe('SectionFormDrawer', () => {
     const updated = service.sections()[0];
     expect(updated.title).toBe('Updated title');
     expect(updated.status).toBe('published');
+  });
+
+  it('hides the Publish button when editing an existing section', () => {
+    const existing = service.create({ title: 'Original', description: 'Original desc', imageUrl: '' });
+    const fixture = TestBed.createComponent(SectionFormDrawer);
+    fixture.componentRef.setInput('section', existing);
+    fixture.detectChanges();
+
+    expect(buttons(fixture).publish).toBeNull();
+  });
+
+  it('shows the Publish button when creating a new section', () => {
+    const fixture = createFixture();
+
+    expect(buttons(fixture).publish).not.toBeNull();
+  });
+
+  it('blocks submission with a case-insensitive duplicate title', () => {
+    service.create({ title: 'Existing Section', description: 'Existing desc', imageUrl: '' });
+    const fixture = createFixture();
+    const component = fixture.componentInstance;
+
+    component.form.controls.title.setValue('EXISTING section');
+    component.form.controls.title.markAsTouched();
+    component.form.controls.description.setValue('A description');
+    fixture.detectChanges();
+
+    expect(component.form.controls.title.hasError('duplicateTitle')).toBe(true);
+    expect(buttons(fixture).save.disabled).toBe(true);
+    expect(
+      fixture.nativeElement.querySelector('mat-error')?.textContent?.trim(),
+    ).toBe('A section with this title already exists');
+
+    component.form.controls.title.setValue('A unique title');
+    fixture.detectChanges();
+
+    expect(component.form.controls.title.hasError('duplicateTitle')).toBe(false);
+    expect(buttons(fixture).save.disabled).toBe(false);
+  });
+
+  it('allows keeping the same title when editing the section that already owns it', () => {
+    const existing = service.create({ title: 'Original', description: 'Original desc', imageUrl: '' });
+    const fixture = TestBed.createComponent(SectionFormDrawer);
+    fixture.componentRef.setInput('section', existing);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+
+    component.form.controls.title.setValue('ORIGINAL');
+    fixture.detectChanges();
+
+    expect(component.form.controls.title.hasError('duplicateTitle')).toBe(false);
+    expect(buttons(fixture).save.disabled).toBe(false);
   });
 
   it('does not call the service on Cancel', () => {

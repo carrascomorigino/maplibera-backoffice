@@ -1,5 +1,11 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, output } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -20,8 +26,23 @@ export class SectionFormDrawer {
   readonly section = input<Section | undefined>(undefined);
   readonly closed = output<void>();
 
+  private readonly duplicateTitleValidator: ValidatorFn = (control) => {
+    const title = (control.value as string).trim().toLowerCase();
+    if (!title) {
+      return null;
+    }
+    const currentId = this.section()?.id;
+    const isDuplicate = this.sectionService
+      .sections()
+      .some((section) => section.id !== currentId && section.title.trim().toLowerCase() === title);
+    return isDuplicate ? { duplicateTitle: true } : null;
+  };
+
   readonly form = new FormGroup({
-    title: new FormControl('', { nonNullable: true, validators: Validators.required }),
+    title: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, this.duplicateTitleValidator],
+    }),
     description: new FormControl('', { nonNullable: true, validators: Validators.required }),
     imageUrl: new FormControl('', {
       nonNullable: true,
