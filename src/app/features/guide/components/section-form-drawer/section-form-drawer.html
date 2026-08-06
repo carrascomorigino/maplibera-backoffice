@@ -1,41 +1,52 @@
-<form [formGroup]="form" class="flex flex-col gap-4 p-6 w-96">
-  <h2 class="text-lg font-semibold">{{ section() ? 'Edit section' : 'New section' }}</h2>
+<form
+  [formGroup]="form"
+  class="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden sm:w-[26rem]"
+>
+  <div class="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden p-6">
+    <h2 class="text-lg font-semibold">{{ section() ? 'Edit section' : 'New section' }}</h2>
 
-  <mat-form-field>
-    <mat-label>Title</mat-label>
-    <input matInput formControlName="title" />
-  </mat-form-field>
+    <mat-form-field class="min-w-0">
+      <mat-label>Title</mat-label>
+      <input matInput formControlName="title" />
+    </mat-form-field>
 
-  <mat-form-field>
-    <mat-label>Slug</mat-label>
-    <input matInput formControlName="slug" />
-    @if (form.controls.slug.hasError('pattern')) {
-      <mat-error>Use lowercase letters, numbers, and hyphens only</mat-error>
-    } @else if (form.controls.slug.hasError('duplicateSlug')) {
-      <mat-error>A section with this slug already exists</mat-error>
+    <mat-form-field class="min-w-0">
+      <mat-label>Slug</mat-label>
+      <input matInput formControlName="slug" />
+      @if (form.controls.slug.hasError('pattern')) {
+        <mat-error>Use lowercase letters, numbers, and hyphens only</mat-error>
+      } @else if (form.controls.slug.hasError('duplicateSlug')) {
+        <mat-error>A section with this slug already exists</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="min-w-0">
+      <label
+        data-testid="description-label"
+        class="mb-1 block text-sm font-medium text-gray-700"
+        >Description *</label
+      >
+      <app-markdown-editor formControlName="description" />
+    </div>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>Image URL</mat-label>
+      <input matInput formControlName="imageUrl" />
+    </mat-form-field>
+
+    @if (form.controls.imageUrl.valid && form.controls.imageUrl.value) {
+      <img
+        data-testid="image-preview"
+        [src]="form.controls.imageUrl.value"
+        alt=""
+        class="h-32 w-32 rounded object-cover"
+      />
     }
-  </mat-form-field>
 
-  <div>
-    <label class="mb-1 block text-sm font-medium text-gray-700">Description</label>
-    <app-markdown-editor formControlName="description" />
+    <app-question-editor formControlName="question" />
   </div>
 
-  <mat-form-field>
-    <mat-label>Image URL</mat-label>
-    <input matInput formControlName="imageUrl" />
-  </mat-form-field>
-
-  @if (form.controls.imageUrl.valid && form.controls.imageUrl.value) {
-    <img
-      data-testid="image-preview"
-      [src]="form.controls.imageUrl.value"
-      alt=""
-      class="h-32 w-32 rounded object-cover"
-    />
-  }
-
-  <div class="flex gap-2">
+  <div class="flex gap-2 border-t border-gray-200 p-6">
     <button
       mat-flat-button
       type="button"

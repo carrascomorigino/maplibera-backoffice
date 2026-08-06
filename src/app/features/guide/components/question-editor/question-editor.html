@@ -1,0 +1,182 @@
+<div [formGroup]="form" class="flex min-w-0 flex-col gap-4">
+  <mat-form-field class="min-w-0">
+    <mat-label>Question (optional)</mat-label>
+    <input matInput formControlName="text" data-testid="question-text-input" (blur)="onBlur()" />
+  </mat-form-field>
+
+  @if (form.controls.text.value.trim()) {
+    <div class="flex min-w-0 flex-col gap-1">
+      <label class="text-sm font-medium text-gray-700" for="question-type-select">Question type *</label>
+      <select
+        id="question-type-select"
+        data-testid="question-type-select"
+        formControlName="type"
+        class="w-full min-w-0 rounded border border-gray-300 p-2 text-sm"
+      >
+        <option value="" disabled>Select a type</option>
+        <option value="yes-no">Yes/No question</option>
+        <option value="single">Single choice</option>
+        <option value="multiple">Multiple choice</option>
+      </select>
+    </div>
+
+    @if (form.controls.type.value === 'yes-no') {
+      <fieldset class="flex min-w-0 flex-col gap-2">
+        <legend class="text-sm font-medium text-gray-700">Correct answer *</legend>
+        <label class="flex items-center gap-2">
+          <input
+            type="radio"
+            name="yesNoCorrectAnswer"
+            data-testid="yes-no-yes"
+            [checked]="form.controls.yesNoCorrectAnswer.value === 'yes'"
+            (change)="form.controls.yesNoCorrectAnswer.setValue('yes')"
+          />
+          Yes
+        </label>
+        <label class="flex items-center gap-2">
+          <input
+            type="radio"
+            name="yesNoCorrectAnswer"
+            data-testid="yes-no-no"
+            [checked]="form.controls.yesNoCorrectAnswer.value === 'no'"
+            (change)="form.controls.yesNoCorrectAnswer.setValue('no')"
+          />
+          No
+        </label>
+      </fieldset>
+    }
+
+    @if (form.controls.type.value === 'single' || form.controls.type.value === 'multiple') {
+      <div class="flex min-w-0 flex-col gap-3">
+        @for (row of answers.controls; track row; let i = $index) {
+          <div
+            [formGroup]="row"
+            [attr.data-testid]="'answer-row-' + i"
+            class="flex min-w-0 flex-col gap-2 rounded border border-gray-200 p-3"
+          >
+            <div class="flex min-w-0 items-start gap-2">
+              @if (form.controls.type.value === 'single') {
+                <input
+                  type="radio"
+                  name="singleCorrectAnswer"
+                  class="mt-4 shrink-0"
+                  aria-label="Correct answer"
+                  [attr.data-testid]="'answer-correct-' + i"
+                  [checked]="row.controls.isCorrect.value"
+                  (change)="selectSingleCorrect(i)"
+                />
+              } @else {
+                <input
+                  type="checkbox"
+                  class="mt-4 shrink-0"
+                  aria-label="Correct answer"
+                  [attr.data-testid]="'answer-correct-' + i"
+                  [formControl]="row.controls.isCorrect"
+                />
+              }
+
+              <mat-form-field class="min-w-0 flex-1">
+                <mat-label>Answer {{ i + 1 }} *</mat-label>
+                <input matInput formControlName="text" [attr.data-testid]="'answer-text-' + i" />
+              </mat-form-field>
+
+              <button
+                mat-icon-button
+                type="button"
+                [attr.data-testid]="'answer-remove-' + i"
+                [disabled]="!canRemoveAnswer()"
+                (click)="removeAnswer(i)"
+                aria-label="Remove answer"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            <mat-form-field class="min-w-0">
+              <mat-label>Image URL (optional)</mat-label>
+              <input matInput formControlName="imageUrl" [attr.data-testid]="'answer-image-' + i" />
+              @if (row.controls.imageUrl.hasError('imageRequired')) {
+                <mat-error>An image is required once another answer has one</mat-error>
+              } @else if (row.controls.imageUrl.hasError('pattern')) {
+                <mat-error>Enter a valid URL</mat-error>
+              }
+            </mat-form-field>
+          </div>
+        }
+
+        <button
+          mat-stroked-button
+          type="button"
+          data-testid="add-answer-button"
+          (click)="addAnswer()"
+        >
+          Add answer
+        </button>
+
+        <label class="flex items-center gap-2">
+          <input
+            type="checkbox"
+            data-testid="include-all-of-the-above"
+            formControlName="includeAllOfTheAbove"
+          />
+          Include "All of the above"
+        </label>
+        @if (form.controls.includeAllOfTheAbove.value) {
+          <label class="flex items-center gap-2 pl-6">
+            @if (form.controls.type.value === 'single') {
+              <input
+                type="radio"
+                name="singleCorrectAnswer"
+                data-testid="all-of-the-above-correct"
+                [checked]="form.controls.allOfTheAboveCorrect.value"
+                (change)="selectSingleCorrect('all')"
+              />
+            } @else {
+              <input
+                type="checkbox"
+                data-testid="all-of-the-above-correct"
+                formControlName="allOfTheAboveCorrect"
+              />
+            }
+            All of the above is correct
+          </label>
+        }
+
+        <label class="flex items-center gap-2">
+          <input
+            type="checkbox"
+            data-testid="include-none-of-the-above"
+            formControlName="includeNoneOfTheAbove"
+          />
+          Include "None of the above"
+        </label>
+        @if (form.controls.includeNoneOfTheAbove.value) {
+          <label class="flex items-center gap-2 pl-6">
+            @if (form.controls.type.value === 'single') {
+              <input
+                type="radio"
+                name="singleCorrectAnswer"
+                data-testid="none-of-the-above-correct"
+                [checked]="form.controls.noneOfTheAboveCorrect.value"
+                (change)="selectSingleCorrect('none')"
+              />
+            } @else {
+              <input
+                type="checkbox"
+                data-testid="none-of-the-above-correct"
+                formControlName="noneOfTheAboveCorrect"
+              />
+            }
+            None of the above is correct
+          </label>
+        }
+
+        @if (form.invalid) {
+          <p class="text-sm text-red-600" data-testid="question-error">
+            Complete the question type, every answer's text, and mark at least one correct answer.
+          </p>
+        }
+      </div>
+    }
+  }
+</div>

@@ -9,17 +9,23 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { Section } from '../../models/section.model';
+import { Question, Section } from '../../models/section.model';
 import { SectionService } from '../../services/section.service';
 import { MarkdownEditor } from '../markdown-editor/markdown-editor';
+import { QuestionEditor } from '../question-editor/question-editor';
 import { slugify } from '../../utils/slugify';
-
-const URL_PATTERN = /^https?:\/\/.+/i;
-const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+import { URL_PATTERN, SLUG_PATTERN } from '../../utils/patterns';
 
 @Component({
   selector: 'app-section-form-drawer',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MarkdownEditor],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MarkdownEditor,
+    QuestionEditor,
+  ],
   templateUrl: './section-form-drawer.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -54,6 +60,7 @@ export class SectionFormDrawer {
       nonNullable: true,
       validators: Validators.pattern(URL_PATTERN),
     }),
+    question: new FormControl<Question | undefined>(undefined),
   });
 
   constructor() {
@@ -75,6 +82,7 @@ export class SectionFormDrawer {
           slug: section?.slug ?? '',
           description: section?.description ?? '',
           imageUrl: section?.imageUrl ?? '',
+          question: section?.question ?? undefined,
         },
         { emitEvent: false },
       );
@@ -97,14 +105,22 @@ export class SectionFormDrawer {
   }
 
   private persist(): string {
-    const { title, slug, description, imageUrl } = this.form.getRawValue();
+    const { title, slug, description, imageUrl, question } = this.form.getRawValue();
+    const questionValue = question ?? undefined;
     const existing = this.section();
 
     if (existing) {
-      this.sectionService.update(existing.slug, { title, slug, description, imageUrl });
+      this.sectionService.update(existing.slug, {
+        title,
+        slug,
+        description,
+        imageUrl,
+        question: questionValue,
+      });
       return slug;
     }
 
-    return this.sectionService.create({ slug, title, description, imageUrl }).slug;
+    return this.sectionService.create({ slug, title, description, imageUrl, question: questionValue })
+      .slug;
   }
 }
