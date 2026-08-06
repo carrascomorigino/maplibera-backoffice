@@ -4,6 +4,9 @@
   <mat-form-field>
     <mat-label>Title</mat-label>
     <input matInput formControlName="title" />
+    @if (form.controls.title.hasError('duplicateTitle')) {
+      <mat-error>A section with this title already exists</mat-error>
+    }
   </mat-form-field>
 
   <mat-form-field>
@@ -35,15 +38,17 @@
     >
       Save
     </button>
-    <button
-      mat-flat-button
-      type="button"
-      data-testid="publish-button"
-      [disabled]="form.invalid"
-      (click)="publish()"
-    >
-      Publish
-    </button>
+    @if (!section()) {
+      <button
+        mat-flat-button
+        type="button"
+        data-testid="publish-button"
+        [disabled]="form.invalid"
+        (click)="publish()"
+      >
+        Publish
+      </button>
+    }
     <button mat-stroked-button type="button" data-testid="cancel-button" (click)="cancel()">
       Cancel
     </button>
