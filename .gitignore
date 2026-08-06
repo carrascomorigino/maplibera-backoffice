@@ -42,3 +42,25 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Ignorar datos efímeros, logs y llaves de agentes
+.agents/*.log
+.agents/*.env
+.agents/cache/
+.agents/state/
+
+# Conservar las definiciones de agentes
+!.agents/*.md
+!.agents/*.json
+!.agents/definitions/
+
+# Ignorar datos locales y privados de Claude
+.claude/*.json
+.claude/history*
+.claude/cache/
+.claude/projects/
+.claude/telemetry/
+
+# Permitir subir configuraciones y skills
+!.claude/skills/
+!.claude/agents/
