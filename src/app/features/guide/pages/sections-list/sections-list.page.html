@@ -1,0 +1,76 @@
+<mat-drawer-container class="h-full">
+  <mat-drawer #drawer mode="over" position="end" [opened]="isDrawerOpen()" (closedStart)="closeDrawer()">
+    @if (isDrawerOpen()) {
+      <app-section-form-drawer [section]="editingSection()" (closed)="closeDrawer()" />
+    }
+  </mat-drawer>
+
+  <mat-drawer-content class="p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-xl font-semibold">Sections</h1>
+      <button
+        mat-flat-button
+        type="button"
+        data-testid="new-section-button"
+        (click)="openCreate()"
+      >
+        New section
+      </button>
+    </div>
+
+    @if (sections().length === 0) {
+      <p class="text-gray-600">No sections yet. Create your first one to get started.</p>
+    } @else {
+      <ul
+        cdkDropList
+        [cdkDropListData]="sections()"
+        class="flex flex-col gap-2"
+        (cdkDropListDropped)="onDrop($event)"
+      >
+        @for (section of sections(); track section.id) {
+          <li
+            cdkDrag
+            tabindex="0"
+            [attr.aria-label]="'Reorder ' + section.title + '. Press space to lift, arrow keys to move, space to drop.'"
+            class="flex items-center gap-4 rounded border border-gray-200 p-3"
+          >
+            @if (section.imageUrl) {
+              <img [src]="section.imageUrl" alt="" class="h-12 w-12 rounded object-cover" />
+            } @else {
+              <div class="h-12 w-12 rounded bg-gray-100"></div>
+            }
+
+            <div class="flex-1">
+              <p data-testid="section-title" class="font-medium">{{ section.title }}</p>
+              <p class="text-sm text-gray-600">{{ section.description }}</p>
+            </div>
+
+            <span
+              class="rounded-full px-2 py-1 text-xs font-medium"
+              [class]="statusBadgeClass(section.status)"
+            >
+              {{ section.status }}
+            </span>
+
+            <button
+              mat-stroked-button
+              type="button"
+              data-testid="edit-button"
+              (click)="openEdit(section)"
+            >
+              Edit
+            </button>
+            <button
+              mat-stroked-button
+              type="button"
+              [attr.data-testid]="'status-action-' + section.id"
+              (click)="onStatusAction(section)"
+            >
+              {{ statusActionLabel(section.status) }}
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </mat-drawer-content>
+</mat-drawer-container>
