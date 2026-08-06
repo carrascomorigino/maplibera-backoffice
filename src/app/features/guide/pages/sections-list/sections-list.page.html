@@ -58,6 +58,25 @@
               <p data-testid="section-title" class="font-medium">{{ section.title }}</p>
               <p data-testid="section-slug" class="font-mono text-xs text-gray-500">{{ section.slug }}</p>
               <p class="text-sm text-gray-600">{{ section.description }}</p>
+
+              @if (section.question) {
+                <div class="mt-1">
+                  <p class="text-xs font-medium text-gray-500">
+                    <span data-testid="question-type">{{ questionTypeLabel(section.question.type) }}</span>
+                    &mdash;
+                    <span data-testid="question-text">{{ section.question.text }}</span>
+                  </p>
+                  @if (correctAnswerLabels(section.question); as correctAnswers) {
+                    @if (correctAnswers.length) {
+                      <ul class="mt-0.5 list-disc pl-4 text-xs text-gray-600">
+                        @for (answer of correctAnswers; track answer) {
+                          <li data-testid="correct-answer">{{ answer }}</li>
+                        }
+                      </ul>
+                    }
+                  }
+                </div>
+              }
             </div>
 
             <span

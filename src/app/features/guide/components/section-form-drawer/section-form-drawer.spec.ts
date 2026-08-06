@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { SectionFormDrawer } from './section-form-drawer';
 import { SectionService } from '../../services/section.service';
+import { Question, QuestionType } from '../../models/section.model';
 
 describe('SectionFormDrawer', () => {
   let service: SectionService;
@@ -278,5 +279,129 @@ describe('SectionFormDrawer', () => {
 
       expect(service.sections()[0].slug).toBe('new-section');
     });
+  });
+
+  describe('question', () => {
+    it('omits the question when its text is left empty', () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      component.form.controls.title.setValue('New section');
+      component.form.controls.description.setValue('Description');
+      fixture.detectChanges();
+      buttons(fixture).save.click();
+
+      expect(service.sections()[0].question).toBeUndefined();
+    });
+
+    it('persists a filled-in valid question on Save', () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+      const question: Question = {
+        text: 'Is this correct?',
+        type: 'yes-no',
+        yesNoCorrectAnswer: 'yes',
+      };
+
+      component.form.controls.title.setValue('New section');
+      component.form.controls.description.setValue('Description');
+      component.form.controls.question.setValue(question);
+      fixture.detectChanges();
+      buttons(fixture).save.click();
+
+      expect(service.sections()[0].question).toEqual(question);
+    });
+
+    it('disables Save and Publish while the question is invalid', () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      component.form.controls.title.setValue('New section');
+      component.form.controls.description.setValue('Description');
+      component.form.controls.question.setValue({
+        text: 'Is this correct?',
+        type: '' as QuestionType,
+      });
+      fixture.detectChanges();
+
+      expect(buttons(fixture).save.disabled).toBe(true);
+      expect(buttons(fixture).publish?.disabled).toBe(true);
+
+      component.form.controls.question.setValue({
+        text: 'Is this correct?',
+        type: 'yes-no',
+        yesNoCorrectAnswer: 'yes',
+      });
+      fixture.detectChanges();
+
+      expect(buttons(fixture).save.disabled).toBe(false);
+      expect(buttons(fixture).publish?.disabled).toBe(false);
+    });
+
+    it('loads an existing question back into the form when editing', () => {
+      const question: Question = {
+        text: 'Pick one',
+        type: 'single',
+        answers: [
+          { text: 'A', isCorrect: true },
+          { text: 'B', isCorrect: false },
+        ],
+      };
+      const existing = service.create({
+        slug: 'with-question',
+        title: 'With question',
+        description: 'Desc',
+        imageUrl: '',
+        question,
+      });
+      const fixture = TestBed.createComponent(SectionFormDrawer);
+      fixture.componentRef.setInput('section', existing);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.form.controls.question.value).toEqual(question);
+    });
+
+    it('normalizes legacy single-choice data with more than one correct answer when loaded for editing, and persists the fix on Save', async () => {
+      const question: Question = {
+        text: 'Pick one',
+        type: 'single',
+        answers: [
+          { text: 'A', isCorrect: true },
+          { text: 'B', isCorrect: true },
+          { text: 'C', isCorrect: false },
+        ],
+      };
+      const existing = service.create({
+        slug: 'legacy-question',
+        title: 'Legacy question',
+        description: 'Desc',
+        imageUrl: '',
+        question,
+      });
+      const fixture = TestBed.createComponent(SectionFormDrawer);
+      fixture.componentRef.setInput('section', existing);
+      fixture.detectChanges();
+      await Promise.resolve();
+      fixture.detectChanges();
+
+      const normalized = fixture.componentInstance.form.controls.question.value;
+      expect(normalized?.answers?.filter((a) => a.isCorrect)).toHaveLength(1);
+
+      buttons(fixture).save.click();
+
+      const saved = service.sections().find((s) => s.slug === 'legacy-question');
+      expect(saved?.question?.answers?.filter((a) => a.isCorrect)).toHaveLength(1);
+      expect(saved?.question?.answers?.[0].isCorrect).toBe(true);
+    });
+  });
+
+  it('shows a required indicator on the Description label', () => {
+    const fixture = createFixture();
+
+    const label = fixture.nativeElement.querySelector(
+      '[data-testid="description-label"]',
+    ) as HTMLElement;
+
+    expect(label.textContent?.trim()).toBe('Description *');
   });
 });

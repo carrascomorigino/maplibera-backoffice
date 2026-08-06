@@ -3,7 +3,7 @@ import { By } from '@angular/platform-browser';
 import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import { SectionsListPage } from './sections-list.page';
 import { SectionService } from '../../services/section.service';
-import { Section } from '../../models/section.model';
+import { Question, Section } from '../../models/section.model';
 
 describe('SectionsListPage', () => {
   let service: SectionService;
@@ -189,5 +189,106 @@ describe('SectionsListPage', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-section-form-drawer')).toBeNull();
+  });
+
+  describe('question summary', () => {
+    it('shows nothing extra when the section has no question', () => {
+      service.create({ slug: 'no-question', title: 'No question', description: '', imageUrl: '' });
+      const fixture = createFixture();
+
+      expect(fixture.nativeElement.querySelector('[data-testid="question-type"]')).toBeNull();
+    });
+
+    it('shows the type, text, and only the correct answer for a yes/no question', () => {
+      service.create({
+        slug: 'yn',
+        title: 'YN',
+        description: '',
+        imageUrl: '',
+        question: { text: 'Is this correct?', type: 'yes-no', yesNoCorrectAnswer: 'yes' },
+      });
+      const fixture = createFixture();
+
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="question-type"]')?.textContent?.trim(),
+      ).toBe('Yes/No question');
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="question-text"]')?.textContent?.trim(),
+      ).toBe('Is this correct?');
+      const answers = Array.from(
+        fixture.nativeElement.querySelectorAll('[data-testid="correct-answer"]'),
+      ).map((el) => (el as HTMLElement).textContent?.trim());
+      expect(answers).toEqual(['Yes']);
+    });
+
+    it('shows only the correct answers for a multiple choice question, including specials', () => {
+      service.create({
+        slug: 'mc',
+        title: 'MC',
+        description: '',
+        imageUrl: '',
+        question: {
+          text: 'Pick all that apply',
+          type: 'multiple',
+          answers: [
+            { text: 'A', isCorrect: false },
+            { text: 'B', isCorrect: false },
+            { text: 'C', isCorrect: false },
+          ],
+          includeAllOfTheAbove: true,
+          allOfTheAboveCorrect: true,
+        },
+      });
+      const fixture = createFixture();
+
+      const answers = Array.from(
+        fixture.nativeElement.querySelectorAll('[data-testid="correct-answer"]'),
+      ).map((el) => (el as HTMLElement).textContent?.trim());
+      expect(answers).toEqual(['All of the above']);
+    });
+  });
+
+  describe('correctAnswerLabels', () => {
+    it('returns Yes or No for a yes/no question', () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      expect(
+        component.correctAnswerLabels({ text: 'Q', type: 'yes-no', yesNoCorrectAnswer: 'yes' }),
+      ).toEqual(['Yes']);
+      expect(
+        component.correctAnswerLabels({ text: 'Q', type: 'yes-no', yesNoCorrectAnswer: 'no' }),
+      ).toEqual(['No']);
+    });
+
+    it('returns the correct answer texts for single/multiple choice', () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+      const question: Question = {
+        text: 'Q',
+        type: 'multiple',
+        answers: [
+          { text: 'A', isCorrect: true },
+          { text: 'B', isCorrect: false },
+          { text: 'C', isCorrect: true },
+        ],
+      };
+
+      expect(component.correctAnswerLabels(question)).toEqual(['A', 'C']);
+    });
+
+    it('includes "All of the above" / "None of the above" when marked correct', () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+      const question: Question = {
+        text: 'Q',
+        type: 'single',
+        answers: [{ text: 'A', isCorrect: false }],
+        includeNoneOfTheAbove: true,
+        noneOfTheAboveCorrect: true,
+      };
+
+      expect(component.correctAnswerLabels(question)).toEqual(['None of the above']);
+    });
   });
 });

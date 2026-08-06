@@ -38,6 +38,29 @@ describe('SectionService', () => {
 
       expect(second.order).toBe(1);
     });
+
+    it('round-trips a question through create and update unchanged', () => {
+      const service = setup();
+      const question = {
+        text: 'Is this correct?',
+        type: 'yes-no' as const,
+        yesNoCorrectAnswer: 'yes' as const,
+      };
+
+      const created = service.create({
+        slug: 'with-question',
+        title: 'With question',
+        description: 'A',
+        imageUrl: '',
+        question,
+      });
+      expect(created.question).toEqual(question);
+      expect(service.sections()[0].question).toEqual(question);
+
+      const updatedQuestion = { ...question, yesNoCorrectAnswer: 'no' as const };
+      service.update(created.slug, { question: updatedQuestion });
+      expect(service.sections()[0].question).toEqual(updatedQuestion);
+    });
   });
 
   describe('update', () => {

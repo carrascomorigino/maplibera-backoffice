@@ -3,7 +3,10 @@ import { Section } from '../models/section.model';
 
 const STORAGE_KEY = 'guide-sections';
 
-export type SectionInput = Pick<Section, 'slug' | 'title' | 'description' | 'imageUrl'>;
+export type SectionInput = Pick<
+  Section,
+  'slug' | 'title' | 'description' | 'imageUrl' | 'question'
+>;
 export type SectionUpdate = Partial<SectionInput>;
 
 @Injectable({ providedIn: 'root' })
@@ -21,6 +24,7 @@ export class SectionService {
       title: input.title,
       description: input.description,
       imageUrl: input.imageUrl,
+      question: input.question,
       status: 'draft',
       order: this.state().length,
       createdAt: now,
