@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatDrawer, MatDrawerContainer, MatDrawerContent } from '@angular/material/sidenav';
 import { Section, SectionStatus } from '../../models/section.model';
 import { SectionService } from '../../services/section.service';
@@ -11,7 +12,9 @@ import { SectionFormDrawer } from '../../components/section-form-drawer/section-
   imports: [
     CdkDropList,
     CdkDrag,
+    CdkDragHandle,
     MatButtonModule,
+    MatIconModule,
     MatDrawerContainer,
     MatDrawer,
     MatDrawerContent,
@@ -47,9 +50,9 @@ export class SectionsListPage {
 
   protected onStatusAction(section: Section): void {
     if (section.status === 'published') {
-      this.sectionService.pause(section.id);
+      this.sectionService.pause(section.slug);
     } else {
-      this.sectionService.publish(section.id);
+      this.sectionService.publish(section.slug);
     }
   }
 
@@ -65,8 +68,8 @@ export class SectionsListPage {
   }
 
   onDrop(event: CdkDragDrop<Section[]>): void {
-    const ids = event.container.data.map((section) => section.id);
-    moveItemInArray(ids, event.previousIndex, event.currentIndex);
-    this.sectionService.reorder(ids);
+    const slugs = event.container.data.map((section) => section.slug);
+    moveItemInArray(slugs, event.previousIndex, event.currentIndex);
+    this.sectionService.reorder(slugs);
   }
 }

@@ -1,7 +1,7 @@
 export type SectionStatus = 'draft' | 'published' | 'paused';
 
 export interface Section {
-  id: string;
+  slug: string;
   title: string;
   description: string;
   imageUrl: string;
