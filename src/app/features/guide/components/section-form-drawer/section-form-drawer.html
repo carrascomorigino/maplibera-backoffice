@@ -1,0 +1,51 @@
+<form [formGroup]="form" class="flex flex-col gap-4 p-6 w-80">
+  <h2 class="text-lg font-semibold">{{ section() ? 'Edit section' : 'New section' }}</h2>
+
+  <mat-form-field>
+    <mat-label>Title</mat-label>
+    <input matInput formControlName="title" />
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-label>Description</mat-label>
+    <textarea matInput formControlName="description"></textarea>
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-label>Image URL</mat-label>
+    <input matInput formControlName="imageUrl" />
+  </mat-form-field>
+
+  @if (form.controls.imageUrl.valid && form.controls.imageUrl.value) {
+    <img
+      data-testid="image-preview"
+      [src]="form.controls.imageUrl.value"
+      alt=""
+      class="h-32 w-32 rounded object-cover"
+    />
+  }
+
+  <div class="flex gap-2">
+    <button
+      mat-flat-button
+      type="button"
+      data-testid="save-button"
+      [disabled]="form.invalid"
+      (click)="save()"
+    >
+      Save
+    </button>
+    <button
+      mat-flat-button
+      type="button"
+      data-testid="publish-button"
+      [disabled]="form.invalid"
+      (click)="publish()"
+    >
+      Publish
+    </button>
+    <button mat-stroked-button type="button" data-testid="cancel-button" (click)="cancel()">
+      Cancel
+    </button>
+  </div>
+</form>
