@@ -19,6 +19,12 @@
       "skillPath": "changelog-generator/SKILL.md",
       "computedHash": "f84bcb773a67ade28878d63103e3d4dc1f5031d6103be5107ff99c15b8d4a992"
     },
+    "developing-genkit-js": {
+      "source": "genkit-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/developing-genkit-js/SKILL.md",
+      "computedHash": "eb1a7516378e49532ba235fc02710bedfc12e1300267d0ae9de0f2ebd9d30ce9"
+    },
     "interface-design": {
       "source": "dammyjay93/interface-design",
       "sourceType": "github",
