@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 - `npm start` (or `npx ng serve`) — dev server at http://localhost:4200 with auto-reload.
+- `npm run dev:api` — runs a standalone Express API (`src/api-server.ts`, incl. `POST /api/translate`) via `tsx watch`, for local development. It shares its route handler (`src/server/register-translate-route.ts`) with the production SSR server (`src/server.ts`) but has no Angular SSR dependency itself, since `tsx` can't JIT-compile Angular's SSR engine outside the CLI build pipeline. `npm start` proxies `/api/*` to it (see `proxy.conf.json`). Requires a `.env` (copy `.env.example`) with `GEMINI_API_KEY` set to exercise the guide feature's AI-suggested translations; without it, that feature degrades to showing the untranslated source text instead of crashing — everything else in the app works with `npm start` alone.
 - `npx ng build` — production build to `dist/maplibera-backoffice/`. `npx ng build --configuration development` for an unoptimized build.
 - `npm test` (or `npx ng test`) — unit tests via Angular's `@angular/build:unit-test` builder, running on Vitest with jsdom. Watch mode is on by default in a TTY.
   - Run a single spec file: `npx ng test --include src/app/features/guide/services/section.service.spec.ts`

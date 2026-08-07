@@ -1,13 +1,18 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
+import { LanguageService } from './core/i18n/language.service';
 
 describe('App', () => {
+  let language: LanguageService;
+
   beforeEach(async () => {
+    localStorage.clear();
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [provideRouter([])],
     }).compileComponents();
+    language = TestBed.inject(LanguageService);
   });
 
   it('should create the app', () => {
@@ -23,6 +28,15 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const link = compiled.querySelector('a');
     expect(link?.getAttribute('href')).toBe('/guide/sections');
-    expect(link?.textContent).toContain('Sections');
+    expect(link?.textContent?.trim()).toBe(language.t().nav.sectionsLink);
+  });
+
+  it('should render the app title translated', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const title = compiled.querySelector('[data-testid="nav-title"]');
+    expect(title?.textContent?.trim()).toBe(language.t().nav.appTitle);
   });
 });

@@ -1,28 +1,32 @@
 <div [formGroup]="form" class="flex min-w-0 flex-col gap-4">
   <mat-form-field class="min-w-0">
-    <mat-label>Question (optional)</mat-label>
+    <mat-label>{{ language.t().guide.questionEditor.questionLabel }}</mat-label>
     <input matInput formControlName="text" data-testid="question-text-input" (blur)="onBlur()" />
   </mat-form-field>
 
   @if (form.controls.text.value.trim()) {
     <div class="flex min-w-0 flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700" for="question-type-select">Question type *</label>
+      <label class="text-sm font-medium text-gray-700" for="question-type-select">{{
+        language.t().guide.questionEditor.questionTypeLabel
+      }}</label>
       <select
         id="question-type-select"
         data-testid="question-type-select"
         formControlName="type"
         class="w-full min-w-0 rounded border border-gray-300 p-2 text-sm"
       >
-        <option value="" disabled>Select a type</option>
-        <option value="yes-no">Yes/No question</option>
-        <option value="single">Single choice</option>
-        <option value="multiple">Multiple choice</option>
+        <option value="" disabled>{{ language.t().guide.questionEditor.selectTypePlaceholder }}</option>
+        <option value="yes-no">{{ language.t().guide.questionEditor.typeYesNo }}</option>
+        <option value="single">{{ language.t().guide.questionEditor.typeSingle }}</option>
+        <option value="multiple">{{ language.t().guide.questionEditor.typeMultiple }}</option>
       </select>
     </div>
 
     @if (form.controls.type.value === 'yes-no') {
       <fieldset class="flex min-w-0 flex-col gap-2">
-        <legend class="text-sm font-medium text-gray-700">Correct answer *</legend>
+        <legend class="text-sm font-medium text-gray-700">{{
+          language.t().guide.questionEditor.correctAnswerLegend
+        }}</legend>
         <label class="flex items-center gap-2">
           <input
             type="radio"
@@ -31,7 +35,7 @@
             [checked]="form.controls.yesNoCorrectAnswer.value === 'yes'"
             (change)="form.controls.yesNoCorrectAnswer.setValue('yes')"
           />
-          Yes
+          {{ language.t().guide.questionEditor.yesOption }}
         </label>
         <label class="flex items-center gap-2">
           <input
@@ -41,7 +45,7 @@
             [checked]="form.controls.yesNoCorrectAnswer.value === 'no'"
             (change)="form.controls.yesNoCorrectAnswer.setValue('no')"
           />
-          No
+          {{ language.t().guide.questionEditor.noOption }}
         </label>
       </fieldset>
     }
@@ -60,7 +64,7 @@
                   type="radio"
                   name="singleCorrectAnswer"
                   class="mt-4 shrink-0"
-                  aria-label="Correct answer"
+                  [attr.aria-label]="language.t().guide.questionEditor.correctAnswerAria"
                   [attr.data-testid]="'answer-correct-' + i"
                   [checked]="row.controls.isCorrect.value"
                   (change)="selectSingleCorrect(i)"
@@ -69,14 +73,14 @@
                 <input
                   type="checkbox"
                   class="mt-4 shrink-0"
-                  aria-label="Correct answer"
+                  [attr.aria-label]="language.t().guide.questionEditor.correctAnswerAria"
                   [attr.data-testid]="'answer-correct-' + i"
                   [formControl]="row.controls.isCorrect"
                 />
               }
 
               <mat-form-field class="min-w-0 flex-1">
-                <mat-label>Answer {{ i + 1 }} *</mat-label>
+                <mat-label>{{ language.t().guide.questionEditor.answerLabel(i + 1) }}</mat-label>
                 <input matInput formControlName="text" [attr.data-testid]="'answer-text-' + i" />
               </mat-form-field>
 
@@ -86,19 +90,19 @@
                 [attr.data-testid]="'answer-remove-' + i"
                 [disabled]="!canRemoveAnswer()"
                 (click)="removeAnswer(i)"
-                aria-label="Remove answer"
+                [attr.aria-label]="language.t().guide.questionEditor.removeAnswerAria"
               >
                 <mat-icon>close</mat-icon>
               </button>
             </div>
 
             <mat-form-field class="min-w-0">
-              <mat-label>Image URL (optional)</mat-label>
+              <mat-label>{{ language.t().guide.questionEditor.imageUrlLabel }}</mat-label>
               <input matInput formControlName="imageUrl" [attr.data-testid]="'answer-image-' + i" />
               @if (row.controls.imageUrl.hasError('imageRequired')) {
-                <mat-error>An image is required once another answer has one</mat-error>
+                <mat-error>{{ language.t().guide.questionEditor.imageRequiredError }}</mat-error>
               } @else if (row.controls.imageUrl.hasError('pattern')) {
-                <mat-error>Enter a valid URL</mat-error>
+                <mat-error>{{ language.t().guide.questionEditor.invalidUrlError }}</mat-error>
               }
             </mat-form-field>
           </div>
@@ -110,7 +114,7 @@
           data-testid="add-answer-button"
           (click)="addAnswer()"
         >
-          Add answer
+          {{ language.t().guide.questionEditor.addAnswerButton }}
         </button>
 
         <label class="flex items-center gap-2">
@@ -119,7 +123,7 @@
             data-testid="include-all-of-the-above"
             formControlName="includeAllOfTheAbove"
           />
-          Include "All of the above"
+          {{ language.t().guide.questionEditor.includeAllOfTheAbove }}
         </label>
         @if (form.controls.includeAllOfTheAbove.value) {
           <label class="flex items-center gap-2 pl-6">
@@ -138,7 +142,7 @@
                 formControlName="allOfTheAboveCorrect"
               />
             }
-            All of the above is correct
+            {{ language.t().guide.questionEditor.allOfTheAboveCorrect }}
           </label>
         }
 
@@ -148,7 +152,7 @@
             data-testid="include-none-of-the-above"
             formControlName="includeNoneOfTheAbove"
           />
-          Include "None of the above"
+          {{ language.t().guide.questionEditor.includeNoneOfTheAbove }}
         </label>
         @if (form.controls.includeNoneOfTheAbove.value) {
           <label class="flex items-center gap-2 pl-6">
@@ -167,13 +171,13 @@
                 formControlName="noneOfTheAboveCorrect"
               />
             }
-            None of the above is correct
+            {{ language.t().guide.questionEditor.noneOfTheAboveCorrect }}
           </label>
         }
 
         @if (form.invalid) {
           <p class="text-sm text-red-600" data-testid="question-error">
-            Complete the question type, every answer's text, and mark at least one correct answer.
+            {{ language.t().guide.questionEditor.questionErrorText }}
           </p>
         }
       </div>

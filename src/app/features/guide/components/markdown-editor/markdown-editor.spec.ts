@@ -27,9 +27,9 @@ describe('MarkdownEditor', () => {
     fixture.detectChanges();
   }
 
-  function clickButton(fixture: ReturnType<typeof createFixture>, label: string) {
+  function clickButton(fixture: ReturnType<typeof createFixture>, testId: string) {
     const button = fixture.nativeElement.querySelector(
-      `[aria-label="${label}"]`,
+      `[data-testid="${testId}"]`,
     ) as HTMLButtonElement;
     button.click();
     fixture.detectChanges();
@@ -78,7 +78,7 @@ describe('MarkdownEditor', () => {
       const fixture = createFixture();
       setText(fixture, 'hello world', 0, 5);
 
-      clickButton(fixture, 'Bold');
+      clickButton(fixture, 'bold-button');
 
       expect(textarea(fixture).value).toBe('**hello** world');
     });
@@ -87,7 +87,7 @@ describe('MarkdownEditor', () => {
       const fixture = createFixture();
       setText(fixture, '', 0, 0);
 
-      clickButton(fixture, 'Bold');
+      clickButton(fixture, 'bold-button');
 
       expect(textarea(fixture).value).toBe('**bold text**');
     });
@@ -96,7 +96,7 @@ describe('MarkdownEditor', () => {
       const fixture = createFixture();
       setText(fixture, 'hello world', 6, 11);
 
-      clickButton(fixture, 'Italic');
+      clickButton(fixture, 'italic-button');
 
       expect(textarea(fixture).value).toBe('hello *world*');
     });
@@ -105,7 +105,7 @@ describe('MarkdownEditor', () => {
       const fixture = createFixture();
       setText(fixture, 'Section title', 0, 0);
 
-      clickButton(fixture, 'Heading');
+      clickButton(fixture, 'heading-button');
 
       expect(textarea(fixture).value).toBe('## Section title');
     });
@@ -114,7 +114,7 @@ describe('MarkdownEditor', () => {
       const fixture = createFixture();
       setText(fixture, 'one\ntwo', 0, 7);
 
-      clickButton(fixture, 'Bulleted list');
+      clickButton(fixture, 'bulleted-list-button');
 
       expect(textarea(fixture).value).toBe('- one\n- two');
     });
@@ -123,7 +123,7 @@ describe('MarkdownEditor', () => {
       const fixture = createFixture();
       setText(fixture, 'one\ntwo', 0, 7);
 
-      clickButton(fixture, 'Numbered list');
+      clickButton(fixture, 'numbered-list-button');
 
       expect(textarea(fixture).value).toBe('1. one\n1. two');
     });
@@ -132,7 +132,7 @@ describe('MarkdownEditor', () => {
       const fixture = createFixture();
       setText(fixture, 'docs', 0, 4);
 
-      clickButton(fixture, 'Link');
+      clickButton(fixture, 'link-button');
 
       expect(textarea(fixture).value).toBe('[docs](https://)');
     });
@@ -142,7 +142,9 @@ describe('MarkdownEditor', () => {
 
       clickPreviewToggle(fixture);
 
-      const bold = fixture.nativeElement.querySelector('[aria-label="Bold"]') as HTMLButtonElement;
+      const bold = fixture.nativeElement.querySelector(
+        '[data-testid="bold-button"]',
+      ) as HTMLButtonElement;
       expect(bold.disabled).toBe(true);
     });
   });

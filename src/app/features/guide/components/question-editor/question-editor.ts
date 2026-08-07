@@ -19,6 +19,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Question, QuestionAnswer, QuestionType } from '../../models/section.model';
 import { URL_PATTERN } from '../../utils/patterns';
+import { LanguageService } from '../../../../core/i18n/language.service';
 
 type AnswerGroup = FormGroup<{
   text: FormControl<string>;
@@ -76,6 +77,8 @@ function questionGroupValidator(group: AbstractControl): ValidationErrors | null
   ],
 })
 export class QuestionEditor implements ControlValueAccessor, Validator {
+  protected readonly language = inject(LanguageService);
+
   readonly form = new FormGroup(
     {
       text: new FormControl('', { nonNullable: true }),

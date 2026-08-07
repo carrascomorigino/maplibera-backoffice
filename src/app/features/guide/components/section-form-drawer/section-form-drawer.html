@@ -3,20 +3,69 @@
   class="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden sm:w-[26rem]"
 >
   <div class="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden p-6">
-    <h2 class="text-lg font-semibold">{{ section() ? 'Edit section' : 'New section' }}</h2>
+    <h2 class="text-lg font-semibold">
+      {{ section() ? language.t().guide.sectionForm.editHeading : language.t().guide.sectionForm.newHeading }}
+    </h2>
+
+    <span data-testid="working-language-indicator" class="w-fit rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+      {{ language.t().guide.sectionForm.workingLanguageLabel(contentLanguageLabels[targetLanguage()]) }}
+    </span>
+
+    @if (loading()) {
+      <p data-testid="suggestion-loading" class="text-sm text-gray-500">
+        {{ language.t().guide.sectionForm.suggestionLoadingText }}
+      </p>
+    }
+
+    @if (staleSourceLanguage() && staleSuggestionLoading()) {
+      <p data-testid="stale-preview-loading" class="text-sm text-gray-500">
+        {{ language.t().guide.sectionForm.previewLoadingText }}
+      </p>
+    }
 
     <mat-form-field class="min-w-0">
-      <mat-label>Title</mat-label>
+      <mat-label>{{ language.t().guide.sectionForm.titleLabel }}</mat-label>
       <input matInput formControlName="title" />
     </mat-form-field>
 
+    @if (staleSourceLanguage() && titleSuggestionDiffers()) {
+      <div class="flex flex-col gap-1">
+        @if (!previewRevealed()) {
+          <button
+            mat-stroked-button
+            type="button"
+            data-testid="preview-title-button"
+            (click)="previewStaleSuggestion()"
+          >
+            {{ language.t().guide.sectionForm.previewButton }}
+          </button>
+        }
+        @if (previewRevealed()) {
+          <div
+            data-testid="title-preview-panel"
+            class="flex items-center justify-between gap-2 rounded border border-amber-200 bg-amber-50 p-2 text-sm"
+          >
+            <span>{{ staleSuggestion()?.title }}</span>
+            <button
+              mat-stroked-button
+              type="button"
+              data-testid="accept-title-button"
+              (click)="acceptTitleSuggestion()"
+            >
+              {{ language.t().guide.sectionForm.acceptTranslationButton }}
+            </button>
+          </div>
+        }
+      </div>
+    }
+
     <mat-form-field class="min-w-0">
-      <mat-label>Slug</mat-label>
+      <mat-label>{{ language.t().guide.sectionForm.slugLabel }}</mat-label>
       <input matInput formControlName="slug" />
       @if (form.controls.slug.hasError('pattern')) {
-        <mat-error>Use lowercase letters, numbers, and hyphens only</mat-error>
+        <mat-error>{{ language.t().guide.sectionForm.slugPatternError }}</mat-error>
       } @else if (form.controls.slug.hasError('duplicateSlug')) {
-        <mat-error>A section with this slug already exists</mat-error>
+        <mat-error>{{ language.t().guide.sectionForm.duplicateSlugError }}</mat-error>
       }
     </mat-form-field>
 
@@ -24,13 +73,44 @@
       <label
         data-testid="description-label"
         class="mb-1 block text-sm font-medium text-gray-700"
-        >Description *</label
+        >{{ language.t().guide.sectionForm.descriptionLabel }}</label
       >
       <app-markdown-editor formControlName="description" />
     </div>
 
+    @if (staleSourceLanguage() && descriptionSuggestionDiffers()) {
+      <div class="flex flex-col gap-1">
+        @if (!previewRevealed()) {
+          <button
+            mat-stroked-button
+            type="button"
+            data-testid="preview-description-button"
+            (click)="previewStaleSuggestion()"
+          >
+            {{ language.t().guide.sectionForm.previewButton }}
+          </button>
+        }
+        @if (previewRevealed()) {
+          <div
+            data-testid="description-preview-panel"
+            class="flex items-center justify-between gap-2 rounded border border-amber-200 bg-amber-50 p-2 text-sm"
+          >
+            <span>{{ staleSuggestion()?.description }}</span>
+            <button
+              mat-stroked-button
+              type="button"
+              data-testid="accept-description-button"
+              (click)="acceptDescriptionSuggestion()"
+            >
+              {{ language.t().guide.sectionForm.acceptTranslationButton }}
+            </button>
+          </div>
+        }
+      </div>
+    }
+
     <mat-form-field class="min-w-0">
-      <mat-label>Image URL</mat-label>
+      <mat-label>{{ language.t().guide.sectionForm.imageUrlLabel }}</mat-label>
       <input matInput formControlName="imageUrl" />
     </mat-form-field>
 
@@ -41,6 +121,37 @@
         alt=""
         class="h-32 w-32 rounded object-cover"
       />
+    }
+
+    @if (staleSourceLanguage() && questionSuggestionDiffers()) {
+      <div class="flex flex-col gap-1">
+        @if (!previewRevealed()) {
+          <button
+            mat-stroked-button
+            type="button"
+            data-testid="preview-question-button"
+            (click)="previewStaleSuggestion()"
+          >
+            {{ language.t().guide.sectionForm.previewButton }}
+          </button>
+        }
+        @if (previewRevealed()) {
+          <div
+            data-testid="question-preview-panel"
+            class="flex items-center justify-between gap-2 rounded border border-amber-200 bg-amber-50 p-2 text-sm"
+          >
+            <span>{{ staleSuggestion()?.question?.text }}</span>
+            <button
+              mat-stroked-button
+              type="button"
+              data-testid="accept-question-button"
+              (click)="acceptQuestionSuggestion()"
+            >
+              {{ language.t().guide.sectionForm.acceptTranslationButton }}
+            </button>
+          </div>
+        }
+      </div>
     }
 
     <app-question-editor formControlName="question" />
@@ -54,7 +165,7 @@
       [disabled]="form.invalid"
       (click)="save()"
     >
-      Save
+      {{ language.t().guide.sectionForm.saveButton }}
     </button>
     @if (!section()) {
       <button
@@ -64,11 +175,11 @@
         [disabled]="form.invalid"
         (click)="publish()"
       >
-        Publish
+        {{ language.t().guide.sectionForm.publishButton }}
       </button>
     }
     <button mat-stroked-button type="button" data-testid="cancel-button" (click)="cancel()">
-      Cancel
+      {{ language.t().guide.sectionForm.cancelButton }}
     </button>
   </div>
 </form>

@@ -4,25 +4,22 @@ import {
   isMainModule,
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
+import { config as loadEnv } from 'dotenv';
 import express from 'express';
 import { join } from 'node:path';
+import { registerTranslateRoute } from './server/register-translate-route';
+
+if (process.env['NODE_ENV'] !== 'production') {
+  loadEnv();
+}
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
-/**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
- */
+app.use(express.json());
+registerTranslateRoute(app);
 
 /**
  * Serve static files from /browser

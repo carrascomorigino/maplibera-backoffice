@@ -1,0 +1,103 @@
+<span
+  cdkDragHandle
+  data-testid="drag-handle"
+  aria-hidden="true"
+  class="cursor-move text-gray-400"
+>
+  <mat-icon>drag_indicator</mat-icon>
+</span>
+
+@if (section().imageUrl) {
+  <img [src]="section().imageUrl" alt="" class="h-12 w-12 rounded object-cover" />
+} @else {
+  <div
+    data-testid="thumbnail-placeholder"
+    class="flex h-12 w-12 items-center justify-center rounded bg-gray-100 text-gray-400"
+  >
+    <mat-icon>image</mat-icon>
+  </div>
+}
+
+<div class="flex-1">
+  <div class="flex items-center gap-2">
+    <p data-testid="section-title" class="font-medium">{{ translation()?.title }}</p>
+    <select
+      data-testid="language-select"
+      [attr.aria-label]="language.t().guide.sectionsList.languageSelectAria"
+      [value]="selectedLanguage()"
+      (change)="onLanguageChange($any($event.target).value)"
+      class="rounded border border-gray-300 text-xs"
+    >
+      @for (lang of contentLanguages; track lang) {
+        <option
+          [attr.data-testid]="'language-option-' + lang"
+          [attr.aria-label]="
+            section().staleLanguages?.[lang]
+              ? language.t().guide.sectionsList.languageNeedsUpdateAria(contentLanguageLabels[lang])
+              : null
+          "
+          [value]="lang"
+        >
+          {{ contentLanguageLabels[lang] }}{{ section().staleLanguages?.[lang] ? ' ⚠' : section().translations[lang] ? ' ✓' : '' }}
+        </option>
+      }
+    </select>
+    @if (hasStaleLanguages()) {
+      <span
+        data-testid="stale-language-warning"
+        [attr.aria-label]="language.t().guide.sectionsList.languageSelectorHasUpdatesAria"
+        class="text-amber-600"
+        >⚠</span
+      >
+    }
+  </div>
+  <p data-testid="section-slug" class="font-mono text-xs text-gray-500">{{ section().slug }}</p>
+  <p class="text-sm text-gray-600">{{ translation()?.description }}</p>
+
+  <p class="mt-1 text-xs text-gray-500">
+    {{ language.t().guide.sectionsList.availableLanguagesLabel }}:
+    @for (lang of availableLanguages(); track lang) {
+      <span [attr.data-testid]="'available-language-' + lang" class="mr-1 font-mono uppercase">{{
+        lang
+      }}</span>
+    }
+  </p>
+
+  @if (translation()?.question; as question) {
+    <div class="mt-1">
+      <p class="text-xs font-medium text-gray-500">
+        <span data-testid="question-type">{{ questionTypeLabel(question.type) }}</span>
+        &mdash;
+        <span data-testid="question-text">{{ question.text }}</span>
+      </p>
+      @if (correctAnswerLabels(question); as correctAnswers) {
+        @if (correctAnswers.length) {
+          <ul class="mt-0.5 list-disc pl-4 text-xs text-gray-600">
+            @for (answer of correctAnswers; track answer) {
+              <li data-testid="correct-answer">{{ answer }}</li>
+            }
+          </ul>
+        }
+      }
+    </div>
+  }
+</div>
+
+<span
+  class="rounded-full px-2 py-1 text-xs font-medium"
+  [class]="statusBadgeClass(section().status)"
+>
+  {{ section().status }}
+</span>
+
+<button mat-stroked-button type="button" data-testid="edit-button" (click)="onEdit()">
+  {{ language.t().guide.sectionsList.editButton }}
+</button>
+<button
+  mat-stroked-button
+  type="button"
+  [attr.data-testid]="'status-action-' + section().slug"
+  (click)="onStatusAction()"
+>
+  {{ statusActionLabel(section().status) }}
+</button>
