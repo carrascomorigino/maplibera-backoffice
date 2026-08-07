@@ -1,7 +1,7 @@
 import type { GoogleGenAI } from '@google/genai';
 import { ContentLanguage } from '../app/features/guide/models/content-language.model';
 
-const MODEL = 'gemini-2.5-flash';
+const MODEL = process.env['GEMINI_API_MODEL'] ?? 'gemini-2.5-flash';
 
 export interface TranslateFieldsRequest {
   sourceLanguage: ContentLanguage;

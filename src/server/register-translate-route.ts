@@ -9,8 +9,11 @@ export function registerTranslateRoute(app: Express): void {
     try {
       const result = await translateFields(geminiClient, req.body);
       res.json(result);
-    } catch {
-      res.status(502).json({ error: 'translation_failed' });
+    } catch (error) {
+      res.status(500).json({
+        error: 'translation_failed',
+        message: error instanceof Error ? error.message : String(error),
+      });
     }
   });
 }
