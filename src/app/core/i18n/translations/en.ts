@@ -4,6 +4,16 @@ export const en: Translations = {
   nav: {
     appTitle: 'maplibera-backoffice',
     sectionsLink: 'Sections',
+    resourcesLink: 'Resources',
+  },
+  languageTags: {
+    untranslatedAria: (languageName) => `${languageName} not translated yet`,
+    needsUpdateAria: (languageName) => `${languageName} needs updating`,
+    removeConfirmTitle: 'Remove translation',
+    removeConfirmMessage: (languageName) =>
+      `Remove the ${languageName} translation? Its content in that language will be lost.`,
+    removeConfirmConfirmButton: 'Remove',
+    removeConfirmCancelButton: 'Cancel',
   },
   guide: {
     sectionsList: {
@@ -22,10 +32,6 @@ export const en: Translations = {
       noneOfTheAbove: 'None of the above',
       reorderAriaLabel: (title) =>
         `Reorder ${title}. Press space to lift, arrow keys to move, space to drop.`,
-      languageSelectAria: 'Language',
-      availableLanguagesLabel: 'Available languages',
-      languageNeedsUpdateAria: (languageName) => `${languageName} needs updating`,
-      languageSelectorHasUpdatesAria: 'Some languages need updating',
     },
     sectionForm: {
       editHeading: 'Edit section',
@@ -82,6 +88,81 @@ export const en: Translations = {
       correctAnswerAria: 'Correct answer',
       questionErrorText:
         "Complete the question type, every answer's text, and mark at least one correct answer.",
+    },
+  },
+  resources: {
+    resourcesList: {
+      heading: 'Resources',
+      addNutritionButton: '+ Nutrition',
+      addRecipeButton: '+ Recipe',
+      addMultimediaButton: '+ Multimedia',
+      addAppButton: '+ App',
+      filterAllLabel: 'All',
+      filterNutritionLabel: 'Nutrition',
+      filterRecipesLabel: 'Recipes',
+      filterMultimediaLabel: 'Multimedia',
+      filterAppsLabel: 'Apps',
+      categoryHeadingNutrition: 'Nutrition',
+      categoryHeadingRecipes: 'Recipes',
+      categoryHeadingMultimedia: 'Multimedia',
+      categoryHeadingApps: 'Apps',
+      emptyCategoryState: 'No resources in this category yet.',
+      editButton: 'Edit',
+      publishAction: 'Publish',
+      pauseAction: 'Pause',
+      reorderAriaLabel: (title) =>
+        `Reorder ${title}. Press space to lift, arrow keys to move, space to drop.`,
+    },
+    resourceForm: {
+      editHeading: 'Edit resource',
+      newHeading: 'New resource',
+      titleLabel: 'Title',
+      slugLabel: 'Slug',
+      slugPatternError: 'Use lowercase letters, numbers, and hyphens only',
+      duplicateSlugError: 'A resource with this slug already exists',
+      shortDescriptionLabel: 'Short description',
+      saveButton: 'Save',
+      publishButton: 'Publish',
+      cancelButton: 'Cancel',
+      workingLanguageLabel: (languageName) => `Working language: ${languageName}`,
+      suggestionLoadingText: 'Generating a suggested translation…',
+      suggestionFailedNotice:
+        'Automatic translation failed. Showing the original text for you to translate manually.',
+      suggestionFailedDismiss: 'Dismiss',
+      previewButton: 'Preview',
+      acceptTranslationButton: 'Accept translation',
+      previewLoadingText: 'Generating suggestion…',
+    },
+    categoryFields: {
+      nutrition: {
+        explanatoryTextLabel: 'Explanatory text',
+        sourceLinksLabel: 'Study/source links',
+        pdfUrlsLabel: 'Attached PDF URLs',
+      },
+      recipes: {
+        preparationMinutesLabel: 'Preparation time (minutes)',
+        photoUrlsLabel: 'Photo gallery URLs',
+        ingredientsLabel: 'Ingredients',
+        stepsLabel: 'Preparation steps',
+      },
+      multimedia: {
+        mediaTypeLabel: 'Type',
+        mediaTypeDocumentary: 'Documentary',
+        mediaTypeBook: 'Book',
+        mediaTypePodcast: 'Podcast',
+        externalUrlLabel: 'External link (YouTube, Spotify, etc.)',
+        posterUrlLabel: 'Poster URL',
+      },
+      apps: {
+        appStoreUrlLabel: 'App Store URL',
+        playStoreUrlLabel: 'Play Store URL',
+        iconUrlLabel: 'Icon URL',
+      },
+    },
+    stringListEditor: {
+      addRowButton: (itemLabel) => `+ Add ${itemLabel}`,
+      removeRowAria: 'Remove',
+      invalidUrlError: 'Enter a valid URL',
     },
   },
 };

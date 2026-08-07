@@ -1,0 +1,83 @@
+<mat-drawer-container class="h-full">
+  <mat-drawer #drawer mode="over" position="end" [opened]="isDrawerOpen()" (closedStart)="onCancelled()">
+    @if (isDrawerOpen()) {
+      <app-resource-form-drawer
+        [resource]="drawerResource()"
+        [category]="drawerCategory()!"
+        [targetLanguage]="drawerTargetLanguage()"
+        [sourceLanguage]="drawerSourceLanguage()"
+        [staleSourceLanguage]="drawerStaleSourceLanguage()"
+        (saved)="onSaved()"
+        (cancelled)="onCancelled()"
+      />
+    }
+  </mat-drawer>
+
+  <mat-drawer-content class="p-6">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-4">
+      <h1 class="text-xl font-semibold">{{ language.t().resources.resourcesList.heading }}</h1>
+
+      <mat-button-toggle-group
+        [value]="activeFilter()"
+        (change)="activeFilter.set($event.value)"
+        aria-label="Filter"
+      >
+        <mat-button-toggle value="all" data-testid="filter-all">
+          {{ language.t().resources.resourcesList.filterAllLabel }}
+        </mat-button-toggle>
+        @for (category of categories; track category) {
+          <mat-button-toggle [value]="category" [attr.data-testid]="'filter-' + category">
+            {{ filterLabel(category) }}
+          </mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+
+      <div class="flex flex-wrap gap-2">
+        @for (category of categories; track category) {
+          <button
+            mat-flat-button
+            type="button"
+            [attr.data-testid]="'add-' + category + '-button'"
+            (click)="openCreate(category)"
+          >
+            {{ addButtonLabel(category) }}
+          </button>
+        }
+      </div>
+    </div>
+
+    @for (category of visibleCategories(); track category) {
+      <section [attr.data-testid]="'category-section-' + category" class="mb-8">
+        <h2 class="mb-3 text-lg font-semibold">{{ categoryHeading(category) }}</h2>
+
+        @if (resourcesByCategory()[category].length === 0) {
+          <p [attr.data-testid]="'empty-category-' + category" class="text-gray-600">
+            {{ language.t().resources.resourcesList.emptyCategoryState }}
+          </p>
+        } @else {
+          <div
+            cdkDropList
+            [cdkDropListData]="resourcesByCategory()[category]"
+            class="grid gap-4"
+            style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))"
+            (cdkDropListDropped)="onDrop(category, $event)"
+          >
+            @for (resource of resourcesByCategory()[category]; track resource.slug) {
+              <div
+                cdkDrag
+                tabindex="0"
+                [attr.aria-label]="language.t().resources.resourcesList.reorderAriaLabel(resource.slug)"
+              >
+                <app-resource-card
+                  [resource]="resource"
+                  (editRequested)="openEdit($event)"
+                  (translateRequested)="openTranslate($event)"
+                />
+              </div>
+            }
+          </div>
+        }
+      </section>
+    }
+  </mat-drawer-content>
+</mat-drawer-container>

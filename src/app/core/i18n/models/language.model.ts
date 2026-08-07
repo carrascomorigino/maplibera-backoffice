@@ -4,6 +4,15 @@ export interface Translations {
   nav: {
     appTitle: string;
     sectionsLink: string;
+    resourcesLink: string;
+  };
+  languageTags: {
+    untranslatedAria: (languageName: string) => string;
+    needsUpdateAria: (languageName: string) => string;
+    removeConfirmTitle: string;
+    removeConfirmMessage: (languageName: string) => string;
+    removeConfirmConfirmButton: string;
+    removeConfirmCancelButton: string;
   };
   guide: {
     sectionsList: {
@@ -21,10 +30,6 @@ export interface Translations {
       allOfTheAbove: string;
       noneOfTheAbove: string;
       reorderAriaLabel: (title: string) => string;
-      languageSelectAria: string;
-      availableLanguagesLabel: string;
-      languageNeedsUpdateAria: (languageName: string) => string;
-      languageSelectorHasUpdatesAria: string;
     };
     sectionForm: {
       editHeading: string;
@@ -79,6 +84,79 @@ export interface Translations {
       noneOfTheAboveCorrect: string;
       correctAnswerAria: string;
       questionErrorText: string;
+    };
+  };
+  resources: {
+    resourcesList: {
+      heading: string;
+      addNutritionButton: string;
+      addRecipeButton: string;
+      addMultimediaButton: string;
+      addAppButton: string;
+      filterAllLabel: string;
+      filterNutritionLabel: string;
+      filterRecipesLabel: string;
+      filterMultimediaLabel: string;
+      filterAppsLabel: string;
+      categoryHeadingNutrition: string;
+      categoryHeadingRecipes: string;
+      categoryHeadingMultimedia: string;
+      categoryHeadingApps: string;
+      emptyCategoryState: string;
+      editButton: string;
+      publishAction: string;
+      pauseAction: string;
+      reorderAriaLabel: (title: string) => string;
+    };
+    resourceForm: {
+      editHeading: string;
+      newHeading: string;
+      titleLabel: string;
+      slugLabel: string;
+      slugPatternError: string;
+      duplicateSlugError: string;
+      shortDescriptionLabel: string;
+      saveButton: string;
+      publishButton: string;
+      cancelButton: string;
+      workingLanguageLabel: (languageName: string) => string;
+      suggestionLoadingText: string;
+      suggestionFailedNotice: string;
+      suggestionFailedDismiss: string;
+      previewButton: string;
+      acceptTranslationButton: string;
+      previewLoadingText: string;
+    };
+    categoryFields: {
+      nutrition: {
+        explanatoryTextLabel: string;
+        sourceLinksLabel: string;
+        pdfUrlsLabel: string;
+      };
+      recipes: {
+        preparationMinutesLabel: string;
+        photoUrlsLabel: string;
+        ingredientsLabel: string;
+        stepsLabel: string;
+      };
+      multimedia: {
+        mediaTypeLabel: string;
+        mediaTypeDocumentary: string;
+        mediaTypeBook: string;
+        mediaTypePodcast: string;
+        externalUrlLabel: string;
+        posterUrlLabel: string;
+      };
+      apps: {
+        appStoreUrlLabel: string;
+        playStoreUrlLabel: string;
+        iconUrlLabel: string;
+      };
+    };
+    stringListEditor: {
+      addRowButton: (itemLabel: string) => string;
+      removeRowAria: string;
+      invalidUrlError: string;
     };
   };
 }

@@ -1,0 +1,26 @@
+<div [formGroup]="form" class="flex flex-col gap-4">
+  <mat-form-field class="min-w-0">
+    <mat-label>{{ language.t().resources.categoryFields.multimedia.mediaTypeLabel }}</mat-label>
+    <mat-select formControlName="mediaType" data-testid="multimedia-type-select">
+      <mat-option value="documentary">{{
+        language.t().resources.categoryFields.multimedia.mediaTypeDocumentary
+      }}</mat-option>
+      <mat-option value="book">{{
+        language.t().resources.categoryFields.multimedia.mediaTypeBook
+      }}</mat-option>
+      <mat-option value="podcast">{{
+        language.t().resources.categoryFields.multimedia.mediaTypePodcast
+      }}</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field class="min-w-0">
+    <mat-label>{{ language.t().resources.categoryFields.multimedia.externalUrlLabel }}</mat-label>
+    <input matInput formControlName="externalUrl" (blur)="onBlur()" />
+  </mat-form-field>
+
+  <mat-form-field class="min-w-0">
+    <mat-label>{{ language.t().resources.categoryFields.multimedia.posterUrlLabel }}</mat-label>
+    <input matInput formControlName="posterUrl" (blur)="onBlur()" />
+  </mat-form-field>
+</div>

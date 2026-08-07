@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
+import { of } from 'rxjs';
 import { SectionListItem } from './section-list-item';
 import { SectionService } from '../../services/section.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
@@ -22,16 +24,8 @@ describe('SectionListItem', () => {
     return fixture;
   }
 
-  function languageSelect(fixture: ReturnType<typeof createFixture>) {
-    return fixture.nativeElement.querySelector(
-      '[data-testid="language-select"]',
-    ) as HTMLSelectElement;
-  }
-
-  function chips(fixture: ReturnType<typeof createFixture>) {
-    return Array.from(
-      fixture.nativeElement.querySelectorAll('[data-testid^="available-language-"]'),
-    ).map((el) => (el as HTMLElement).getAttribute('data-testid'));
+  function languageTag(fixture: ReturnType<typeof createFixture>, lang: string) {
+    return fixture.nativeElement.querySelector(`[data-testid="language-tag-${lang}"]`) as HTMLElement;
   }
 
   function twoLanguageSection(): Section {
@@ -93,7 +87,7 @@ describe('SectionListItem', () => {
       fixture.componentInstance.translateRequested.subscribe(translateRequested);
       fixture.componentInstance.editRequested.subscribe(editRequested);
 
-      fixture.componentInstance['onLanguageChange']('es');
+      fixture.componentInstance['onLanguageSelected']('es');
       fixture.detectChanges();
 
       expect(fixture.componentInstance.selectedLanguage()).toBe('es');
@@ -124,7 +118,7 @@ describe('SectionListItem', () => {
       fixture.componentInstance.translateRequested.subscribe(translateRequested);
       fixture.componentInstance.editRequested.subscribe(editRequested);
 
-      fixture.componentInstance['onLanguageChange']('es');
+      fixture.componentInstance['onLanguageSelected']('es');
       fixture.detectChanges();
 
       expect(fixture.componentInstance.selectedLanguage()).toBe('es');
@@ -144,7 +138,7 @@ describe('SectionListItem', () => {
       const translateRequested = vi.fn();
       fixture.componentInstance.translateRequested.subscribe(translateRequested);
 
-      fixture.componentInstance['onLanguageChange']('fr');
+      fixture.componentInstance['onTranslateRequested']('fr');
       fixture.detectChanges();
 
       expect(translateRequested).toHaveBeenCalledWith({
@@ -162,7 +156,7 @@ describe('SectionListItem', () => {
       const created = twoLanguageSection();
       const section = service.sections().find((s) => s.slug === created.slug)!;
       const fixture = createFixture(section);
-      fixture.componentInstance['onLanguageChange']('fr');
+      fixture.componentInstance['onTranslateRequested']('fr');
       fixture.detectChanges();
       expect(fixture.componentInstance.selectedLanguage()).toBe('fr');
 
@@ -177,7 +171,7 @@ describe('SectionListItem', () => {
       const created = twoLanguageSection();
       const section = service.sections().find((s) => s.slug === created.slug)!;
       const fixture = createFixture(section);
-      fixture.componentInstance['onLanguageChange']('fr');
+      fixture.componentInstance['onTranslateRequested']('fr');
       fixture.detectChanges();
 
       fixture.componentRef.setInput('resetRequest', { slug: 'other-slug', language: 'en' });
@@ -187,8 +181,8 @@ describe('SectionListItem', () => {
     });
   });
 
-  describe('available language chips', () => {
-    it("reflects the section's translated languages", () => {
+  describe('language tags', () => {
+    it("reflects the section's translated languages as colored tags and the rest as gray", () => {
       language.setLanguage('en');
       const created = twoLanguageSection();
       service.saveTranslation(created.slug, {
@@ -201,9 +195,9 @@ describe('SectionListItem', () => {
 
       const fixture = createFixture(section);
 
-      expect(chips(fixture).sort()).toEqual(
-        ['available-language-en', 'available-language-es'].sort(),
-      );
+      expect(languageTag(fixture, 'en').className).not.toContain('gray');
+      expect(languageTag(fixture, 'es').className).not.toContain('gray');
+      expect(languageTag(fixture, 'fr').className).toContain('gray');
     });
   });
 
@@ -258,17 +252,8 @@ describe('SectionListItem', () => {
     });
   });
 
-  describe('stale-language warning', () => {
-    it('shows no warning when nothing is stale', () => {
-      const created = twoLanguageSection();
-      const section = service.sections().find((s) => s.slug === created.slug)!;
-
-      const fixture = createFixture(section);
-
-      expect(fixture.nativeElement.querySelector('[data-testid="stale-language-warning"]')).toBeNull();
-    });
-
-    it('shows a warning when the section has stale languages', () => {
+  describe('removing a language', () => {
+    it('opens a confirm dialog and removes the translation via the service on confirm', () => {
       language.setLanguage('en');
       const created = twoLanguageSection();
       service.saveTranslation(created.slug, {
@@ -277,17 +262,38 @@ describe('SectionListItem', () => {
         language: 'es',
         translation: { title: 'Empezando', description: 'Intro es' },
       });
+      const section = service.sections()[0];
+      const fixture = createFixture(section);
+      const dialog = TestBed.inject(MatDialog);
+      const openSpy = vi.spyOn(dialog, 'open').mockReturnValue({
+        afterClosed: () => of(true),
+      } as ReturnType<MatDialog['open']>);
+
+      fixture.componentInstance['onLanguageRemoved']('es');
+
+      expect(openSpy).toHaveBeenCalled();
+      expect(service.sections()[0].translations.es).toBeUndefined();
+    });
+
+    it('does not remove the translation when the dialog is cancelled', () => {
+      language.setLanguage('en');
+      const created = twoLanguageSection();
       service.saveTranslation(created.slug, {
         slug: created.slug,
         imageUrl: '',
-        language: 'en',
-        translation: { title: 'Getting started v2', description: 'Intro' },
+        language: 'es',
+        translation: { title: 'Empezando', description: 'Intro es' },
       });
       const section = service.sections()[0];
-
       const fixture = createFixture(section);
+      const dialog = TestBed.inject(MatDialog);
+      vi.spyOn(dialog, 'open').mockReturnValue({
+        afterClosed: () => of(false),
+      } as ReturnType<MatDialog['open']>);
 
-      expect(fixture.nativeElement.querySelector('[data-testid="stale-language-warning"]')).not.toBeNull();
+      fixture.componentInstance['onLanguageRemoved']('es');
+
+      expect(service.sections()[0].translations.es).toBeTruthy();
     });
   });
 

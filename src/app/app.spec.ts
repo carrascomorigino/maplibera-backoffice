@@ -31,6 +31,16 @@ describe('App', () => {
     expect(link?.textContent?.trim()).toBe(language.t().nav.sectionsLink);
   });
 
+  it('should render a nav link to the resources module', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const links = compiled.querySelectorAll('a');
+    const resourcesLink = Array.from(links).find((link) => link.getAttribute('href') === '/resources');
+    expect(resourcesLink?.textContent?.trim()).toBe(language.t().nav.resourcesLink);
+  });
+
   it('should render the app title translated', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();

@@ -1,22 +1,21 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { SectionTranslation } from '../models/section.model';
-import { ContentLanguage } from '../models/content-language.model';
+import { ContentLanguage } from '../../features/guide/models/content-language.model';
 
 @Injectable({ providedIn: 'root' })
 export class TranslationSuggestionService {
   private readonly http = inject(HttpClient);
 
   async suggest(
-    source: { language: ContentLanguage; translation: SectionTranslation },
+    source: { language: ContentLanguage; fields: Record<string, unknown> },
     targetLanguage: ContentLanguage,
-  ): Promise<SectionTranslation> {
+  ): Promise<Record<string, unknown>> {
     return firstValueFrom(
-      this.http.post<SectionTranslation>('/api/translate', {
+      this.http.post<Record<string, unknown>>('/api/translate', {
         sourceLanguage: source.language,
         targetLanguage,
-        ...source.translation,
+        fields: source.fields,
       }),
     );
   }

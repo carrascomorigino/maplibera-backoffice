@@ -3,7 +3,7 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { SectionFormDrawer } from './section-form-drawer';
 import { SectionService } from '../../services/section.service';
-import { TranslationSuggestionService } from '../../services/translation-suggestion.service';
+import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { Question, QuestionType } from '../../models/section.model';
 import { LanguageService } from '../../../../core/i18n/language.service';
 
@@ -409,7 +409,7 @@ describe('SectionFormDrawer', () => {
       fixture.detectChanges();
 
       expect(suggestionService.suggest).toHaveBeenCalledWith(
-        { language: 'en', translation: { title: 'Getting started', description: 'Intro text' } },
+        { language: 'en', fields: { title: 'Getting started', description: 'Intro text' } },
         'es',
       );
       expect(fixture.componentInstance.loading()).toBe(true);
@@ -521,7 +521,7 @@ describe('SectionFormDrawer', () => {
       createStaleFixture();
 
       expect(suggestionService.suggest).toHaveBeenCalledWith(
-        { language: 'en', translation: { title: 'Getting started v2', description: 'Intro text v2' } },
+        { language: 'en', fields: { title: 'Getting started v2', description: 'Intro text v2' } },
         'es',
       );
     });

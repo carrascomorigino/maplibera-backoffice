@@ -1,0 +1,55 @@
+<div [formGroup]="form" class="flex flex-col gap-4">
+  <mat-form-field class="min-w-0">
+    <mat-label>{{ language.t().resources.categoryFields.recipes.preparationMinutesLabel }}</mat-label>
+    <input
+      matInput
+      type="number"
+      data-testid="recipe-preparation-minutes"
+      formControlName="preparationMinutes"
+      (blur)="onBlur()"
+    />
+  </mat-form-field>
+
+  <div>
+    <label class="mb-1 block text-sm font-medium text-gray-700">
+      {{ language.t().resources.categoryFields.recipes.photoUrlsLabel }}
+    </label>
+    <app-string-list-editor
+      formControlName="photoUrls"
+      [urlMode]="true"
+      [addButtonLabel]="
+        language.t().resources.stringListEditor.addRowButton(
+          language.t().resources.categoryFields.recipes.photoUrlsLabel
+        )
+      "
+    />
+  </div>
+
+  <div>
+    <label class="mb-1 block text-sm font-medium text-gray-700">
+      {{ language.t().resources.categoryFields.recipes.ingredientsLabel }}
+    </label>
+    <app-string-list-editor
+      formControlName="ingredients"
+      [addButtonLabel]="
+        language.t().resources.stringListEditor.addRowButton(
+          language.t().resources.categoryFields.recipes.ingredientsLabel
+        )
+      "
+    />
+  </div>
+
+  <div>
+    <label class="mb-1 block text-sm font-medium text-gray-700">
+      {{ language.t().resources.categoryFields.recipes.stepsLabel }}
+    </label>
+    <app-string-list-editor
+      formControlName="steps"
+      [addButtonLabel]="
+        language.t().resources.stringListEditor.addRowButton(
+          language.t().resources.categoryFields.recipes.stepsLabel
+        )
+      "
+    />
+  </div>
+</div>

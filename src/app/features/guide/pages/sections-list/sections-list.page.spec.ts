@@ -5,7 +5,7 @@ import { SectionsListPage } from './sections-list.page';
 import { SectionService } from '../../services/section.service';
 import { Section } from '../../models/section.model';
 import { LanguageService } from '../../../../core/i18n/language.service';
-import { TranslationSuggestionService } from '../../services/translation-suggestion.service';
+import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 
 describe('SectionsListPage', () => {
   let service: SectionService;
@@ -193,11 +193,7 @@ describe('SectionsListPage', () => {
     });
     const fixture = createFixture();
 
-    const languageSelect = fixture.nativeElement.querySelector(
-      '[data-testid="language-select"]',
-    ) as HTMLSelectElement;
-    languageSelect.value = 'es';
-    languageSelect.dispatchEvent(new Event('change'));
+    (fixture.nativeElement.querySelector('[data-testid="language-tag-es"]') as HTMLElement).click();
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-section-form-drawer')).not.toBeNull();
@@ -205,9 +201,7 @@ describe('SectionsListPage', () => {
     (fixture.nativeElement.querySelector('[data-testid="cancel-button"]') as HTMLButtonElement).click();
     fixture.detectChanges();
 
-    const revertedSelect = fixture.nativeElement.querySelector(
-      '[data-testid="language-select"]',
-    ) as HTMLSelectElement;
-    expect(revertedSelect.value).toBe('en');
+    const enTag = fixture.nativeElement.querySelector('[data-testid="language-tag-en"]') as HTMLElement;
+    expect(enTag.className).toContain('ring');
   });
 });
