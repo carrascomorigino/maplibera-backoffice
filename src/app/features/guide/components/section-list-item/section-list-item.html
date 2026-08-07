@@ -19,18 +19,7 @@
 }
 
 <div class="flex-1">
-  <div class="flex items-center gap-2">
-    <p data-testid="section-title" class="font-medium">{{ translation()?.title }}</p>
-    <app-language-tags
-      [languages]="contentLanguages"
-      [translatedLanguages]="availableLanguages()"
-      [staleLanguages]="section().staleLanguages ?? {}"
-      [selectedLanguage]="selectedLanguage()"
-      (languageSelected)="onLanguageSelected($event)"
-      (translateRequested)="onTranslateRequested($event)"
-      (languageRemoved)="onLanguageRemoved($event)"
-    />
-  </div>
+  <p data-testid="section-title" class="font-medium">{{ translation()?.title }}</p>
   <p data-testid="section-slug" class="font-mono text-xs text-gray-500">{{ section().slug }}</p>
   <p class="text-sm text-gray-600">{{ translation()?.description }}</p>
 
@@ -52,6 +41,22 @@
       }
     </div>
   }
+
+  <p data-testid="country-availability-indicator" class="mt-1 text-xs text-gray-500">
+    {{ countryAvailabilityIndicator() }}
+  </p>
+
+  <div class="mt-2">
+    <app-language-tags
+      [languages]="contentLanguages"
+      [translatedLanguages]="availableLanguages()"
+      [staleLanguages]="section().staleLanguages ?? {}"
+      [selectedLanguage]="selectedLanguage()"
+      (languageSelected)="onLanguageSelected($event)"
+      (translateRequested)="onTranslateRequested($event)"
+      (languageRemoved)="onLanguageRemoved($event)"
+    />
+  </div>
 </div>
 
 <span

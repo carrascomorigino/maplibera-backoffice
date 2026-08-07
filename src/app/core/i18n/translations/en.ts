@@ -32,6 +32,8 @@ export const en: Translations = {
       noneOfTheAbove: 'None of the above',
       reorderAriaLabel: (title) =>
         `Reorder ${title}. Press space to lift, arrow keys to move, space to drop.`,
+      countryAvailabilityIndicator: (countries) => `Availability: ${countries}`,
+      countryAvailabilityWorldwide: 'worldwide',
     },
     sectionForm: {
       editHeading: 'Edit section',
@@ -42,6 +44,13 @@ export const en: Translations = {
       duplicateSlugError: 'A section with this slug already exists',
       descriptionLabel: 'Description *',
       imageUrlLabel: 'Image URL',
+      countryScopeLabel: 'Country availability',
+      countryScopeAllOption: 'All countries',
+      countryScopeSpecificOption: 'Specific countries',
+      countriesLabel: 'Countries',
+      countriesRequiredError: 'Select at least one country',
+      countryFilterPlaceholder: 'Search country…',
+      removeCountryAria: (countryName) => `Remove ${countryName}`,
       saveButton: 'Save',
       publishButton: 'Publish',
       cancelButton: 'Cancel',
@@ -72,6 +81,7 @@ export const en: Translations = {
       typeYesNo: 'Yes/No question',
       typeSingle: 'Single choice',
       typeMultiple: 'Multiple choice',
+      detailLabel: 'Detail (optional)',
       correctAnswerLegend: 'Correct answer *',
       yesOption: 'Yes',
       noOption: 'No',
@@ -88,6 +98,10 @@ export const en: Translations = {
       correctAnswerAria: 'Correct answer',
       questionErrorText:
         "Complete the question type, every answer's text, and mark at least one correct answer.",
+    },
+    fieldLimits: {
+      charactersRemaining: (count) =>
+        count === 1 ? '1 character remaining' : `${count} characters remaining`,
     },
   },
   resources: {

@@ -19,6 +19,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Question, QuestionAnswer, QuestionType } from '../../models/section.model';
 import { URL_PATTERN } from '../../utils/patterns';
+import {
+  ANSWER_TEXT_MAX_LENGTH,
+  QUESTION_DETAIL_MAX_LENGTH,
+  QUESTION_TEXT_MAX_LENGTH,
+} from '../../utils/field-limits';
+import { MarkdownEditor } from '../markdown-editor/markdown-editor';
 import { LanguageService } from '../../../../core/i18n/language.service';
 
 type AnswerGroup = FormGroup<{
@@ -68,7 +74,14 @@ function questionGroupValidator(group: AbstractControl): ValidationErrors | null
 
 @Component({
   selector: 'app-question-editor',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatIconModule,
+    MarkdownEditor,
+  ],
   templateUrl: './question-editor.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
@@ -78,10 +91,17 @@ function questionGroupValidator(group: AbstractControl): ValidationErrors | null
 })
 export class QuestionEditor implements ControlValueAccessor, Validator {
   protected readonly language = inject(LanguageService);
+  protected readonly questionTextMaxLength = QUESTION_TEXT_MAX_LENGTH;
+  protected readonly questionDetailMaxLength = QUESTION_DETAIL_MAX_LENGTH;
+  protected readonly answerTextMaxLength = ANSWER_TEXT_MAX_LENGTH;
 
   readonly form = new FormGroup(
     {
       text: new FormControl('', { nonNullable: true }),
+      detail: new FormControl('', {
+        nonNullable: true,
+        validators: Validators.maxLength(QUESTION_DETAIL_MAX_LENGTH),
+      }),
       type: new FormControl<QuestionType | ''>('', { nonNullable: true }),
       yesNoCorrectAnswer: new FormControl<'yes' | 'no' | null>(null),
       answers: new FormArray<AnswerGroup>([]),
@@ -111,6 +131,7 @@ export class QuestionEditor implements ControlValueAccessor, Validator {
       if (!value.trim()) {
         this.form.patchValue(
           {
+            detail: '',
             type: '',
             yesNoCorrectAnswer: null,
             includeAllOfTheAbove: false,
@@ -176,6 +197,7 @@ export class QuestionEditor implements ControlValueAccessor, Validator {
     this.form.reset(
       {
         text: question?.text ?? '',
+        detail: question?.detail ?? '',
         type: question?.type ?? '',
         yesNoCorrectAnswer: question?.yesNoCorrectAnswer ?? null,
         answers: [],
@@ -329,15 +351,17 @@ export class QuestionEditor implements ControlValueAccessor, Validator {
       return undefined;
     }
 
+    const detail = raw.detail.trim();
     const type = raw.type as QuestionType | '';
     if (!type) {
-      return { text, type: '' as QuestionType };
+      return { text, type: '' as QuestionType, ...(detail ? { detail } : {}) };
     }
 
     if (type === 'yes-no') {
       return {
         text,
         type,
+        ...(detail ? { detail } : {}),
         ...(raw.yesNoCorrectAnswer ? { yesNoCorrectAnswer: raw.yesNoCorrectAnswer } : {}),
       };
     }
@@ -351,6 +375,7 @@ export class QuestionEditor implements ControlValueAccessor, Validator {
     return {
       text,
       type,
+      ...(detail ? { detail } : {}),
       answers,
       includeAllOfTheAbove: raw.includeAllOfTheAbove,
       allOfTheAboveCorrect: raw.allOfTheAboveCorrect,

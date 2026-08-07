@@ -199,6 +199,75 @@ describe('SectionListItem', () => {
       expect(languageTag(fixture, 'es').className).not.toContain('gray');
       expect(languageTag(fixture, 'fr').className).toContain('gray');
     });
+
+    it('renders after the title and question summary, not beside the title', () => {
+      const created = service.create({
+        slug: 'yn',
+        imageUrl: '',
+        language: 'en',
+        translation: {
+          title: 'YN',
+          description: '',
+          question: { text: 'Is this correct?', type: 'yes-no', yesNoCorrectAnswer: 'yes' },
+        },
+      });
+      const section = service.sections().find((s) => s.slug === created.slug)!;
+
+      const fixture = createFixture(section);
+
+      const title = fixture.nativeElement.querySelector('[data-testid="section-title"]') as HTMLElement;
+      const questionText = fixture.nativeElement.querySelector(
+        '[data-testid="question-text"]',
+      ) as HTMLElement;
+      const tags = fixture.nativeElement.querySelector('app-language-tags') as HTMLElement;
+
+      const position = title.compareDocumentPosition(tags);
+      expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      const questionPosition = questionText.compareDocumentPosition(tags);
+      expect(questionPosition & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+  });
+
+  describe('country availability indicator', () => {
+    it('shows "worldwide" when availableCountries is not set', () => {
+      language.setLanguage('en');
+      const created = twoLanguageSection();
+      const section = service.sections().find((s) => s.slug === created.slug)!;
+
+      const fixture = createFixture(section);
+
+      expect(
+        fixture.nativeElement
+          .querySelector('[data-testid="country-availability-indicator"]')
+          ?.textContent?.trim(),
+      ).toBe(
+        language
+          .t()
+          .guide.sectionsList.countryAvailabilityIndicator(
+            language.t().guide.sectionsList.countryAvailabilityWorldwide,
+          ),
+      );
+    });
+
+    it('shows the localized, comma-separated country names when set', () => {
+      language.setLanguage('en');
+      const created = service.create({
+        slug: 'restricted',
+        imageUrl: '',
+        language: 'en',
+        translation: { title: 'Restricted', description: '' },
+        availableCountries: ['AR', 'BR'],
+      });
+      const section = service.sections().find((s) => s.slug === created.slug)!;
+
+      const fixture = createFixture(section);
+
+      expect(
+        fixture.nativeElement
+          .querySelector('[data-testid="country-availability-indicator"]')
+          ?.textContent?.trim(),
+      ).toBe(language.t().guide.sectionsList.countryAvailabilityIndicator('Argentina, Brazil'));
+    });
   });
 
   describe('edit', () => {

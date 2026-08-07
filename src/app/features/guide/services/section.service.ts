@@ -13,6 +13,7 @@ export interface SectionTranslationInput {
   imageUrl: string;
   language: ContentLanguage;
   translation: SectionTranslation;
+  availableCountries?: string[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -33,6 +34,7 @@ export class SectionService {
       order: this.state().length,
       createdAt: now,
       updatedAt: now,
+      availableCountries: input.availableCountries,
     };
 
     this.state.update((sections) => [...sections, section]);
@@ -67,6 +69,7 @@ export class SectionService {
           imageUrl: input.imageUrl,
           translations,
           staleLanguages,
+          availableCountries: input.availableCountries,
           updatedAt: new Date().toISOString(),
         };
       }),

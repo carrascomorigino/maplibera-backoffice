@@ -25,7 +25,10 @@
 
     <mat-form-field class="min-w-0">
       <mat-label>{{ language.t().guide.sectionForm.titleLabel }}</mat-label>
-      <input matInput formControlName="title" />
+      <input matInput formControlName="title" [maxlength]="titleMaxLength" />
+      <mat-hint align="end">{{
+        language.t().guide.fieldLimits.charactersRemaining(titleMaxLength - form.controls.title.value.length)
+      }}</mat-hint>
     </mat-form-field>
 
     @if (staleSourceLanguage() && titleSuggestionDiffers()) {
@@ -75,7 +78,7 @@
         class="mb-1 block text-sm font-medium text-gray-700"
         >{{ language.t().guide.sectionForm.descriptionLabel }}</label
       >
-      <app-markdown-editor formControlName="description" />
+      <app-markdown-editor formControlName="description" [maxLength]="descriptionMaxLength" />
     </div>
 
     @if (staleSourceLanguage() && descriptionSuggestionDiffers()) {
@@ -122,6 +125,44 @@
         class="h-32 w-32 rounded object-cover"
       />
     }
+
+    <fieldset class="flex min-w-0 flex-col gap-2">
+      <legend class="text-sm font-medium text-gray-700">{{
+        language.t().guide.sectionForm.countryScopeLabel
+      }}</legend>
+      <label class="flex items-center gap-2">
+        <input
+          type="radio"
+          name="countryScope"
+          data-testid="country-scope-all"
+          [checked]="form.controls.countryScope.value === 'all'"
+          (change)="form.controls.countryScope.setValue('all')"
+        />
+        {{ language.t().guide.sectionForm.countryScopeAllOption }}
+      </label>
+      <label class="flex items-center gap-2">
+        <input
+          type="radio"
+          name="countryScope"
+          data-testid="country-scope-specific"
+          [checked]="form.controls.countryScope.value === 'specific'"
+          (change)="form.controls.countryScope.setValue('specific')"
+        />
+        {{ language.t().guide.sectionForm.countryScopeSpecificOption }}
+      </label>
+
+      @if (form.controls.countryScope.value === 'specific') {
+        <div class="flex min-w-0 flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700" for="countries-select">{{
+            language.t().guide.sectionForm.countriesLabel
+          }}</label>
+          <app-country-select id="countries-select" formControlName="countries" />
+          @if (form.controls.countries.hasError('countriesRequired')) {
+            <mat-error>{{ language.t().guide.sectionForm.countriesRequiredError }}</mat-error>
+          }
+        </div>
+      }
+    </fieldset>
 
     @if (staleSourceLanguage() && questionSuggestionDiffers()) {
       <div class="flex flex-col gap-1">

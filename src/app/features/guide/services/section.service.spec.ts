@@ -126,6 +126,46 @@ describe('SectionService', () => {
     });
   });
 
+  describe('availableCountries', () => {
+    it('round-trips availableCountries unchanged through create', () => {
+      const service = setup();
+
+      const created = service.create(input({ slug: 'with-countries', availableCountries: ['AR', 'BR'] }));
+
+      expect(created.availableCountries).toEqual(['AR', 'BR']);
+      expect(service.sections()[0].availableCountries).toEqual(['AR', 'BR']);
+    });
+
+    it('defaults to undefined (all countries) when omitted on create', () => {
+      const service = setup();
+
+      const created = service.create(input({ slug: 'no-restriction' }));
+
+      expect(created.availableCountries).toBeUndefined();
+    });
+
+    it('overwrites availableCountries on saveTranslation, not merges', () => {
+      const service = setup();
+      const created = service.create(input({ slug: 'editable', availableCountries: ['AR'] }));
+
+      service.saveTranslation(
+        created.slug,
+        input({ slug: 'editable', availableCountries: ['BR', 'CL'] }),
+      );
+
+      expect(service.sections()[0].availableCountries).toEqual(['BR', 'CL']);
+    });
+
+    it('clears availableCountries on saveTranslation when omitted', () => {
+      const service = setup();
+      const created = service.create(input({ slug: 'editable', availableCountries: ['AR'] }));
+
+      service.saveTranslation(created.slug, input({ slug: 'editable' }));
+
+      expect(service.sections()[0].availableCountries).toBeUndefined();
+    });
+  });
+
   describe('staleLanguages propagation', () => {
     it('does not mark anything stale on create', () => {
       const service = setup();
