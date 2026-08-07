@@ -1,0 +1,69 @@
+<div class="flex min-w-0 flex-col gap-2">
+  @if (selectedOptions().length) {
+    <div class="flex flex-wrap gap-1">
+      @for (option of selectedOptions(); track option.code) {
+        <span
+          [attr.data-testid]="'country-chip-' + option.code"
+          class="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700"
+        >
+          {{ option.label }}
+          <button
+            type="button"
+            [attr.data-testid]="'country-chip-remove-' + option.code"
+            [attr.aria-label]="language.t().guide.sectionForm.removeCountryAria(option.label)"
+            class="leading-none text-current"
+            [disabled]="disabled()"
+            (click)="remove(option.code)"
+          >
+            ×
+          </button>
+        </span>
+      }
+    </div>
+  }
+
+  <div class="relative min-w-0">
+    <input
+      type="text"
+      role="combobox"
+      aria-autocomplete="list"
+      [attr.id]="inputId()"
+      [attr.aria-controls]="inputId() + '-listbox'"
+      [attr.aria-expanded]="isOpen() && filteredOptions().length > 0"
+      [attr.aria-activedescendant]="
+        isOpen() && filteredOptions().length ? optionId(filteredOptions()[highlightedIndex()].code) : null
+      "
+      data-testid="country-filter-input"
+      [attr.placeholder]="language.t().guide.sectionForm.countryFilterPlaceholder"
+      [value]="filterText()"
+      [disabled]="disabled()"
+      class="w-full min-w-0 rounded border border-gray-300 p-2 text-sm"
+      (input)="onFilterInput($any($event.target).value)"
+      (keydown)="onFilterKeydown($event)"
+      (focus)="onFocus()"
+      (blur)="onBlur()"
+    />
+    @if (isOpen() && filteredOptions().length) {
+      <ul
+        [attr.id]="inputId() + '-listbox'"
+        role="listbox"
+        class="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded border border-gray-300 bg-white text-sm shadow"
+      >
+        @for (option of filteredOptions(); track option.code; let i = $index) {
+          <li
+            [id]="optionId(option.code)"
+            role="option"
+            [attr.aria-selected]="i === highlightedIndex()"
+            [attr.data-testid]="'country-option-' + option.code"
+            class="cursor-pointer px-2 py-1"
+            [class.bg-blue-50]="i === highlightedIndex()"
+            (mousedown)="$event.preventDefault()"
+            (click)="select(option.code)"
+          >
+            {{ option.label }}
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</div>

@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { QuestionEditor } from './question-editor';
 import { Question } from '../../models/section.model';
+import { QUESTION_DETAIL_MAX_LENGTH } from '../../utils/field-limits';
 
 describe('QuestionEditor', () => {
   function createFixture() {
@@ -89,6 +90,91 @@ describe('QuestionEditor', () => {
       expect(component.form.controls.type.value).toBe('');
       expect(component.form.controls.yesNoCorrectAnswer.value).toBeNull();
       expect(component.validate()).toBeNull();
+    });
+  });
+
+  describe('detail field', () => {
+    function detailTextarea(fixture: ReturnType<typeof createFixture>) {
+      return fixture.nativeElement.querySelector(
+        '[data-testid="markdown-textarea"]',
+      ) as HTMLTextAreaElement | null;
+    }
+
+    it('renders a rich-text (markdown) editor, hidden until question text is entered', () => {
+      const fixture = createFixture();
+      expect(detailTextarea(fixture)).toBeNull();
+
+      fixture.componentInstance.form.controls.text.setValue('Is this correct?');
+      fixture.detectChanges();
+
+      expect(detailTextarea(fixture)).not.toBeNull();
+    });
+
+    it('is capped at QUESTION_DETAIL_MAX_LENGTH via the maxlength attribute', () => {
+      const fixture = createFixture();
+      fixture.componentInstance.form.controls.text.setValue('Is this correct?');
+      fixture.detectChanges();
+
+      expect(detailTextarea(fixture)?.maxLength).toBe(QUESTION_DETAIL_MAX_LENGTH);
+    });
+
+    it('is included in the built question independent of whether a type/answers are filled in', () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+      const onChange = vi.fn();
+      component.registerOnChange(onChange);
+
+      component.form.controls.text.setValue('Is this correct?');
+      component.form.controls.detail.setValue('Extra context here');
+      fixture.detectChanges();
+
+      expect(onChange).toHaveBeenLastCalledWith({
+        text: 'Is this correct?',
+        type: '',
+        detail: 'Extra context here',
+      });
+
+      component.form.controls.type.setValue('yes-no');
+      component.form.controls.yesNoCorrectAnswer.setValue('yes');
+      fixture.detectChanges();
+
+      expect(onChange).toHaveBeenLastCalledWith({
+        text: 'Is this correct?',
+        type: 'yes-no',
+        detail: 'Extra context here',
+        yesNoCorrectAnswer: 'yes',
+      });
+    });
+
+    it('is omitted from the built question when blank or whitespace-only', () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+      const onChange = vi.fn();
+      component.registerOnChange(onChange);
+
+      setTypeAndText(fixture, 'Is this correct?', 'yes-no');
+      component.form.controls.detail.setValue('   ');
+      component.form.controls.yesNoCorrectAnswer.setValue('yes');
+      fixture.detectChanges();
+
+      expect(onChange).toHaveBeenLastCalledWith({
+        text: 'Is this correct?',
+        type: 'yes-no',
+        yesNoCorrectAnswer: 'yes',
+      });
+    });
+
+    it('writeValue populates detail, and writing undefined resets it', () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      component.writeValue({ text: 'Q', type: 'yes-no', yesNoCorrectAnswer: 'yes', detail: 'Some detail' });
+      fixture.detectChanges();
+      expect(component.form.controls.detail.value).toBe('Some detail');
+
+      component.writeValue(undefined);
+      fixture.detectChanges();
+      expect(component.form.controls.detail.value).toBe('');
     });
   });
 

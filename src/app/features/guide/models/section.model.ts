@@ -13,6 +13,7 @@ export interface QuestionAnswer {
 export interface Question {
   text: string;
   type: QuestionType;
+  detail?: string;
   yesNoCorrectAnswer?: 'yes' | 'no';
   answers?: QuestionAnswer[];
   includeAllOfTheAbove?: boolean;
@@ -37,4 +38,6 @@ export interface Section {
   translations: Partial<Record<ContentLanguage, SectionTranslation>>;
   /** Maps a language that needs re-syncing to the language it should translate from. */
   staleLanguages?: Partial<Record<ContentLanguage, ContentLanguage>>;
+  /** ISO 3166-1 alpha-2 codes. Omitted/undefined means available in all countries. */
+  availableCountries?: string[];
 }

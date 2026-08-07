@@ -4,6 +4,7 @@ import {
   ElementRef,
   forwardRef,
   inject,
+  input,
   signal,
   viewChild,
 } from '@angular/core';
@@ -27,6 +28,8 @@ import { LanguageService } from '../../../../core/i18n/language.service';
 })
 export class MarkdownEditor implements ControlValueAccessor {
   protected readonly language = inject(LanguageService);
+
+  readonly maxLength = input<number | undefined>(undefined);
 
   private readonly textareaRef = viewChild<ElementRef<HTMLTextAreaElement>>('textarea');
 
@@ -68,6 +71,10 @@ export class MarkdownEditor implements ControlValueAccessor {
 
   protected renderedHtml(): string {
     return renderMarkdown(this.value());
+  }
+
+  protected charactersRemaining(): number {
+    return (this.maxLength() ?? 0) - this.value().length;
   }
 
   protected applyBold(): void {

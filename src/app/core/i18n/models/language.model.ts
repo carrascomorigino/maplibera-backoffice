@@ -30,6 +30,8 @@ export interface Translations {
       allOfTheAbove: string;
       noneOfTheAbove: string;
       reorderAriaLabel: (title: string) => string;
+      countryAvailabilityIndicator: (countries: string) => string;
+      countryAvailabilityWorldwide: string;
     };
     sectionForm: {
       editHeading: string;
@@ -40,6 +42,13 @@ export interface Translations {
       duplicateSlugError: string;
       descriptionLabel: string;
       imageUrlLabel: string;
+      countryScopeLabel: string;
+      countryScopeAllOption: string;
+      countryScopeSpecificOption: string;
+      countriesLabel: string;
+      countriesRequiredError: string;
+      countryFilterPlaceholder: string;
+      removeCountryAria: (countryName: string) => string;
       saveButton: string;
       publishButton: string;
       cancelButton: string;
@@ -69,6 +78,7 @@ export interface Translations {
       typeYesNo: string;
       typeSingle: string;
       typeMultiple: string;
+      detailLabel: string;
       correctAnswerLegend: string;
       yesOption: string;
       noOption: string;
@@ -84,6 +94,9 @@ export interface Translations {
       noneOfTheAboveCorrect: string;
       correctAnswerAria: string;
       questionErrorText: string;
+    };
+    fieldLimits: {
+      charactersRemaining: (count: number) => string;
     };
   };
   resources: {

@@ -1,0 +1,5 @@
+export const TITLE_MAX_LENGTH = 100;
+export const DESCRIPTION_MAX_LENGTH = 2000;
+export const QUESTION_TEXT_MAX_LENGTH = 300;
+export const QUESTION_DETAIL_MAX_LENGTH = 500;
+export const ANSWER_TEXT_MAX_LENGTH = 150;

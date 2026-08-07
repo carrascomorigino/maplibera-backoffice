@@ -9,6 +9,7 @@ import { SectionService } from '../../services/section.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { LanguageTags } from '../../../../shared/components/language-tags/language-tags';
 import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/confirm-dialog';
+import { countryDisplayName } from '../../../../shared/models/country.model';
 
 export interface EditRequestedEvent {
   section: Section;
@@ -156,6 +157,17 @@ export class SectionListItem {
       case 'multiple':
         return labels.questionTypeMultiple;
     }
+  }
+
+  protected countryAvailabilityIndicator(): string {
+    const codes = this.section().availableCountries;
+    const labels = this.language.t().guide.sectionsList;
+    if (!codes?.length) {
+      return labels.countryAvailabilityIndicator(labels.countryAvailabilityWorldwide);
+    }
+    const uiLanguage = this.language.language();
+    const names = codes.map((code) => countryDisplayName(code, uiLanguage)).join(', ');
+    return labels.countryAvailabilityIndicator(names);
   }
 
   protected correctAnswerLabels(question: Question): string[] {

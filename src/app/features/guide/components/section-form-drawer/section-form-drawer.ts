@@ -17,9 +17,13 @@ import { TranslationSuggestionService } from '../../../../shared/services/transl
 import { StaleTranslationSuggestionCache } from '../../../../shared/services/stale-translation-suggestion-cache.service';
 import { MarkdownEditor } from '../markdown-editor/markdown-editor';
 import { QuestionEditor } from '../question-editor/question-editor';
+import { CountrySelect } from '../country-select/country-select';
 import { slugify } from '../../utils/slugify';
 import { URL_PATTERN, SLUG_PATTERN } from '../../utils/patterns';
+import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from '../../utils/field-limits';
 import { LanguageService } from '../../../../core/i18n/language.service';
+
+type CountryScope = 'all' | 'specific';
 
 @Component({
   selector: 'app-section-form-drawer',
@@ -30,6 +34,7 @@ import { LanguageService } from '../../../../core/i18n/language.service';
     MatInputModule,
     MarkdownEditor,
     QuestionEditor,
+    CountrySelect,
   ],
   templateUrl: './section-form-drawer.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,6 +46,8 @@ export class SectionFormDrawer {
   private readonly snackBar = inject(MatSnackBar);
   protected readonly language = inject(LanguageService);
   protected readonly contentLanguageLabels = CONTENT_LANGUAGE_LABELS;
+  protected readonly titleMaxLength = TITLE_MAX_LENGTH;
+  protected readonly descriptionMaxLength = DESCRIPTION_MAX_LENGTH;
 
   readonly section = input<Section | undefined>(undefined);
   readonly targetLanguage = input.required<ContentLanguage>();
@@ -71,21 +78,42 @@ export class SectionFormDrawer {
     return isDuplicate ? { duplicateSlug: true } : null;
   };
 
+  private readonly countriesRequiredValidator: ValidatorFn = (control) => {
+    const scope = control.parent?.get('countryScope')?.value as CountryScope | undefined;
+    const countries = control.value as string[];
+    return scope === 'specific' && countries.length === 0 ? { countriesRequired: true } : null;
+  };
+
   readonly form = new FormGroup({
-    title: new FormControl('', { nonNullable: true, validators: Validators.required }),
+    title: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH)],
+    }),
     slug: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(SLUG_PATTERN), this.duplicateSlugValidator],
     }),
-    description: new FormControl('', { nonNullable: true, validators: Validators.required }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(DESCRIPTION_MAX_LENGTH)],
+    }),
     imageUrl: new FormControl('', {
       nonNullable: true,
       validators: Validators.pattern(URL_PATTERN),
     }),
     question: new FormControl<Question | undefined>(undefined),
+    countryScope: new FormControl<CountryScope>('all', { nonNullable: true }),
+    countries: new FormControl<string[]>([], {
+      nonNullable: true,
+      validators: this.countriesRequiredValidator,
+    }),
   });
 
   constructor() {
+    this.form.controls.countryScope.valueChanges.subscribe(() => {
+      this.form.controls.countries.updateValueAndValidity();
+    });
+
     this.form.controls.title.valueChanges.subscribe((title) => {
       if (!this.slugManuallyEdited()) {
         this.form.controls.slug.setValue(slugify(title), { emitEvent: false });
@@ -113,6 +141,8 @@ export class SectionFormDrawer {
           description: existing?.description ?? '',
           imageUrl: section?.imageUrl ?? '',
           question: existing?.question ?? undefined,
+          countryScope: section?.availableCountries?.length ? 'specific' : 'all',
+          countries: section?.availableCountries ?? [],
         },
         { emitEvent: false },
       );
@@ -291,10 +321,12 @@ export class SectionFormDrawer {
   }
 
   private persist(): string {
-    const { title, slug, description, imageUrl, question } = this.form.getRawValue();
+    const { title, slug, description, imageUrl, question, countryScope, countries } =
+      this.form.getRawValue();
     const questionValue = question ?? undefined;
     const existing = this.section();
     const translation: SectionTranslation = { title, description, question: questionValue };
+    const availableCountries = countryScope === 'specific' ? countries : undefined;
 
     if (existing) {
       this.sectionService.saveTranslation(existing.slug, {
@@ -302,6 +334,7 @@ export class SectionFormDrawer {
         imageUrl,
         language: this.targetLanguage(),
         translation,
+        availableCountries,
       });
       return slug;
     }
@@ -311,6 +344,7 @@ export class SectionFormDrawer {
       imageUrl,
       language: this.targetLanguage(),
       translation,
+      availableCountries,
     }).slug;
   }
 }

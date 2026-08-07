@@ -149,6 +149,40 @@ describe('MarkdownEditor', () => {
     });
   });
 
+  describe('character limit', () => {
+    function counter(fixture: ReturnType<typeof createFixture>) {
+      return fixture.nativeElement.querySelector(
+        '[data-testid="markdown-char-counter"]',
+      ) as HTMLElement | null;
+    }
+
+    it('renders no maxlength attribute and no counter when maxLength is unset', () => {
+      const fixture = createFixture();
+
+      expect(textarea(fixture).hasAttribute('maxlength')).toBe(false);
+      expect(counter(fixture)).toBeNull();
+    });
+
+    it('sets the maxlength attribute and shows the remaining count when maxLength is set', () => {
+      const fixture = createFixture();
+      fixture.componentRef.setInput('maxLength', 2000);
+      fixture.detectChanges();
+
+      expect(textarea(fixture).maxLength).toBe(2000);
+      expect(counter(fixture)?.textContent).toContain('2000');
+    });
+
+    it('updates the remaining count as the user types', () => {
+      const fixture = createFixture();
+      fixture.componentRef.setInput('maxLength', 2000);
+      fixture.detectChanges();
+
+      setText(fixture, 'Hello');
+
+      expect(counter(fixture)?.textContent).toContain('1995');
+    });
+  });
+
   describe('preview', () => {
     it('renders formatted markdown as HTML', () => {
       const fixture = createFixture();

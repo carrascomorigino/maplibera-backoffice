@@ -6,6 +6,7 @@ import { SectionService } from '../../services/section.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { Question, QuestionType } from '../../models/section.model';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { TITLE_MAX_LENGTH } from '../../utils/field-limits';
 
 describe('SectionFormDrawer', () => {
   let service: SectionService;
@@ -371,6 +372,68 @@ describe('SectionFormDrawer', () => {
       fixture.detectChanges();
 
       expect(fixture.componentInstance.form.controls.question.value).toEqual(question);
+    });
+  });
+
+  describe('title character limit', () => {
+    it('caps the title input and shows how many characters remain', () => {
+      const fixture = createFixture('en');
+      const titleInput = fixture.nativeElement.querySelector(
+        'input[formcontrolname="title"]',
+      ) as HTMLInputElement;
+      expect(titleInput.maxLength).toBe(TITLE_MAX_LENGTH);
+
+      fixture.componentInstance.form.controls.title.setValue('Hello');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain(
+        language.t().guide.fieldLimits.charactersRemaining(TITLE_MAX_LENGTH - 5),
+      );
+    });
+  });
+
+  describe('country availability', () => {
+    it('persists availableCountries as undefined when scope is "all" (the default)', () => {
+      const fixture = createFixture('en');
+      const component = fixture.componentInstance;
+
+      component.form.controls.title.setValue('New section');
+      component.form.controls.description.setValue('Description');
+      fixture.detectChanges();
+      buttons(fixture).save.click();
+
+      expect(service.sections()[0].availableCountries).toBeUndefined();
+    });
+
+    it('persists the selected countries when scope is "specific"', () => {
+      const fixture = createFixture('en');
+      const component = fixture.componentInstance;
+
+      component.form.controls.title.setValue('New section');
+      component.form.controls.description.setValue('Description');
+      component.form.controls.countryScope.setValue('specific');
+      component.form.controls.countries.setValue(['AR', 'BR']);
+      fixture.detectChanges();
+      buttons(fixture).save.click();
+
+      expect(service.sections()[0].availableCountries).toEqual(['AR', 'BR']);
+    });
+
+    it('is invalid when scope is "specific" with zero countries selected', () => {
+      const fixture = createFixture('en');
+      const component = fixture.componentInstance;
+
+      component.form.controls.title.setValue('New section');
+      component.form.controls.description.setValue('Description');
+      component.form.controls.countryScope.setValue('specific');
+      fixture.detectChanges();
+
+      expect(buttons(fixture).save.disabled).toBe(true);
+
+      component.form.controls.countries.setValue(['AR']);
+      fixture.detectChanges();
+
+      expect(buttons(fixture).save.disabled).toBe(false);
     });
   });
 

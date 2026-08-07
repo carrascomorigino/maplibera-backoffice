@@ -1,10 +1,26 @@
 <div [formGroup]="form" class="flex min-w-0 flex-col gap-4">
   <mat-form-field class="min-w-0">
     <mat-label>{{ language.t().guide.questionEditor.questionLabel }}</mat-label>
-    <input matInput formControlName="text" data-testid="question-text-input" (blur)="onBlur()" />
+    <input
+      matInput
+      formControlName="text"
+      data-testid="question-text-input"
+      [maxlength]="questionTextMaxLength"
+      (blur)="onBlur()"
+    />
+    <mat-hint align="end">{{
+      language.t().guide.fieldLimits.charactersRemaining(questionTextMaxLength - form.controls.text.value.length)
+    }}</mat-hint>
   </mat-form-field>
 
   @if (form.controls.text.value.trim()) {
+    <div class="min-w-0">
+      <label class="mb-1 block text-sm font-medium text-gray-700">{{
+        language.t().guide.questionEditor.detailLabel
+      }}</label>
+      <app-markdown-editor formControlName="detail" [maxLength]="questionDetailMaxLength" />
+    </div>
+
     <div class="flex min-w-0 flex-col gap-1">
       <label class="text-sm font-medium text-gray-700" for="question-type-select">{{
         language.t().guide.questionEditor.questionTypeLabel
@@ -81,7 +97,17 @@
 
               <mat-form-field class="min-w-0 flex-1">
                 <mat-label>{{ language.t().guide.questionEditor.answerLabel(i + 1) }}</mat-label>
-                <input matInput formControlName="text" [attr.data-testid]="'answer-text-' + i" />
+                <input
+                  matInput
+                  formControlName="text"
+                  [attr.data-testid]="'answer-text-' + i"
+                  [maxlength]="answerTextMaxLength"
+                />
+                <mat-hint align="end">{{
+                  language.t().guide.fieldLimits.charactersRemaining(
+                    answerTextMaxLength - row.controls.text.value.length
+                  )
+                }}</mat-hint>
               </mat-form-field>
 
               <button

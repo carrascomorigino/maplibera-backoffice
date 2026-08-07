@@ -32,6 +32,8 @@ export const es: Translations = {
       noneOfTheAbove: 'Ninguna de las anteriores',
       reorderAriaLabel: (title) =>
         `Reordenar ${title}. Presioná espacio para levantar, flechas para mover, espacio para soltar.`,
+      countryAvailabilityIndicator: (countries) => `Disponibilidad: ${countries}`,
+      countryAvailabilityWorldwide: 'mundial',
     },
     sectionForm: {
       editHeading: 'Editar sección',
@@ -42,6 +44,13 @@ export const es: Translations = {
       duplicateSlugError: 'Ya existe una sección con este slug',
       descriptionLabel: 'Descripción *',
       imageUrlLabel: 'URL de la imagen',
+      countryScopeLabel: 'Disponibilidad por país',
+      countryScopeAllOption: 'Todos los países',
+      countryScopeSpecificOption: 'Países específicos',
+      countriesLabel: 'Países',
+      countriesRequiredError: 'Elegí al menos un país',
+      countryFilterPlaceholder: 'Buscar país…',
+      removeCountryAria: (countryName) => `Quitar ${countryName}`,
       saveButton: 'Guardar',
       publishButton: 'Publicar',
       cancelButton: 'Cancelar',
@@ -72,6 +81,7 @@ export const es: Translations = {
       typeYesNo: 'Pregunta de Sí/No',
       typeSingle: 'Opción única',
       typeMultiple: 'Opción múltiple',
+      detailLabel: 'Detalle (opcional)',
       correctAnswerLegend: 'Respuesta correcta *',
       yesOption: 'Sí',
       noOption: 'No',
@@ -88,6 +98,10 @@ export const es: Translations = {
       correctAnswerAria: 'Respuesta correcta',
       questionErrorText:
         'Completá el tipo de pregunta, el texto de cada respuesta y marcá al menos una respuesta correcta.',
+    },
+    fieldLimits: {
+      charactersRemaining: (count) =>
+        count === 1 ? '1 carácter restante' : `${count} caracteres restantes`,
     },
   },
   resources: {

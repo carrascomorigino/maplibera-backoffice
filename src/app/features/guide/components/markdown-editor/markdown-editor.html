@@ -90,8 +90,14 @@
       class="min-h-32 w-full rounded border border-gray-300 p-2 font-mono text-sm"
       [value]="value()"
       [disabled]="disabled()"
+      [attr.maxlength]="maxLength() ?? null"
       (input)="onInput(textarea.value)"
       (blur)="onBlur()"
     ></textarea>
+    @if (maxLength(); as max) {
+      <span data-testid="markdown-char-counter" class="self-end text-xs text-gray-500">{{
+        language.t().guide.fieldLimits.charactersRemaining(charactersRemaining())
+      }}</span>
+    }
   }
 </div>
