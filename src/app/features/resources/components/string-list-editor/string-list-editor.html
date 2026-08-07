@@ -1,0 +1,29 @@
+<div class="flex flex-col gap-2">
+  @for (row of rows.controls; track $index) {
+    <div class="flex items-center gap-2">
+      <mat-form-field class="min-w-0 flex-1">
+        <input
+          matInput
+          data-testid="string-list-row-input"
+          [formControl]="row"
+          (blur)="onBlur()"
+        />
+        @if (urlMode() && row.hasError('pattern')) {
+          <mat-error>{{ language.t().resources.stringListEditor.invalidUrlError }}</mat-error>
+        }
+      </mat-form-field>
+      <button
+        mat-icon-button
+        type="button"
+        data-testid="string-list-remove-button"
+        [attr.aria-label]="language.t().resources.stringListEditor.removeRowAria"
+        (click)="removeRow($index)"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  }
+  <button mat-stroked-button type="button" data-testid="string-list-add-button" (click)="addRow()">
+    {{ addButtonLabel() }}
+  </button>
+</div>

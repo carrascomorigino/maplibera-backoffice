@@ -74,6 +74,30 @@ export class SectionService {
     this.persist();
   }
 
+  removeTranslation(slug: string, language: ContentLanguage): void {
+    this.state.update((sections) =>
+      sections.map((section) => {
+        if (section.slug !== slug || Object.keys(section.translations).length <= 1) {
+          return section;
+        }
+
+        const translations = { ...section.translations };
+        delete translations[language];
+
+        const staleLanguages = { ...section.staleLanguages };
+        delete staleLanguages[language];
+        for (const lang of Object.keys(staleLanguages) as ContentLanguage[]) {
+          if (staleLanguages[lang] === language) {
+            delete staleLanguages[lang];
+          }
+        }
+
+        return { ...section, translations, staleLanguages, updatedAt: new Date().toISOString() };
+      }),
+    );
+    this.persist();
+  }
+
   publish(slug: string): void {
     this.setStatus(slug, 'published');
   }

@@ -21,47 +21,18 @@
 <div class="flex-1">
   <div class="flex items-center gap-2">
     <p data-testid="section-title" class="font-medium">{{ translation()?.title }}</p>
-    <select
-      data-testid="language-select"
-      [attr.aria-label]="language.t().guide.sectionsList.languageSelectAria"
-      [value]="selectedLanguage()"
-      (change)="onLanguageChange($any($event.target).value)"
-      class="rounded border border-gray-300 text-xs"
-    >
-      @for (lang of contentLanguages; track lang) {
-        <option
-          [attr.data-testid]="'language-option-' + lang"
-          [attr.aria-label]="
-            section().staleLanguages?.[lang]
-              ? language.t().guide.sectionsList.languageNeedsUpdateAria(contentLanguageLabels[lang])
-              : null
-          "
-          [value]="lang"
-        >
-          {{ contentLanguageLabels[lang] }}{{ section().staleLanguages?.[lang] ? ' ⚠' : section().translations[lang] ? ' ✓' : '' }}
-        </option>
-      }
-    </select>
-    @if (hasStaleLanguages()) {
-      <span
-        data-testid="stale-language-warning"
-        [attr.aria-label]="language.t().guide.sectionsList.languageSelectorHasUpdatesAria"
-        class="text-amber-600"
-        >⚠</span
-      >
-    }
+    <app-language-tags
+      [languages]="contentLanguages"
+      [translatedLanguages]="availableLanguages()"
+      [staleLanguages]="section().staleLanguages ?? {}"
+      [selectedLanguage]="selectedLanguage()"
+      (languageSelected)="onLanguageSelected($event)"
+      (translateRequested)="onTranslateRequested($event)"
+      (languageRemoved)="onLanguageRemoved($event)"
+    />
   </div>
   <p data-testid="section-slug" class="font-mono text-xs text-gray-500">{{ section().slug }}</p>
   <p class="text-sm text-gray-600">{{ translation()?.description }}</p>
-
-  <p class="mt-1 text-xs text-gray-500">
-    {{ language.t().guide.sectionsList.availableLanguagesLabel }}:
-    @for (lang of availableLanguages(); track lang) {
-      <span [attr.data-testid]="'available-language-' + lang" class="mr-1 font-mono uppercase">{{
-        lang
-      }}</span>
-    }
-  </p>
 
   @if (translation()?.question; as question) {
     <div class="mt-1">

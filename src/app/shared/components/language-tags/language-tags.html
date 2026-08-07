@@ -1,0 +1,31 @@
+<div class="flex flex-wrap items-center gap-1">
+  @for (lang of languages(); track lang) {
+    <span
+      [attr.data-testid]="'language-tag-' + lang"
+      [class]="tagClass(lang)"
+      role="button"
+      tabindex="0"
+      [attr.aria-label]="
+        !isTranslated(lang)
+          ? language.t().languageTags.untranslatedAria(contentLanguageLabels[lang])
+          : isStale(lang)
+            ? language.t().languageTags.needsUpdateAria(contentLanguageLabels[lang])
+            : null
+      "
+      (click)="onTagClick(lang)"
+      (keydown.enter)="onTagClick(lang)"
+    >
+      <span>{{ contentLanguageLabels[lang] }}{{ isStale(lang) ? ' ⚠' : '' }}</span>
+      @if (canRemove(lang)) {
+        <button
+          type="button"
+          [attr.data-testid]="'language-tag-remove-' + lang"
+          class="leading-none text-current"
+          (click)="onRemoveClick($event, lang)"
+        >
+          ×
+        </button>
+      }
+    </span>
+  }
+</div>

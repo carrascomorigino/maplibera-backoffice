@@ -1,0 +1,118 @@
+<form
+  [formGroup]="form"
+  class="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden sm:w-[26rem]"
+>
+  <div class="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden p-6">
+    <h2 class="text-lg font-semibold">
+      {{ resource() ? language.t().resources.resourceForm.editHeading : language.t().resources.resourceForm.newHeading }}
+    </h2>
+
+    <span data-testid="working-language-indicator" class="w-fit rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+      {{ language.t().resources.resourceForm.workingLanguageLabel(contentLanguageLabels[targetLanguage()]) }}
+    </span>
+
+    @if (loading()) {
+      <p data-testid="suggestion-loading" class="text-sm text-gray-500">
+        {{ language.t().resources.resourceForm.suggestionLoadingText }}
+      </p>
+    }
+
+    @if (staleSourceLanguage() && staleSuggestionLoading()) {
+      <p data-testid="stale-preview-loading" class="text-sm text-gray-500">
+        {{ language.t().resources.resourceForm.previewLoadingText }}
+      </p>
+    }
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().resources.resourceForm.titleLabel }}</mat-label>
+      <input matInput formControlName="title" />
+    </mat-form-field>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().resources.resourceForm.slugLabel }}</mat-label>
+      <input matInput formControlName="slug" />
+      @if (form.controls.slug.hasError('pattern')) {
+        <mat-error>{{ language.t().resources.resourceForm.slugPatternError }}</mat-error>
+      } @else if (form.controls.slug.hasError('duplicateSlug')) {
+        <mat-error>{{ language.t().resources.resourceForm.duplicateSlugError }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().resources.resourceForm.shortDescriptionLabel }}</mat-label>
+      <textarea matInput formControlName="shortDescription" rows="2"></textarea>
+    </mat-form-field>
+
+    @if (staleSourceLanguage() && suggestionDiffers()) {
+      <div class="flex flex-col gap-1">
+        @if (!previewRevealed()) {
+          <button
+            mat-stroked-button
+            type="button"
+            data-testid="preview-button"
+            (click)="previewStaleSuggestion()"
+          >
+            {{ language.t().resources.resourceForm.previewButton }}
+          </button>
+        }
+        @if (previewRevealed()) {
+          <div
+            data-testid="suggestion-preview-panel"
+            class="flex items-center justify-between gap-2 rounded border border-amber-200 bg-amber-50 p-2 text-sm"
+          >
+            <span>{{ staleSuggestion()?.['title'] }}</span>
+            <button
+              mat-stroked-button
+              type="button"
+              data-testid="accept-suggestion-button"
+              (click)="acceptSuggestion()"
+            >
+              {{ language.t().resources.resourceForm.acceptTranslationButton }}
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    @switch (category()) {
+      @case ('nutrition') {
+        <app-nutrition-fields-form formControlName="categoryFields" />
+      }
+      @case ('recipes') {
+        <app-recipe-fields-form formControlName="categoryFields" />
+      }
+      @case ('multimedia') {
+        <app-multimedia-fields-form formControlName="categoryFields" />
+      }
+      @case ('apps') {
+        <app-app-fields-form formControlName="categoryFields" />
+      }
+    }
+  </div>
+
+  <div class="flex gap-2 border-t border-gray-200 p-6">
+    <button
+      mat-flat-button
+      type="button"
+      data-testid="save-button"
+      [disabled]="form.invalid"
+      (click)="save()"
+    >
+      {{ language.t().resources.resourceForm.saveButton }}
+    </button>
+    @if (!resource()) {
+      <button
+        mat-flat-button
+        type="button"
+        data-testid="publish-button"
+        [disabled]="form.invalid"
+        (click)="publish()"
+      >
+        {{ language.t().resources.resourceForm.publishButton }}
+      </button>
+    }
+    <button mat-stroked-button type="button" data-testid="cancel-button" (click)="cancel()">
+      {{ language.t().resources.resourceForm.cancelButton }}
+    </button>
+  </div>
+</form>

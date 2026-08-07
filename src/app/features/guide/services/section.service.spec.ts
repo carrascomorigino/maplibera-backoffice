@@ -295,6 +295,74 @@ describe('SectionService', () => {
     });
   });
 
+  describe('removeTranslation', () => {
+    it('deletes the given language and leaves the rest untouched', () => {
+      const service = setup();
+      const created = service.create(input({ slug: 'multi' }));
+      service.saveTranslation(
+        created.slug,
+        input({ slug: 'multi', language: 'es', translation: { title: 'Empezando', description: 'Intro' } }),
+      );
+
+      service.removeTranslation('multi', 'es');
+
+      const section = service.sections()[0];
+      expect(Object.keys(section.translations)).toEqual(['en']);
+    });
+
+    it('clears staleLanguages entries keyed by or pointing at the removed language', () => {
+      const service = setup();
+      const created = service.create(input({ slug: 'multi' }));
+      service.saveTranslation(
+        created.slug,
+        input({ slug: 'multi', language: 'es', translation: { title: 'Empezando', description: 'Intro' } }),
+      );
+      service.saveTranslation(
+        created.slug,
+        input({ slug: 'multi', language: 'fr', translation: { title: 'Pour commencer', description: 'Intro' } }),
+      );
+      service.saveTranslation(
+        created.slug,
+        input({ slug: 'multi', translation: { title: 'Getting started v2', description: 'Intro' } }),
+      );
+      expect(service.sections()[0].staleLanguages).toEqual({ es: 'en', fr: 'en' });
+
+      service.removeTranslation('multi', 'es');
+
+      const section = service.sections()[0];
+      expect(section.staleLanguages).toEqual({ fr: 'en' });
+    });
+
+    it('removing the language that other languages point to as their stale source clears those entries too', () => {
+      const service = setup();
+      const created = service.create(input({ slug: 'multi' }));
+      service.saveTranslation(
+        created.slug,
+        input({ slug: 'multi', language: 'es', translation: { title: 'Empezando', description: 'Intro' } }),
+      );
+      service.saveTranslation(
+        created.slug,
+        input({ slug: 'multi', translation: { title: 'Getting started v2', description: 'Intro' } }),
+      );
+      expect(service.sections()[0].staleLanguages).toEqual({ es: 'en' });
+
+      service.removeTranslation('multi', 'en');
+
+      const section = service.sections()[0];
+      expect(section.staleLanguages).toEqual({});
+    });
+
+    it('is a no-op when it would remove the last remaining translation', () => {
+      const service = setup();
+      service.create(input({ slug: 'solo' }));
+
+      service.removeTranslation('solo', 'en');
+
+      const section = service.sections()[0];
+      expect(Object.keys(section.translations)).toEqual(['en']);
+    });
+  });
+
   describe('publish / pause', () => {
     it('publish sets status to published', () => {
       const service = setup();

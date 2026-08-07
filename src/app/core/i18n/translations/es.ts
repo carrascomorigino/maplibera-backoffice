@@ -4,6 +4,16 @@ export const es: Translations = {
   nav: {
     appTitle: 'maplibera-backoffice',
     sectionsLink: 'Secciones',
+    resourcesLink: 'Recursos',
+  },
+  languageTags: {
+    untranslatedAria: (languageName) => `${languageName} sin traducir`,
+    needsUpdateAria: (languageName) => `${languageName} necesita actualizarse`,
+    removeConfirmTitle: 'Quitar traducción',
+    removeConfirmMessage: (languageName) =>
+      `¿Quitar la traducción en ${languageName}? Se perderá el contenido en ese idioma.`,
+    removeConfirmConfirmButton: 'Quitar',
+    removeConfirmCancelButton: 'Cancelar',
   },
   guide: {
     sectionsList: {
@@ -22,10 +32,6 @@ export const es: Translations = {
       noneOfTheAbove: 'Ninguna de las anteriores',
       reorderAriaLabel: (title) =>
         `Reordenar ${title}. Presioná espacio para levantar, flechas para mover, espacio para soltar.`,
-      languageSelectAria: 'Idioma',
-      availableLanguagesLabel: 'Idiomas disponibles',
-      languageNeedsUpdateAria: (languageName) => `${languageName} necesita actualizarse`,
-      languageSelectorHasUpdatesAria: 'Hay idiomas que necesitan actualizarse',
     },
     sectionForm: {
       editHeading: 'Editar sección',
@@ -82,6 +88,81 @@ export const es: Translations = {
       correctAnswerAria: 'Respuesta correcta',
       questionErrorText:
         'Completá el tipo de pregunta, el texto de cada respuesta y marcá al menos una respuesta correcta.',
+    },
+  },
+  resources: {
+    resourcesList: {
+      heading: 'Recursos',
+      addNutritionButton: '+ Nutrición',
+      addRecipeButton: '+ Recetas',
+      addMultimediaButton: '+ Multimedia',
+      addAppButton: '+ Apps',
+      filterAllLabel: 'Todas',
+      filterNutritionLabel: 'Nutrición',
+      filterRecipesLabel: 'Recetas',
+      filterMultimediaLabel: 'Multimedia',
+      filterAppsLabel: 'Apps',
+      categoryHeadingNutrition: 'Nutrición',
+      categoryHeadingRecipes: 'Recetas',
+      categoryHeadingMultimedia: 'Multimedia',
+      categoryHeadingApps: 'Apps',
+      emptyCategoryState: 'Todavía no hay recursos en esta categoría.',
+      editButton: 'Editar',
+      publishAction: 'Publicar',
+      pauseAction: 'Pausar',
+      reorderAriaLabel: (title) =>
+        `Reordenar ${title}. Presioná espacio para levantar, flechas para mover, espacio para soltar.`,
+    },
+    resourceForm: {
+      editHeading: 'Editar recurso',
+      newHeading: 'Nuevo recurso',
+      titleLabel: 'Título',
+      slugLabel: 'Slug',
+      slugPatternError: 'Usá solo minúsculas, números y guiones',
+      duplicateSlugError: 'Ya existe un recurso con este slug',
+      shortDescriptionLabel: 'Descripción corta',
+      saveButton: 'Guardar',
+      publishButton: 'Publicar',
+      cancelButton: 'Cancelar',
+      workingLanguageLabel: (languageName) => `Idioma de trabajo: ${languageName}`,
+      suggestionLoadingText: 'Generando una traducción sugerida…',
+      suggestionFailedNotice:
+        'Falló la traducción automática. Se muestra el texto original para que lo traduzcas manualmente.',
+      suggestionFailedDismiss: 'Descartar',
+      previewButton: 'Previsualizar',
+      acceptTranslationButton: 'Aceptar traducción',
+      previewLoadingText: 'Generando sugerencia…',
+    },
+    categoryFields: {
+      nutrition: {
+        explanatoryTextLabel: 'Texto explicativo',
+        sourceLinksLabel: 'Enlaces a estudios/fuentes',
+        pdfUrlsLabel: 'URLs de PDFs adjuntos',
+      },
+      recipes: {
+        preparationMinutesLabel: 'Tiempo de preparación (minutos)',
+        photoUrlsLabel: 'URLs de la galería de fotos',
+        ingredientsLabel: 'Ingredientes',
+        stepsLabel: 'Pasos de preparación',
+      },
+      multimedia: {
+        mediaTypeLabel: 'Tipo',
+        mediaTypeDocumentary: 'Documental',
+        mediaTypeBook: 'Libro',
+        mediaTypePodcast: 'Podcast',
+        externalUrlLabel: 'Enlace externo (YouTube, Spotify, etc.)',
+        posterUrlLabel: 'URL de la carátula',
+      },
+      apps: {
+        appStoreUrlLabel: 'URL de App Store',
+        playStoreUrlLabel: 'URL de Play Store',
+        iconUrlLabel: 'URL del ícono',
+      },
+    },
+    stringListEditor: {
+      addRowButton: (itemLabel) => `+ Agregar ${itemLabel}`,
+      removeRowAria: 'Quitar',
+      invalidUrlError: 'Ingresá una URL válida',
     },
   },
 };

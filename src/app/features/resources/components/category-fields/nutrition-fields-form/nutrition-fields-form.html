@@ -1,0 +1,44 @@
+<div [formGroup]="form" class="flex flex-col gap-4">
+  <div class="min-w-0">
+    <label class="mb-1 block text-sm font-medium text-gray-700">
+      {{ language.t().resources.categoryFields.nutrition.explanatoryTextLabel }}
+    </label>
+    <textarea
+      data-testid="nutrition-explanatory-text"
+      formControlName="explanatoryText"
+      rows="4"
+      class="w-full rounded border border-gray-300 p-2 text-sm"
+      (blur)="onBlur()"
+    ></textarea>
+  </div>
+
+  <div>
+    <label class="mb-1 block text-sm font-medium text-gray-700">
+      {{ language.t().resources.categoryFields.nutrition.sourceLinksLabel }}
+    </label>
+    <app-string-list-editor
+      formControlName="sourceLinks"
+      [urlMode]="true"
+      [addButtonLabel]="
+        language.t().resources.stringListEditor.addRowButton(
+          language.t().resources.categoryFields.nutrition.sourceLinksLabel
+        )
+      "
+    />
+  </div>
+
+  <div>
+    <label class="mb-1 block text-sm font-medium text-gray-700">
+      {{ language.t().resources.categoryFields.nutrition.pdfUrlsLabel }}
+    </label>
+    <app-string-list-editor
+      formControlName="pdfUrls"
+      [urlMode]="true"
+      [addButtonLabel]="
+        language.t().resources.stringListEditor.addRowButton(
+          language.t().resources.categoryFields.nutrition.pdfUrlsLabel
+        )
+      "
+    />
+  </div>
+</div>

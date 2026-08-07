@@ -13,8 +13,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Question, Section, SectionTranslation } from '../../models/section.model';
 import { ContentLanguage, CONTENT_LANGUAGE_LABELS } from '../../models/content-language.model';
 import { SectionService } from '../../services/section.service';
-import { TranslationSuggestionService } from '../../services/translation-suggestion.service';
-import { StaleTranslationSuggestionCache } from '../../services/stale-translation-suggestion-cache.service';
+import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
+import { StaleTranslationSuggestionCache } from '../../../../shared/services/stale-translation-suggestion-cache.service';
 import { MarkdownEditor } from '../markdown-editor/markdown-editor';
 import { QuestionEditor } from '../question-editor/question-editor';
 import { slugify } from '../../utils/slugify';
@@ -163,7 +163,11 @@ export class SectionFormDrawer {
     sourceLanguage: ContentLanguage,
     sourceTranslation: SectionTranslation,
   ): void {
-    const cached = this.staleSuggestionCache.get(slug, targetLanguage, sourceTranslation);
+    const cached = this.staleSuggestionCache.get<SectionTranslation, SectionTranslation>(
+      slug,
+      targetLanguage,
+      sourceTranslation,
+    );
     if (cached) {
       this.staleSuggestion.set(cached);
       return;
@@ -171,10 +175,21 @@ export class SectionFormDrawer {
 
     this.staleSuggestionLoading.set(true);
     this.translationSuggestionService
-      .suggest({ language: sourceLanguage, translation: sourceTranslation }, targetLanguage)
+      .suggest(
+        {
+          language: sourceLanguage,
+          fields: {
+            title: sourceTranslation.title,
+            description: sourceTranslation.description,
+            question: sourceTranslation.question,
+          },
+        },
+        targetLanguage,
+      )
       .then((result) => {
-        this.staleSuggestionCache.set(slug, targetLanguage, sourceTranslation, result);
-        this.staleSuggestion.set(result);
+        const translation = result as unknown as SectionTranslation;
+        this.staleSuggestionCache.set(slug, targetLanguage, sourceTranslation, translation);
+        this.staleSuggestion.set(translation);
       })
       .catch(() => {
         const sectionForm = this.language.t().guide.sectionForm;
@@ -228,11 +243,22 @@ export class SectionFormDrawer {
   ): void {
     this.loading.set(true);
     this.translationSuggestionService
-      .suggest({ language: sourceLanguage, translation: sourceTranslation }, target)
-      .then((result) => {
+      .suggest(
+        {
+          language: sourceLanguage,
+          fields: {
+            title: sourceTranslation.title,
+            description: sourceTranslation.description,
+            question: sourceTranslation.question,
+          },
+        },
+        target,
+      )
+      .then((response) => {
         if (this.targetLanguage() !== target) {
           return;
         }
+        const result = response as unknown as SectionTranslation;
         this.form.patchValue(
           {
             title: result.title,

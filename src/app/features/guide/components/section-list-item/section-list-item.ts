@@ -2,10 +2,13 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, ou
 import { CdkDragHandle } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
 import { Question, QuestionType, Section, SectionStatus } from '../../models/section.model';
 import { ContentLanguage, CONTENT_LANGUAGES, CONTENT_LANGUAGE_LABELS } from '../../models/content-language.model';
 import { SectionService } from '../../services/section.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { LanguageTags } from '../../../../shared/components/language-tags/language-tags';
+import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/confirm-dialog';
 
 export interface EditRequestedEvent {
   section: Section;
@@ -26,7 +29,7 @@ export interface ResetSelectionRequest {
 
 @Component({
   selector: 'app-section-list-item',
-  imports: [CdkDragHandle, MatButtonModule, MatIconModule],
+  imports: [CdkDragHandle, MatButtonModule, MatIconModule, LanguageTags],
   templateUrl: './section-list-item.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
@@ -35,6 +38,7 @@ export interface ResetSelectionRequest {
 })
 export class SectionListItem {
   private readonly sectionService = inject(SectionService);
+  private readonly dialog = inject(MatDialog);
   protected readonly language = inject(LanguageService);
 
   protected readonly contentLanguages = CONTENT_LANGUAGES;
@@ -58,10 +62,6 @@ export class SectionListItem {
     () => this.contentLanguages.filter((lang) => this.section().translations[lang]) as ContentLanguage[],
   );
 
-  readonly hasStaleLanguages = computed(
-    () => Object.keys(this.section().staleLanguages ?? {}).length > 0,
-  );
-
   constructor() {
     effect(() => {
       const request = this.resetRequest();
@@ -71,18 +71,8 @@ export class SectionListItem {
     });
   }
 
-  protected onLanguageChange(newLanguage: ContentLanguage): void {
-    const previous = this.selectedLanguage();
+  protected onLanguageSelected(newLanguage: ContentLanguage): void {
     this._selectedLanguage.set(newLanguage);
-
-    if (!this.section().translations[newLanguage]) {
-      this.translateRequested.emit({
-        section: this.section(),
-        sourceLanguage: previous,
-        targetLanguage: newLanguage,
-      });
-      return;
-    }
 
     const staleSourceLanguage = this.section().staleLanguages?.[newLanguage];
     if (staleSourceLanguage) {
@@ -92,6 +82,34 @@ export class SectionListItem {
         staleSourceLanguage,
       });
     }
+  }
+
+  protected onTranslateRequested(newLanguage: ContentLanguage): void {
+    const previous = this.selectedLanguage();
+    this._selectedLanguage.set(newLanguage);
+    this.translateRequested.emit({
+      section: this.section(),
+      sourceLanguage: previous,
+      targetLanguage: newLanguage,
+    });
+  }
+
+  protected onLanguageRemoved(lang: ContentLanguage): void {
+    const labels = this.language.t().languageTags;
+    const languageName = this.contentLanguageLabels[lang];
+    const dialogRef = this.dialog.open(ConfirmDialog, {
+      data: {
+        title: labels.removeConfirmTitle,
+        message: labels.removeConfirmMessage(languageName),
+        confirmLabel: labels.removeConfirmConfirmButton,
+        cancelLabel: labels.removeConfirmCancelButton,
+      },
+    });
+    dialogRef.afterClosed().subscribe((confirmed) => {
+      if (confirmed) {
+        this.sectionService.removeTranslation(this.section().slug, lang);
+      }
+    });
   }
 
   protected onEdit(): void {

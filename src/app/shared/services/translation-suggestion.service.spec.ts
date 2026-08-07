@@ -19,9 +19,9 @@ describe('TranslationSuggestionService', () => {
     httpMock.verify();
   });
 
-  it('POSTs the source/target languages and content to /api/translate', async () => {
+  it('POSTs the source/target languages and a nested fields object to /api/translate', async () => {
     const promise = service.suggest(
-      { language: 'en', translation: { title: 'Title', description: 'Description' } },
+      { language: 'en', fields: { title: 'Title', description: 'Description' } },
       'es',
     );
 
@@ -30,8 +30,7 @@ describe('TranslationSuggestionService', () => {
     expect(req.request.body).toEqual({
       sourceLanguage: 'en',
       targetLanguage: 'es',
-      title: 'Title',
-      description: 'Description',
+      fields: { title: 'Title', description: 'Description' },
     });
     req.flush({ title: 'Título', description: 'Descripción' });
 
@@ -40,7 +39,7 @@ describe('TranslationSuggestionService', () => {
 
   it('rejects when the backend responds with an error', async () => {
     const promise = service.suggest(
-      { language: 'en', translation: { title: 'Title', description: 'Description' } },
+      { language: 'en', fields: { title: 'Title', description: 'Description' } },
       'es',
     );
 
