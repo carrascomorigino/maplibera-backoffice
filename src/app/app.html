@@ -1,12 +1,15 @@
-<nav class="flex items-center gap-4 border-b border-gray-200 px-6 py-3">
-  <span class="font-semibold">{{ title() }}</span>
-  <a
-    routerLink="/guide/sections"
-    routerLinkActive="font-semibold text-blue-700"
-    class="text-blue-600 hover:underline"
-  >
-    Sections
-  </a>
+<nav class="flex items-center justify-between gap-4 border-b border-gray-200 px-6 py-3">
+  <div class="flex items-center gap-4">
+    <span data-testid="nav-title" class="font-semibold">{{ language.t().nav.appTitle }}</span>
+    <a
+      routerLink="/guide/sections"
+      routerLinkActive="font-semibold text-blue-700"
+      class="text-blue-600 hover:underline"
+    >
+      {{ language.t().nav.sectionsLink }}
+    </a>
+  </div>
+  <app-language-toggle />
 </nav>
 
 <router-outlet />

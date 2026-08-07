@@ -1,9 +1,14 @@
 <div class="flex flex-col gap-2">
-  <div class="flex flex-wrap items-center gap-1" role="toolbar" aria-label="Formatting">
+  <div
+    class="flex flex-wrap items-center gap-1"
+    role="toolbar"
+    [attr.aria-label]="language.t().guide.markdownEditor.toolbarAriaLabel"
+  >
     <button
       mat-icon-button
       type="button"
-      aria-label="Bold"
+      data-testid="bold-button"
+      [attr.aria-label]="language.t().guide.markdownEditor.boldLabel"
       [disabled]="previewing() || disabled()"
       (click)="applyBold()"
     >
@@ -12,7 +17,8 @@
     <button
       mat-icon-button
       type="button"
-      aria-label="Italic"
+      data-testid="italic-button"
+      [attr.aria-label]="language.t().guide.markdownEditor.italicLabel"
       [disabled]="previewing() || disabled()"
       (click)="applyItalic()"
     >
@@ -21,7 +27,8 @@
     <button
       mat-icon-button
       type="button"
-      aria-label="Heading"
+      data-testid="heading-button"
+      [attr.aria-label]="language.t().guide.markdownEditor.headingLabel"
       [disabled]="previewing() || disabled()"
       (click)="applyHeading()"
     >
@@ -30,7 +37,8 @@
     <button
       mat-icon-button
       type="button"
-      aria-label="Bulleted list"
+      data-testid="bulleted-list-button"
+      [attr.aria-label]="language.t().guide.markdownEditor.bulletedListLabel"
       [disabled]="previewing() || disabled()"
       (click)="applyBulletedList()"
     >
@@ -39,7 +47,8 @@
     <button
       mat-icon-button
       type="button"
-      aria-label="Numbered list"
+      data-testid="numbered-list-button"
+      [attr.aria-label]="language.t().guide.markdownEditor.numberedListLabel"
       [disabled]="previewing() || disabled()"
       (click)="applyNumberedList()"
     >
@@ -48,7 +57,8 @@
     <button
       mat-icon-button
       type="button"
-      aria-label="Link"
+      data-testid="link-button"
+      [attr.aria-label]="language.t().guide.markdownEditor.linkLabel"
       [disabled]="previewing() || disabled()"
       (click)="applyLink()"
     >
@@ -63,7 +73,7 @@
       [attr.aria-pressed]="previewing()"
       (click)="togglePreview()"
     >
-      {{ previewing() ? 'Edit' : 'Preview' }}
+      {{ previewing() ? language.t().guide.markdownEditor.editButton : language.t().guide.markdownEditor.previewButton }}
     </button>
   </div>
 

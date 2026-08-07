@@ -1,3 +1,5 @@
+import { ContentLanguage } from './content-language.model';
+
 export type SectionStatus = 'draft' | 'published' | 'paused';
 
 export type QuestionType = 'yes-no' | 'single' | 'multiple';
@@ -19,14 +21,20 @@ export interface Question {
   noneOfTheAboveCorrect?: boolean;
 }
 
-export interface Section {
-  slug: string;
+export interface SectionTranslation {
   title: string;
   description: string;
+  question?: Question;
+}
+
+export interface Section {
+  slug: string;
   imageUrl: string;
   status: SectionStatus;
   order: number;
   createdAt: string;
   updatedAt: string;
-  question?: Question;
+  translations: Partial<Record<ContentLanguage, SectionTranslation>>;
+  /** Maps a language that needs re-syncing to the language it should translate from. */
+  staleLanguages?: Partial<Record<ContentLanguage, ContentLanguage>>;
 }

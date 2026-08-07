@@ -1,7 +1,16 @@
-import { ChangeDetectionStrategy, Component, ElementRef, forwardRef, signal, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  forwardRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { LanguageService } from '../../../../core/i18n/language.service';
 
 @Component({
   selector: 'app-markdown-editor',
@@ -17,6 +26,8 @@ import { MatIconModule } from '@angular/material/icon';
   ],
 })
 export class MarkdownEditor implements ControlValueAccessor {
+  protected readonly language = inject(LanguageService);
+
   private readonly textareaRef = viewChild<ElementRef<HTMLTextAreaElement>>('textarea');
 
   protected readonly value = signal('');

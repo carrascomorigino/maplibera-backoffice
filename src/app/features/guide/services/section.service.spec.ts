@@ -1,9 +1,19 @@
-import { SectionService } from './section.service';
+import { SectionService, SectionTranslationInput } from './section.service';
 
 const STORAGE_KEY = 'guide-sections';
 
 function setup(): SectionService {
   return new SectionService();
+}
+
+function input(overrides: Partial<SectionTranslationInput> = {}): SectionTranslationInput {
+  return {
+    slug: 'getting-started',
+    imageUrl: '',
+    language: 'en',
+    translation: { title: 'Getting started', description: 'Intro section' },
+    ...overrides,
+  };
 }
 
 describe('SectionService', () => {
@@ -12,34 +22,34 @@ describe('SectionService', () => {
   });
 
   describe('create', () => {
-    it('creates a section with draft status, appended order, and timestamps', () => {
+    it('creates a section with draft status, appended order, timestamps, and a single translation', () => {
       const service = setup();
 
-      const section = service.create({
-        slug: 'getting-started',
-        title: 'Getting started',
-        description: 'Intro section',
-        imageUrl: '',
-      });
+      const section = service.create(input());
 
       expect(section.slug).toBe('getting-started');
       expect(section.status).toBe('draft');
       expect(section.order).toBe(0);
       expect(section.createdAt).toBeTruthy();
       expect(section.updatedAt).toBeTruthy();
+      expect(Object.keys(section.translations)).toEqual(['en']);
+      expect(section.translations.en).toEqual({
+        title: 'Getting started',
+        description: 'Intro section',
+      });
       expect(service.sections()).toEqual([section]);
     });
 
     it('appends new sections at the end of the order', () => {
       const service = setup();
 
-      service.create({ slug: 'first', title: 'First', description: 'A', imageUrl: '' });
-      const second = service.create({ slug: 'second', title: 'Second', description: 'B', imageUrl: '' });
+      service.create(input({ slug: 'first' }));
+      const second = service.create(input({ slug: 'second' }));
 
       expect(second.order).toBe(1);
     });
 
-    it('round-trips a question through create and update unchanged', () => {
+    it('round-trips a question through create unchanged', () => {
       const service = setup();
       const question = {
         text: 'Is this correct?',
@@ -47,52 +57,248 @@ describe('SectionService', () => {
         yesNoCorrectAnswer: 'yes' as const,
       };
 
-      const created = service.create({
-        slug: 'with-question',
-        title: 'With question',
-        description: 'A',
-        imageUrl: '',
-        question,
-      });
-      expect(created.question).toEqual(question);
-      expect(service.sections()[0].question).toEqual(question);
+      const created = service.create(
+        input({ slug: 'with-question', translation: { title: 'With question', description: 'A', question } }),
+      );
 
-      const updatedQuestion = { ...question, yesNoCorrectAnswer: 'no' as const };
-      service.update(created.slug, { question: updatedQuestion });
-      expect(service.sections()[0].question).toEqual(updatedQuestion);
+      expect(created.translations.en?.question).toEqual(question);
+      expect(service.sections()[0].translations.en?.question).toEqual(question);
     });
   });
 
-  describe('update', () => {
-    it('updates fields without changing status', () => {
+  describe('saveTranslation', () => {
+    it('updates an existing translation without changing status', () => {
       const service = setup();
-      const created = service.create({ slug: 'original', title: 'Original', description: 'A', imageUrl: '' });
+      const created = service.create(input({ slug: 'original' }));
       service.publish(created.slug);
 
-      service.update(created.slug, { title: 'Updated' });
+      service.saveTranslation(
+        created.slug,
+        input({ slug: 'original', translation: { title: 'Updated', description: 'Intro section' } }),
+      );
 
-      const updated = service.sections().find((s) => s.slug === created.slug);
-      expect(updated?.title).toBe('Updated');
+      const updated = service.sections().find((s) => s.slug === 'original');
+      expect(updated?.translations.en?.title).toBe('Updated');
       expect(updated?.status).toBe('published');
+    });
+
+    it('adds a new language without dropping existing translations', () => {
+      const service = setup();
+      const created = service.create(input({ slug: 'multi' }));
+
+      service.saveTranslation(
+        created.slug,
+        input({
+          slug: 'multi',
+          language: 'es',
+          translation: { title: 'Empezando', description: 'Sección de introducción' },
+        }),
+      );
+
+      const updated = service.sections().find((s) => s.slug === 'multi');
+      expect(Object.keys(updated?.translations ?? {}).sort()).toEqual(['en', 'es']);
+      expect(updated?.translations.en?.title).toBe('Getting started');
+      expect(updated?.translations.es?.title).toBe('Empezando');
     });
 
     it('renames a section slug and re-keys it', () => {
       const service = setup();
-      const created = service.create({ slug: 'old-slug', title: 'A', description: 'B', imageUrl: '' });
+      const created = service.create(input({ slug: 'old-slug' }));
 
-      service.update(created.slug, { slug: 'new-slug' });
+      service.saveTranslation(created.slug, input({ slug: 'new-slug' }));
 
       expect(service.sections().find((s) => s.slug === 'old-slug')).toBeUndefined();
       const renamed = service.sections().find((s) => s.slug === 'new-slug');
       expect(renamed).toBeTruthy();
-      expect(renamed?.title).toBe('A');
+      expect(renamed?.translations.en?.title).toBe('Getting started');
+    });
+
+    it('updates the shared imageUrl', () => {
+      const service = setup();
+      const created = service.create(input({ slug: 'with-image' }));
+
+      service.saveTranslation(
+        created.slug,
+        input({ slug: 'with-image', imageUrl: 'https://example.com/a.png' }),
+      );
+
+      expect(service.sections()[0].imageUrl).toBe('https://example.com/a.png');
+    });
+  });
+
+  describe('staleLanguages propagation', () => {
+    it('does not mark anything stale on create', () => {
+      const service = setup();
+
+      const section = service.create(input({ slug: 'fresh' }));
+
+      expect(section.staleLanguages ?? {}).toEqual({});
+    });
+
+    it('does not mark other languages stale when adding a language for the first time', () => {
+      const service = setup();
+      const created = service.create(input({ slug: 'multi' }));
+
+      service.saveTranslation(
+        created.slug,
+        input({
+          slug: 'multi',
+          language: 'es',
+          translation: { title: 'Empezando', description: 'Intro' },
+        }),
+      );
+
+      expect(service.sections()[0].staleLanguages ?? {}).toEqual({});
+    });
+
+    it('marks other existing languages stale, sourced from the edited language, when an existing translation is edited', () => {
+      const service = setup();
+      const created = service.create(input({ slug: 'multi' }));
+      service.saveTranslation(
+        created.slug,
+        input({
+          slug: 'multi',
+          language: 'es',
+          translation: { title: 'Empezando', description: 'Intro' },
+        }),
+      );
+      service.saveTranslation(
+        created.slug,
+        input({
+          slug: 'multi',
+          language: 'fr',
+          translation: { title: 'Pour commencer', description: 'Intro' },
+        }),
+      );
+
+      service.saveTranslation(
+        created.slug,
+        input({ slug: 'multi', language: 'en', translation: { title: 'Getting started v2', description: 'Intro' } }),
+      );
+
+      const section = service.sections()[0];
+      expect(section.staleLanguages).toEqual({ es: 'en', fr: 'en' });
+    });
+
+    it('clears the edited language from staleLanguages and flips propagation to the others', () => {
+      const service = setup();
+      const created = service.create(input({ slug: 'multi' }));
+      service.saveTranslation(
+        created.slug,
+        input({ slug: 'multi', language: 'es', translation: { title: 'Empezando', description: 'Intro' } }),
+      );
+      service.saveTranslation(
+        created.slug,
+        input({ slug: 'multi', language: 'en', translation: { title: 'Getting started v2', description: 'Intro' } }),
+      );
+      expect(service.sections()[0].staleLanguages).toEqual({ es: 'en' });
+
+      service.saveTranslation(
+        created.slug,
+        input({ slug: 'multi', language: 'es', translation: { title: 'Empezando v2', description: 'Intro' } }),
+      );
+
+      const section = service.sections()[0];
+      expect(section.staleLanguages).toEqual({ en: 'es' });
+    });
+
+    it('does not mark anything stale when there is only one language', () => {
+      const service = setup();
+      const created = service.create(input({ slug: 'solo' }));
+
+      service.saveTranslation(
+        created.slug,
+        input({ slug: 'solo', translation: { title: 'Getting started v2', description: 'Intro' } }),
+      );
+
+      expect(service.sections()[0].staleLanguages ?? {}).toEqual({});
+    });
+
+    it('does not mark other languages stale when re-saving a translation with identical text', () => {
+      const service = setup();
+      const created = service.create(input({ slug: 'multi' }));
+      service.saveTranslation(
+        created.slug,
+        input({
+          slug: 'multi',
+          language: 'es',
+          translation: { title: 'Empezando', description: 'Intro' },
+        }),
+      );
+
+      service.saveTranslation(
+        created.slug,
+        input({ slug: 'multi', translation: { title: 'Getting started', description: 'Intro section' } }),
+      );
+
+      expect(service.sections()[0].staleLanguages ?? {}).toEqual({});
+    });
+
+    it('does not mark other languages stale when only the slug or imageUrl changes', () => {
+      const service = setup();
+      const created = service.create(input({ slug: 'multi' }));
+      service.saveTranslation(
+        created.slug,
+        input({
+          slug: 'multi',
+          language: 'es',
+          translation: { title: 'Empezando', description: 'Intro' },
+        }),
+      );
+
+      service.saveTranslation(
+        created.slug,
+        input({
+          slug: 'renamed',
+          imageUrl: 'https://example.com/a.png',
+          translation: { title: 'Getting started', description: 'Intro section' },
+        }),
+      );
+
+      expect(service.sections()[0].staleLanguages ?? {}).toEqual({});
+    });
+
+    it('still marks others stale when the question changes even if title/description do not', () => {
+      const service = setup();
+      const created = service.create(
+        input({
+          slug: 'multi',
+          translation: {
+            title: 'Getting started',
+            description: 'Intro section',
+            question: { text: 'Q1', type: 'yes-no', yesNoCorrectAnswer: 'yes' },
+          },
+        }),
+      );
+      service.saveTranslation(
+        created.slug,
+        input({
+          slug: 'multi',
+          language: 'es',
+          translation: { title: 'Empezando', description: 'Intro' },
+        }),
+      );
+
+      service.saveTranslation(
+        created.slug,
+        input({
+          slug: 'multi',
+          translation: {
+            title: 'Getting started',
+            description: 'Intro section',
+            question: { text: 'Q1 updated', type: 'yes-no', yesNoCorrectAnswer: 'yes' },
+          },
+        }),
+      );
+
+      expect(service.sections()[0].staleLanguages).toEqual({ es: 'en' });
     });
   });
 
   describe('publish / pause', () => {
     it('publish sets status to published', () => {
       const service = setup();
-      const created = service.create({ slug: 'a', title: 'A', description: 'B', imageUrl: '' });
+      const created = service.create(input({ slug: 'a' }));
 
       service.publish(created.slug);
 
@@ -101,7 +307,7 @@ describe('SectionService', () => {
 
     it('pause sets status to paused', () => {
       const service = setup();
-      const created = service.create({ slug: 'a', title: 'A', description: 'B', imageUrl: '' });
+      const created = service.create(input({ slug: 'a' }));
       service.publish(created.slug);
 
       service.pause(created.slug);
@@ -113,9 +319,9 @@ describe('SectionService', () => {
   describe('reorder', () => {
     it('rewrites order to match the given slug sequence', () => {
       const service = setup();
-      const a = service.create({ slug: 'a', title: 'A', description: '', imageUrl: '' });
-      const b = service.create({ slug: 'b', title: 'B', description: '', imageUrl: '' });
-      const c = service.create({ slug: 'c', title: 'C', description: '', imageUrl: '' });
+      const a = service.create(input({ slug: 'a' }));
+      const b = service.create(input({ slug: 'b' }));
+      const c = service.create(input({ slug: 'c' }));
 
       service.reorder([c.slug, a.slug, b.slug]);
 
@@ -129,8 +335,8 @@ describe('SectionService', () => {
   describe('sections()', () => {
     it('exposes sections sorted by order', () => {
       const service = setup();
-      const a = service.create({ slug: 'a', title: 'A', description: '', imageUrl: '' });
-      const b = service.create({ slug: 'b', title: 'B', description: '', imageUrl: '' });
+      const a = service.create(input({ slug: 'a' }));
+      const b = service.create(input({ slug: 'b' }));
       service.reorder([b.slug, a.slug]);
 
       expect(service.sections().map((s) => s.slug)).toEqual([b.slug, a.slug]);
@@ -140,20 +346,20 @@ describe('SectionService', () => {
   describe('persistence', () => {
     it('persists created sections to localStorage', () => {
       const service = setup();
-      service.create({ slug: 'a', title: 'A', description: '', imageUrl: '' });
+      service.create(input({ slug: 'a' }));
 
       const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
       expect(stored).toHaveLength(1);
-      expect(stored[0].title).toBe('A');
+      expect(stored[0].translations.en.title).toBe('Getting started');
     });
 
     it('loads existing sections from localStorage on construction', () => {
       const first = setup();
-      first.create({ slug: 'persisted', title: 'Persisted', description: '', imageUrl: '' });
+      first.create(input({ slug: 'persisted' }));
 
       const second = setup();
       expect(second.sections()).toHaveLength(1);
-      expect(second.sections()[0].title).toBe('Persisted');
+      expect(second.sections()[0].translations.en?.title).toBe('Getting started');
     });
 
     it('falls back to an empty list when localStorage contains invalid JSON', () => {
@@ -164,13 +370,46 @@ describe('SectionService', () => {
       expect(service.sections()).toEqual([]);
     });
 
-    it('filters out legacy entries that have no slug', () => {
+    it('filters out legacy entries that have no slug or no translations', () => {
       localStorage.setItem(
         STORAGE_KEY,
         JSON.stringify([
-          { id: 'legacy-uuid', title: 'Legacy', description: '', imageUrl: '', status: 'draft', order: 0, createdAt: '', updatedAt: '' },
-          { slug: 'valid-entry', title: 'Valid', description: '', imageUrl: '', status: 'draft', order: 1, createdAt: '', updatedAt: '' },
-          { slug: '', title: 'Empty slug', description: '', imageUrl: '', status: 'draft', order: 2, createdAt: '', updatedAt: '' },
+          {
+            id: 'legacy-uuid',
+            title: 'Legacy',
+            imageUrl: '',
+            status: 'draft',
+            order: 0,
+            createdAt: '',
+            updatedAt: '',
+          },
+          {
+            slug: 'valid-entry',
+            imageUrl: '',
+            status: 'draft',
+            order: 1,
+            createdAt: '',
+            updatedAt: '',
+            translations: { en: { title: 'Valid', description: '' } },
+          },
+          {
+            slug: '',
+            imageUrl: '',
+            status: 'draft',
+            order: 2,
+            createdAt: '',
+            updatedAt: '',
+            translations: { en: { title: 'Empty slug', description: '' } },
+          },
+          {
+            slug: 'no-translations',
+            imageUrl: '',
+            status: 'draft',
+            order: 3,
+            createdAt: '',
+            updatedAt: '',
+            translations: {},
+          },
         ]),
       );
 
@@ -186,9 +425,7 @@ describe('SectionService', () => {
       let service!: SectionService;
       expect(() => (service = setup())).not.toThrow();
       expect(service.sections()).toEqual([]);
-      expect(() =>
-        service.create({ slug: 'a', title: 'A', description: '', imageUrl: '' }),
-      ).not.toThrow();
+      expect(() => service.create(input({ slug: 'a' }))).not.toThrow();
 
       vi.unstubAllGlobals();
     });

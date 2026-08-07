@@ -32,7 +32,7 @@ UI labels and guide content have different language coverage.
 3. Selecting an already-translated language in a row switches the row's
    displayed title/description to that language, with no side effects.
 4. Selecting a not-yet-translated language opens the section editor
-   pre-filled with an AI-suggested translation (via the Claude API),
+   pre-filled with an AI-suggested translation (via the Gemini API),
    translated from whichever language the row was previously showing.
 5. Saving a translation updates the section's available-languages display
    in the list.
@@ -207,28 +207,27 @@ export interface TranslateSectionRequest {
 }
 
 export async function translateSection(
-  client: Anthropic,
+  client: GoogleGenAI,
   request: TranslateSectionRequest,
 ): Promise<SectionTranslation> {
-  const message = await client.messages.create({
-    model: 'claude-sonnet-5',
-    max_tokens: 2048,
-    system:
-      'You are a professional translator for an app guide. Translate the ' +
-      'given JSON fields from {sourceLanguage} to {targetLanguage}, ' +
-      'preserving markdown formatting in "description" and the exact ' +
-      'structure of "question"/"answers". Respond with ONLY valid JSON ' +
-      'matching the input shape, no prose.',
-    messages: [{
-      role: 'user',
-      content: JSON.stringify({
-        title: request.title,
-        description: request.description,
-        question: request.question,
-      }),
-    }],
+  const response = await client.models.generateContent({
+    model: 'gemini-flash-latest',
+    contents: JSON.stringify({
+      title: request.title,
+      description: request.description,
+      question: request.question,
+    }),
+    config: {
+      systemInstruction:
+        'You are a professional translator for an app guide. Translate the ' +
+        'given JSON fields from {sourceLanguage} to {targetLanguage}, ' +
+        'preserving markdown formatting in "description" and the exact ' +
+        'structure of "question"/"answers". Respond with ONLY valid JSON ' +
+        'matching the input shape, no prose.',
+      responseMimeType: 'application/json',
+    },
   });
-  return parseTranslationResponse(message); // validates/parses JSON; throws on malformed output
+  return parseTranslationResponse(response); // validates/parses JSON; throws on malformed output
 }
 ```
 
@@ -238,20 +237,20 @@ export async function translateSection(
 app.use(express.json());
 app.post('/api/translate', async (req, res) => {
   try {
-    res.json(await translateSection(anthropicClient, req.body));
+    res.json(await translateSection(geminiClient, req.body));
   } catch {
     res.status(502).json({ error: 'translation_failed' });
   }
 });
 ```
 
-`anthropicClient` is constructed once at module load:
-`new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY'] })`. New
-dependency: `@anthropic-ai/sdk`.
+`geminiClient` is constructed once at module load:
+`new GoogleGenAI({ apiKey: process.env['GEMINI_API_KEY'] })`. New
+dependency: `@google/genai`.
 
 **API key configuration:** new dependency `dotenv`, loaded at the top of
 `src/server.ts` in non-production, reading a local `.env`. `.env.example`
-(with `ANTHROPIC_API_KEY=`) is committed; `.env` itself is added to
+(with `GEMINI_API_KEY=`) is committed; `.env` itself is added to
 `.gitignore`. In production the key is set as a real environment variable
 by the hosting platform, no `.env` file involved.
 
@@ -309,9 +308,9 @@ implementation):
   `translations`.
 
 `translate-section.spec.ts` (new, written before `translate-section.ts`):
-- With a mocked Anthropic client (`vi.fn()` standing in for
-  `messages.create`), verifies the `system`/`messages` payload sent
-  includes `sourceLanguage`/`targetLanguage`/title/description/question
+- With a mocked Gemini client (`vi.fn()` standing in for
+  `models.generateContent`), verifies the `contents`/`config.systemInstruction`
+  payload sent includes `sourceLanguage`/`targetLanguage`/title/description/question
   correctly.
 - A valid JSON response parses into a `SectionTranslation`.
 - A malformed response (non-JSON, or JSON with the wrong shape) causes the

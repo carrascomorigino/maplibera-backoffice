@@ -9,12 +9,17 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { Question, Section } from '../../models/section.model';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { Question, Section, SectionTranslation } from '../../models/section.model';
+import { ContentLanguage, CONTENT_LANGUAGE_LABELS } from '../../models/content-language.model';
 import { SectionService } from '../../services/section.service';
+import { TranslationSuggestionService } from '../../services/translation-suggestion.service';
+import { StaleTranslationSuggestionCache } from '../../services/stale-translation-suggestion-cache.service';
 import { MarkdownEditor } from '../markdown-editor/markdown-editor';
 import { QuestionEditor } from '../question-editor/question-editor';
 import { slugify } from '../../utils/slugify';
 import { URL_PATTERN, SLUG_PATTERN } from '../../utils/patterns';
+import { LanguageService } from '../../../../core/i18n/language.service';
 
 @Component({
   selector: 'app-section-form-drawer',
@@ -31,11 +36,28 @@ import { URL_PATTERN, SLUG_PATTERN } from '../../utils/patterns';
 })
 export class SectionFormDrawer {
   private readonly sectionService = inject(SectionService);
+  private readonly translationSuggestionService = inject(TranslationSuggestionService);
+  private readonly staleSuggestionCache = inject(StaleTranslationSuggestionCache);
+  private readonly snackBar = inject(MatSnackBar);
+  protected readonly language = inject(LanguageService);
+  protected readonly contentLanguageLabels = CONTENT_LANGUAGE_LABELS;
 
   readonly section = input<Section | undefined>(undefined);
-  readonly closed = output<void>();
+  readonly targetLanguage = input.required<ContentLanguage>();
+  readonly sourceLanguage = input<ContentLanguage | undefined>(undefined);
+  readonly staleSourceLanguage = input<ContentLanguage | undefined>(undefined);
+
+  readonly saved = output<void>();
+  readonly cancelled = output<void>();
+
+  readonly loading = signal(false);
+  readonly staleSuggestion = signal<SectionTranslation | undefined>(undefined);
+  readonly staleSuggestionLoading = signal(false);
+  readonly previewRevealed = signal(false);
 
   private readonly slugManuallyEdited = signal(false);
+  private suggestionRequested = false;
+  private staleSuggestionRequested = false;
 
   private readonly duplicateSlugValidator: ValidatorFn = (control) => {
     const slug = (control.value as string).trim().toLowerCase();
@@ -75,52 +97,194 @@ export class SectionFormDrawer {
 
     effect(() => {
       const section = this.section();
+      const targetLanguage = this.targetLanguage();
+      const sourceLanguage = this.sourceLanguage();
+      const staleSource = this.staleSourceLanguage();
+      const existing = section?.translations[targetLanguage];
+
       this.slugManuallyEdited.set(false);
+      this.staleSuggestion.set(undefined);
+      this.staleSuggestionLoading.set(false);
+      this.previewRevealed.set(false);
       this.form.reset(
         {
-          title: section?.title ?? '',
+          title: existing?.title ?? '',
           slug: section?.slug ?? '',
-          description: section?.description ?? '',
+          description: existing?.description ?? '',
           imageUrl: section?.imageUrl ?? '',
-          question: section?.question ?? undefined,
+          question: existing?.question ?? undefined,
         },
         { emitEvent: false },
       );
+
+      if (!existing && section && sourceLanguage && !this.suggestionRequested) {
+        const sourceTranslation = section.translations[sourceLanguage];
+        if (sourceTranslation) {
+          this.suggestionRequested = true;
+          this.requestSuggestion(targetLanguage, sourceLanguage, sourceTranslation);
+        }
+      }
+
+      if (existing && section && staleSource && !this.staleSuggestionRequested) {
+        const sourceTranslation = section.translations[staleSource];
+        if (sourceTranslation) {
+          this.staleSuggestionRequested = true;
+          this.loadStaleSuggestion(section.slug, targetLanguage, staleSource, sourceTranslation);
+        }
+      }
     });
+  }
+
+  protected previewStaleSuggestion(): void {
+    this.previewRevealed.set(true);
+  }
+
+  protected titleSuggestionDiffers(): boolean {
+    const suggestion = this.staleSuggestion();
+    return !!suggestion && suggestion.title !== this.form.controls.title.value;
+  }
+
+  protected descriptionSuggestionDiffers(): boolean {
+    const suggestion = this.staleSuggestion();
+    return !!suggestion && suggestion.description !== this.form.controls.description.value;
+  }
+
+  protected questionSuggestionDiffers(): boolean {
+    const suggestedQuestion = this.staleSuggestion()?.question;
+    if (!suggestedQuestion) {
+      return false;
+    }
+    return JSON.stringify(suggestedQuestion) !== JSON.stringify(this.form.controls.question.value ?? undefined);
+  }
+
+  private loadStaleSuggestion(
+    slug: string,
+    targetLanguage: ContentLanguage,
+    sourceLanguage: ContentLanguage,
+    sourceTranslation: SectionTranslation,
+  ): void {
+    const cached = this.staleSuggestionCache.get(slug, targetLanguage, sourceTranslation);
+    if (cached) {
+      this.staleSuggestion.set(cached);
+      return;
+    }
+
+    this.staleSuggestionLoading.set(true);
+    this.translationSuggestionService
+      .suggest({ language: sourceLanguage, translation: sourceTranslation }, targetLanguage)
+      .then((result) => {
+        this.staleSuggestionCache.set(slug, targetLanguage, sourceTranslation, result);
+        this.staleSuggestion.set(result);
+      })
+      .catch(() => {
+        const sectionForm = this.language.t().guide.sectionForm;
+        this.snackBar.open(sectionForm.suggestionFailedNotice, sectionForm.suggestionFailedDismiss);
+      })
+      .finally(() => {
+        this.staleSuggestionLoading.set(false);
+      });
+  }
+
+  protected acceptTitleSuggestion(): void {
+    const suggestion = this.staleSuggestion();
+    if (suggestion) {
+      this.form.controls.title.setValue(suggestion.title, { emitEvent: false });
+    }
+  }
+
+  protected acceptDescriptionSuggestion(): void {
+    const suggestion = this.staleSuggestion();
+    if (suggestion) {
+      this.form.controls.description.setValue(suggestion.description, { emitEvent: false });
+    }
+  }
+
+  protected acceptQuestionSuggestion(): void {
+    const suggestion = this.staleSuggestion();
+    if (suggestion) {
+      this.form.controls.question.setValue(suggestion.question, { emitEvent: false });
+    }
   }
 
   protected save(): void {
     this.persist();
-    this.closed.emit();
+    this.saved.emit();
   }
 
   protected publish(): void {
     const slug = this.persist();
     this.sectionService.publish(slug);
-    this.closed.emit();
+    this.saved.emit();
   }
 
   protected cancel(): void {
-    this.closed.emit();
+    this.cancelled.emit();
+  }
+
+  private requestSuggestion(
+    target: ContentLanguage,
+    sourceLanguage: ContentLanguage,
+    sourceTranslation: SectionTranslation,
+  ): void {
+    this.loading.set(true);
+    this.translationSuggestionService
+      .suggest({ language: sourceLanguage, translation: sourceTranslation }, target)
+      .then((result) => {
+        if (this.targetLanguage() !== target) {
+          return;
+        }
+        this.form.patchValue(
+          {
+            title: result.title,
+            description: result.description,
+            question: result.question,
+          },
+          { emitEvent: false },
+        );
+      })
+      .catch(() => {
+        if (this.targetLanguage() !== target) {
+          return;
+        }
+        const sectionForm = this.language.t().guide.sectionForm;
+        this.snackBar.open(sectionForm.suggestionFailedNotice, sectionForm.suggestionFailedDismiss);
+        this.form.patchValue(
+          {
+            title: sourceTranslation.title,
+            description: sourceTranslation.description,
+            question: sourceTranslation.question,
+          },
+          { emitEvent: false },
+        );
+      })
+      .finally(() => {
+        if (this.targetLanguage() === target) {
+          this.loading.set(false);
+        }
+      });
   }
 
   private persist(): string {
     const { title, slug, description, imageUrl, question } = this.form.getRawValue();
     const questionValue = question ?? undefined;
     const existing = this.section();
+    const translation: SectionTranslation = { title, description, question: questionValue };
 
     if (existing) {
-      this.sectionService.update(existing.slug, {
-        title,
+      this.sectionService.saveTranslation(existing.slug, {
         slug,
-        description,
         imageUrl,
-        question: questionValue,
+        language: this.targetLanguage(),
+        translation,
       });
       return slug;
     }
 
-    return this.sectionService.create({ slug, title, description, imageUrl, question: questionValue })
-      .slug;
+    return this.sectionService.create({
+      slug,
+      imageUrl,
+      language: this.targetLanguage(),
+      translation,
+    }).slug;
   }
 }

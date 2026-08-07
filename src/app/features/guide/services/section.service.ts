@@ -1,13 +1,19 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { Section } from '../models/section.model';
+import { Section, SectionTranslation } from '../models/section.model';
+import { ContentLanguage } from '../models/content-language.model';
 
 const STORAGE_KEY = 'guide-sections';
 
-export type SectionInput = Pick<
-  Section,
-  'slug' | 'title' | 'description' | 'imageUrl' | 'question'
->;
-export type SectionUpdate = Partial<SectionInput>;
+function translationsEqual(a: SectionTranslation, b: SectionTranslation): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+export interface SectionTranslationInput {
+  slug: string;
+  imageUrl: string;
+  language: ContentLanguage;
+  translation: SectionTranslation;
+}
 
 @Injectable({ providedIn: 'root' })
 export class SectionService {
@@ -17,14 +23,12 @@ export class SectionService {
     [...this.state()].sort((a, b) => a.order - b.order),
   );
 
-  create(input: SectionInput): Section {
+  create(input: SectionTranslationInput): Section {
     const now = new Date().toISOString();
     const section: Section = {
       slug: input.slug,
-      title: input.title,
-      description: input.description,
       imageUrl: input.imageUrl,
-      question: input.question,
+      translations: { [input.language]: input.translation },
       status: 'draft',
       order: this.state().length,
       createdAt: now,
@@ -36,13 +40,36 @@ export class SectionService {
     return section;
   }
 
-  update(slug: string, changes: SectionUpdate): void {
+  saveTranslation(currentSlug: string, input: SectionTranslationInput): void {
     this.state.update((sections) =>
-      sections.map((section) =>
-        section.slug === slug
-          ? { ...section, ...changes, updatedAt: new Date().toISOString() }
-          : section,
-      ),
+      sections.map((section) => {
+        if (section.slug !== currentSlug) {
+          return section;
+        }
+
+        const previousTranslation = section.translations[input.language];
+        const contentChanged =
+          !previousTranslation || !translationsEqual(previousTranslation, input.translation);
+        const translations = { ...section.translations, [input.language]: input.translation };
+        const staleLanguages = { ...section.staleLanguages };
+        delete staleLanguages[input.language];
+        if (previousTranslation && contentChanged) {
+          for (const lang of Object.keys(translations) as ContentLanguage[]) {
+            if (lang !== input.language) {
+              staleLanguages[lang] = input.language;
+            }
+          }
+        }
+
+        return {
+          ...section,
+          slug: input.slug,
+          imageUrl: input.imageUrl,
+          translations,
+          staleLanguages,
+          updatedAt: new Date().toISOString(),
+        };
+      }),
     );
     this.persist();
   }
@@ -99,7 +126,11 @@ export class SectionService {
       }
       return parsed.filter(
         (section): section is Section =>
-          typeof section?.slug === 'string' && section.slug.length > 0,
+          typeof section?.slug === 'string' &&
+          section.slug.length > 0 &&
+          typeof section?.translations === 'object' &&
+          section.translations !== null &&
+          Object.keys(section.translations).length > 0,
       );
     } catch {
       return [];
