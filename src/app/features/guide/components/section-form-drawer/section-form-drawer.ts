@@ -15,11 +15,11 @@ import { ContentLanguage, CONTENT_LANGUAGE_LABELS } from '../../models/content-l
 import { SectionService } from '../../services/section.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { StaleTranslationSuggestionCache } from '../../../../shared/services/stale-translation-suggestion-cache.service';
-import { MarkdownEditor } from '../markdown-editor/markdown-editor';
+import { MarkdownEditor } from '../../../../shared/components/markdown-editor/markdown-editor';
 import { QuestionEditor } from '../question-editor/question-editor';
 import { CountrySelect } from '../country-select/country-select';
-import { slugify } from '../../utils/slugify';
-import { URL_PATTERN, SLUG_PATTERN } from '../../utils/patterns';
+import { slugify } from '../../../../shared/utils/slugify';
+import { URL_PATTERN, SLUG_PATTERN } from '../../../../shared/utils/patterns';
 import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from '../../utils/field-limits';
 import { LanguageService } from '../../../../core/i18n/language.service';
 

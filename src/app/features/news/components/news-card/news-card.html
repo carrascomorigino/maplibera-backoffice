@@ -1,0 +1,57 @@
+<div class="flex items-start justify-between gap-2">
+  <span
+    data-testid="category-badge"
+    class="rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700"
+  >
+    {{
+      item().category === 'event'
+        ? language.t().news.newsList.categoryBadgeEvent
+        : language.t().news.newsList.categoryBadgeNews
+    }}
+  </span>
+  <span
+    data-testid="status-badge"
+    class="rounded-full px-2 py-1 text-xs font-medium"
+    [class]="statusBadgeClass(item().status)"
+  >
+    {{ item().status }}
+  </span>
+</div>
+
+<img [src]="item().imageUrl" alt="" class="h-32 w-full rounded object-cover" />
+
+<p data-testid="news-title" class="font-medium">{{ translation()?.title }}</p>
+<p class="line-clamp-2 text-sm text-gray-600">{{ translation()?.subtitle }}</p>
+
+<p data-testid="published-at" class="text-xs text-gray-500">
+  {{ language.t().news.newsList.publishedAtIndicator(item().publishedAt) }}
+</p>
+@if (item().category === 'event' && item().eventDate) {
+  <p data-testid="event-date" class="text-xs text-gray-500">
+    {{ language.t().news.newsList.eventDateIndicator(item().eventDate!) }}
+  </p>
+}
+
+<app-language-tags
+  [languages]="contentLanguages"
+  [translatedLanguages]="availableLanguages()"
+  [staleLanguages]="item().staleLanguages ?? {}"
+  [selectedLanguage]="selectedLanguage()"
+  (languageSelected)="onLanguageSelected($event)"
+  (translateRequested)="onTranslateRequested($event)"
+  (languageRemoved)="onLanguageRemoved($event)"
+/>
+
+<div class="mt-auto flex gap-2">
+  <button mat-stroked-button type="button" data-testid="edit-button" (click)="onEdit()">
+    {{ language.t().news.newsList.editButton }}
+  </button>
+  <button
+    mat-stroked-button
+    type="button"
+    [attr.data-testid]="'status-action-' + item().slug"
+    (click)="onStatusAction()"
+  >
+    {{ statusActionLabel(item().status) }}
+  </button>
+</div>

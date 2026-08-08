@@ -11,7 +11,7 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { LanguageService } from '../../../../core/i18n/language.service';
+import { LanguageService } from '../../../core/i18n/language.service';
 
 @Component({
   selector: 'app-markdown-editor',

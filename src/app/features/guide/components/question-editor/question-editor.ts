@@ -18,13 +18,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Question, QuestionAnswer, QuestionType } from '../../models/section.model';
-import { URL_PATTERN } from '../../utils/patterns';
+import { URL_PATTERN } from '../../../../shared/utils/patterns';
 import {
   ANSWER_TEXT_MAX_LENGTH,
   QUESTION_DETAIL_MAX_LENGTH,
   QUESTION_TEXT_MAX_LENGTH,
 } from '../../utils/field-limits';
-import { MarkdownEditor } from '../markdown-editor/markdown-editor';
+import { MarkdownEditor } from '../../../../shared/components/markdown-editor/markdown-editor';
 import { LanguageService } from '../../../../core/i18n/language.service';
 
 type AnswerGroup = FormGroup<{

@@ -15,8 +15,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { URL_PATTERN } from '../../../guide/utils/patterns';
-import { LanguageService } from '../../../../core/i18n/language.service';
+import { URL_PATTERN } from '../../utils/patterns';
+import { LanguageService } from '../../../core/i18n/language.service';
 
 @Component({
   selector: 'app-string-list-editor',

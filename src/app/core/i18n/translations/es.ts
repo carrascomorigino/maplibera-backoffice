@@ -5,6 +5,7 @@ export const es: Translations = {
     appTitle: 'maplibera-backoffice',
     sectionsLink: 'Secciones',
     resourcesLink: 'Recursos',
+    newsLink: 'Noticias y Eventos',
   },
   languageTags: {
     untranslatedAria: (languageName) => `${languageName} sin traducir`,
@@ -14,6 +15,26 @@ export const es: Translations = {
       `¿Quitar la traducción en ${languageName}? Se perderá el contenido en ese idioma.`,
     removeConfirmConfirmButton: 'Quitar',
     removeConfirmCancelButton: 'Cancelar',
+  },
+  markdownEditor: {
+    toolbarAriaLabel: 'Formato',
+    boldLabel: 'Negrita',
+    italicLabel: 'Cursiva',
+    headingLabel: 'Encabezado',
+    bulletedListLabel: 'Lista con viñetas',
+    numberedListLabel: 'Lista numerada',
+    linkLabel: 'Enlace',
+    previewButton: 'Vista previa',
+    editButton: 'Editar',
+  },
+  stringListEditor: {
+    addRowButton: (itemLabel) => `+ Agregar ${itemLabel}`,
+    removeRowAria: 'Quitar',
+    invalidUrlError: 'Ingresá una URL válida',
+  },
+  fieldLimits: {
+    charactersRemaining: (count) =>
+      count === 1 ? '1 carácter restante' : `${count} caracteres restantes`,
   },
   guide: {
     sectionsList: {
@@ -63,17 +84,6 @@ export const es: Translations = {
       acceptTranslationButton: 'Aceptar traducción',
       previewLoadingText: 'Generando sugerencia…',
     },
-    markdownEditor: {
-      toolbarAriaLabel: 'Formato',
-      boldLabel: 'Negrita',
-      italicLabel: 'Cursiva',
-      headingLabel: 'Encabezado',
-      bulletedListLabel: 'Lista con viñetas',
-      numberedListLabel: 'Lista numerada',
-      linkLabel: 'Enlace',
-      previewButton: 'Vista previa',
-      editButton: 'Editar',
-    },
     questionEditor: {
       questionLabel: 'Pregunta (opcional)',
       questionTypeLabel: 'Tipo de pregunta *',
@@ -98,10 +108,6 @@ export const es: Translations = {
       correctAnswerAria: 'Respuesta correcta',
       questionErrorText:
         'Completá el tipo de pregunta, el texto de cada respuesta y marcá al menos una respuesta correcta.',
-    },
-    fieldLimits: {
-      charactersRemaining: (count) =>
-        count === 1 ? '1 carácter restante' : `${count} caracteres restantes`,
     },
   },
   resources: {
@@ -173,10 +179,51 @@ export const es: Translations = {
         iconUrlLabel: 'URL del ícono',
       },
     },
-    stringListEditor: {
-      addRowButton: (itemLabel) => `+ Agregar ${itemLabel}`,
-      removeRowAria: 'Quitar',
-      invalidUrlError: 'Ingresá una URL válida',
+  },
+  news: {
+    newsList: {
+      heading: 'Noticias y Eventos',
+      addButton: '+ Agregar',
+      filterAllLabel: 'Todas',
+      filterNewsLabel: 'Noticias',
+      filterEventLabel: 'Eventos',
+      emptyState: 'Todavía no hay noticias ni eventos. Creá el primero para empezar.',
+      editButton: 'Editar',
+      publishAction: 'Publicar',
+      pauseAction: 'Pausar',
+      categoryBadgeNews: 'Noticia',
+      categoryBadgeEvent: 'Evento',
+      publishedAtIndicator: (date) => `Publicado: ${date}`,
+      eventDateIndicator: (date) => `Evento: ${date}`,
+    },
+    newsForm: {
+      editHeading: 'Editar noticia',
+      newHeading: 'Nueva noticia',
+      categoryLabel: 'Categoría',
+      categoryNewsOption: 'Noticia',
+      categoryEventOption: 'Evento',
+      titleLabel: 'Título',
+      slugLabel: 'Slug',
+      slugPatternError: 'Usá solo minúsculas, números y guiones',
+      duplicateSlugError: 'Ya existe una noticia con este slug',
+      subtitleLabel: 'Bajada / Subtítulo',
+      descriptionLabel: 'Descripción',
+      imageUrlLabel: 'URL de la imagen destacada',
+      publishedAtLabel: 'Fecha de publicación',
+      eventDateLabel: 'Fecha del evento',
+      eventDateRequiredError: 'Ingresá la fecha del evento',
+      sourceLinksLabel: 'Enlaces de referencia / fuentes',
+      saveButton: 'Guardar',
+      publishButton: 'Publicar',
+      cancelButton: 'Cancelar',
+      workingLanguageLabel: (languageName) => `Idioma de trabajo: ${languageName}`,
+      suggestionLoadingText: 'Generando una traducción sugerida…',
+      suggestionFailedNotice:
+        'Falló la traducción automática. Se muestra el texto original para que lo traduzcas manualmente.',
+      suggestionFailedDismiss: 'Descartar',
+      previewButton: 'Previsualizar',
+      acceptTranslationButton: 'Aceptar traducción',
+      previewLoadingText: 'Generando sugerencia…',
     },
   },
 };

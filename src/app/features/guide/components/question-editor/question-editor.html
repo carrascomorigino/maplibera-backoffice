@@ -9,7 +9,7 @@
       (blur)="onBlur()"
     />
     <mat-hint align="end">{{
-      language.t().guide.fieldLimits.charactersRemaining(questionTextMaxLength - form.controls.text.value.length)
+      language.t().fieldLimits.charactersRemaining(questionTextMaxLength - form.controls.text.value.length)
     }}</mat-hint>
   </mat-form-field>
 
@@ -104,7 +104,7 @@
                   [maxlength]="answerTextMaxLength"
                 />
                 <mat-hint align="end">{{
-                  language.t().guide.fieldLimits.charactersRemaining(
+                  language.t().fieldLimits.charactersRemaining(
                     answerTextMaxLength - row.controls.text.value.length
                   )
                 }}</mat-hint>

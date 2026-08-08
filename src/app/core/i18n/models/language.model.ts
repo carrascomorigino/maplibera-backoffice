@@ -5,6 +5,7 @@ export interface Translations {
     appTitle: string;
     sectionsLink: string;
     resourcesLink: string;
+    newsLink: string;
   };
   languageTags: {
     untranslatedAria: (languageName: string) => string;
@@ -13,6 +14,25 @@ export interface Translations {
     removeConfirmMessage: (languageName: string) => string;
     removeConfirmConfirmButton: string;
     removeConfirmCancelButton: string;
+  };
+  markdownEditor: {
+    toolbarAriaLabel: string;
+    boldLabel: string;
+    italicLabel: string;
+    headingLabel: string;
+    bulletedListLabel: string;
+    numberedListLabel: string;
+    linkLabel: string;
+    previewButton: string;
+    editButton: string;
+  };
+  stringListEditor: {
+    addRowButton: (itemLabel: string) => string;
+    removeRowAria: string;
+    invalidUrlError: string;
+  };
+  fieldLimits: {
+    charactersRemaining: (count: number) => string;
   };
   guide: {
     sectionsList: {
@@ -60,17 +80,6 @@ export interface Translations {
       acceptTranslationButton: string;
       previewLoadingText: string;
     };
-    markdownEditor: {
-      toolbarAriaLabel: string;
-      boldLabel: string;
-      italicLabel: string;
-      headingLabel: string;
-      bulletedListLabel: string;
-      numberedListLabel: string;
-      linkLabel: string;
-      previewButton: string;
-      editButton: string;
-    };
     questionEditor: {
       questionLabel: string;
       questionTypeLabel: string;
@@ -94,9 +103,6 @@ export interface Translations {
       noneOfTheAboveCorrect: string;
       correctAnswerAria: string;
       questionErrorText: string;
-    };
-    fieldLimits: {
-      charactersRemaining: (count: number) => string;
     };
   };
   resources: {
@@ -166,10 +172,50 @@ export interface Translations {
         iconUrlLabel: string;
       };
     };
-    stringListEditor: {
-      addRowButton: (itemLabel: string) => string;
-      removeRowAria: string;
-      invalidUrlError: string;
+  };
+  news: {
+    newsList: {
+      heading: string;
+      addButton: string;
+      filterAllLabel: string;
+      filterNewsLabel: string;
+      filterEventLabel: string;
+      emptyState: string;
+      editButton: string;
+      publishAction: string;
+      pauseAction: string;
+      categoryBadgeNews: string;
+      categoryBadgeEvent: string;
+      publishedAtIndicator: (date: string) => string;
+      eventDateIndicator: (date: string) => string;
+    };
+    newsForm: {
+      editHeading: string;
+      newHeading: string;
+      categoryLabel: string;
+      categoryNewsOption: string;
+      categoryEventOption: string;
+      titleLabel: string;
+      slugLabel: string;
+      slugPatternError: string;
+      duplicateSlugError: string;
+      subtitleLabel: string;
+      descriptionLabel: string;
+      imageUrlLabel: string;
+      publishedAtLabel: string;
+      eventDateLabel: string;
+      eventDateRequiredError: string;
+      sourceLinksLabel: string;
+      saveButton: string;
+      publishButton: string;
+      cancelButton: string;
+      workingLanguageLabel: (languageName: string) => string;
+      suggestionLoadingText: string;
+      suggestionFailedNotice: string;
+      suggestionFailedDismiss: string;
+      previewButton: string;
+      acceptTranslationButton: string;
+      previewLoadingText: string;
     };
   };
 }

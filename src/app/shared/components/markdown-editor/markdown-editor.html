@@ -2,13 +2,13 @@
   <div
     class="flex flex-wrap items-center gap-1"
     role="toolbar"
-    [attr.aria-label]="language.t().guide.markdownEditor.toolbarAriaLabel"
+    [attr.aria-label]="language.t().markdownEditor.toolbarAriaLabel"
   >
     <button
       mat-icon-button
       type="button"
       data-testid="bold-button"
-      [attr.aria-label]="language.t().guide.markdownEditor.boldLabel"
+      [attr.aria-label]="language.t().markdownEditor.boldLabel"
       [disabled]="previewing() || disabled()"
       (click)="applyBold()"
     >
@@ -18,7 +18,7 @@
       mat-icon-button
       type="button"
       data-testid="italic-button"
-      [attr.aria-label]="language.t().guide.markdownEditor.italicLabel"
+      [attr.aria-label]="language.t().markdownEditor.italicLabel"
       [disabled]="previewing() || disabled()"
       (click)="applyItalic()"
     >
@@ -28,7 +28,7 @@
       mat-icon-button
       type="button"
       data-testid="heading-button"
-      [attr.aria-label]="language.t().guide.markdownEditor.headingLabel"
+      [attr.aria-label]="language.t().markdownEditor.headingLabel"
       [disabled]="previewing() || disabled()"
       (click)="applyHeading()"
     >
@@ -38,7 +38,7 @@
       mat-icon-button
       type="button"
       data-testid="bulleted-list-button"
-      [attr.aria-label]="language.t().guide.markdownEditor.bulletedListLabel"
+      [attr.aria-label]="language.t().markdownEditor.bulletedListLabel"
       [disabled]="previewing() || disabled()"
       (click)="applyBulletedList()"
     >
@@ -48,7 +48,7 @@
       mat-icon-button
       type="button"
       data-testid="numbered-list-button"
-      [attr.aria-label]="language.t().guide.markdownEditor.numberedListLabel"
+      [attr.aria-label]="language.t().markdownEditor.numberedListLabel"
       [disabled]="previewing() || disabled()"
       (click)="applyNumberedList()"
     >
@@ -58,7 +58,7 @@
       mat-icon-button
       type="button"
       data-testid="link-button"
-      [attr.aria-label]="language.t().guide.markdownEditor.linkLabel"
+      [attr.aria-label]="language.t().markdownEditor.linkLabel"
       [disabled]="previewing() || disabled()"
       (click)="applyLink()"
     >
@@ -73,7 +73,7 @@
       [attr.aria-pressed]="previewing()"
       (click)="togglePreview()"
     >
-      {{ previewing() ? language.t().guide.markdownEditor.editButton : language.t().guide.markdownEditor.previewButton }}
+      {{ previewing() ? language.t().markdownEditor.editButton : language.t().markdownEditor.previewButton }}
     </button>
   </div>
 
@@ -96,7 +96,7 @@
     ></textarea>
     @if (maxLength(); as max) {
       <span data-testid="markdown-char-counter" class="self-end text-xs text-gray-500">{{
-        language.t().guide.fieldLimits.charactersRemaining(charactersRemaining())
+        language.t().fieldLimits.charactersRemaining(charactersRemaining())
       }}</span>
     }
   }

@@ -5,6 +5,7 @@ export const en: Translations = {
     appTitle: 'maplibera-backoffice',
     sectionsLink: 'Sections',
     resourcesLink: 'Resources',
+    newsLink: 'News & Events',
   },
   languageTags: {
     untranslatedAria: (languageName) => `${languageName} not translated yet`,
@@ -14,6 +15,26 @@ export const en: Translations = {
       `Remove the ${languageName} translation? Its content in that language will be lost.`,
     removeConfirmConfirmButton: 'Remove',
     removeConfirmCancelButton: 'Cancel',
+  },
+  markdownEditor: {
+    toolbarAriaLabel: 'Formatting',
+    boldLabel: 'Bold',
+    italicLabel: 'Italic',
+    headingLabel: 'Heading',
+    bulletedListLabel: 'Bulleted list',
+    numberedListLabel: 'Numbered list',
+    linkLabel: 'Link',
+    previewButton: 'Preview',
+    editButton: 'Edit',
+  },
+  stringListEditor: {
+    addRowButton: (itemLabel) => `+ Add ${itemLabel}`,
+    removeRowAria: 'Remove',
+    invalidUrlError: 'Enter a valid URL',
+  },
+  fieldLimits: {
+    charactersRemaining: (count) =>
+      count === 1 ? '1 character remaining' : `${count} characters remaining`,
   },
   guide: {
     sectionsList: {
@@ -63,17 +84,6 @@ export const en: Translations = {
       acceptTranslationButton: 'Accept translation',
       previewLoadingText: 'Generating suggestion…',
     },
-    markdownEditor: {
-      toolbarAriaLabel: 'Formatting',
-      boldLabel: 'Bold',
-      italicLabel: 'Italic',
-      headingLabel: 'Heading',
-      bulletedListLabel: 'Bulleted list',
-      numberedListLabel: 'Numbered list',
-      linkLabel: 'Link',
-      previewButton: 'Preview',
-      editButton: 'Edit',
-    },
     questionEditor: {
       questionLabel: 'Question (optional)',
       questionTypeLabel: 'Question type *',
@@ -98,10 +108,6 @@ export const en: Translations = {
       correctAnswerAria: 'Correct answer',
       questionErrorText:
         "Complete the question type, every answer's text, and mark at least one correct answer.",
-    },
-    fieldLimits: {
-      charactersRemaining: (count) =>
-        count === 1 ? '1 character remaining' : `${count} characters remaining`,
     },
   },
   resources: {
@@ -173,10 +179,51 @@ export const en: Translations = {
         iconUrlLabel: 'Icon URL',
       },
     },
-    stringListEditor: {
-      addRowButton: (itemLabel) => `+ Add ${itemLabel}`,
-      removeRowAria: 'Remove',
-      invalidUrlError: 'Enter a valid URL',
+  },
+  news: {
+    newsList: {
+      heading: 'News & Events',
+      addButton: '+ Add',
+      filterAllLabel: 'All',
+      filterNewsLabel: 'News',
+      filterEventLabel: 'Events',
+      emptyState: 'No news or events yet. Create the first one to get started.',
+      editButton: 'Edit',
+      publishAction: 'Publish',
+      pauseAction: 'Pause',
+      categoryBadgeNews: 'News',
+      categoryBadgeEvent: 'Event',
+      publishedAtIndicator: (date) => `Published: ${date}`,
+      eventDateIndicator: (date) => `Event: ${date}`,
+    },
+    newsForm: {
+      editHeading: 'Edit news item',
+      newHeading: 'New news item',
+      categoryLabel: 'Category',
+      categoryNewsOption: 'News',
+      categoryEventOption: 'Event',
+      titleLabel: 'Title',
+      slugLabel: 'Slug',
+      slugPatternError: 'Use lowercase letters, numbers, and hyphens only',
+      duplicateSlugError: 'A news item with this slug already exists',
+      subtitleLabel: 'Subtitle',
+      descriptionLabel: 'Description',
+      imageUrlLabel: 'Featured image URL',
+      publishedAtLabel: 'Publication date',
+      eventDateLabel: 'Event date',
+      eventDateRequiredError: 'Enter the event date',
+      sourceLinksLabel: 'Reference links / sources',
+      saveButton: 'Save',
+      publishButton: 'Publish',
+      cancelButton: 'Cancel',
+      workingLanguageLabel: (languageName) => `Working language: ${languageName}`,
+      suggestionLoadingText: 'Generating a suggested translation…',
+      suggestionFailedNotice:
+        'Automatic translation failed. Showing the original text for you to translate manually.',
+      suggestionFailedDismiss: 'Dismiss',
+      previewButton: 'Preview',
+      acceptTranslationButton: 'Accept translation',
+      previewLoadingText: 'Generating suggestion…',
     },
   },
 };

@@ -387,7 +387,7 @@ describe('SectionFormDrawer', () => {
       fixture.detectChanges();
 
       expect(fixture.nativeElement.textContent).toContain(
-        language.t().guide.fieldLimits.charactersRemaining(TITLE_MAX_LENGTH - 5),
+        language.t().fieldLimits.charactersRemaining(TITLE_MAX_LENGTH - 5),
       );
     });
   });

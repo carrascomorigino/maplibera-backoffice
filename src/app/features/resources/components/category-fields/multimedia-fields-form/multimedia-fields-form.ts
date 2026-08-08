@@ -15,7 +15,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MultimediaType } from '../../../models/resource.model';
-import { URL_PATTERN } from '../../../../guide/utils/patterns';
+import { URL_PATTERN } from '../../../../../shared/utils/patterns';
 import { LanguageService } from '../../../../../core/i18n/language.service';
 
 export interface MultimediaFieldsValue {

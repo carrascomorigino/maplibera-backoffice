@@ -27,7 +27,7 @@
       <mat-label>{{ language.t().guide.sectionForm.titleLabel }}</mat-label>
       <input matInput formControlName="title" [maxlength]="titleMaxLength" />
       <mat-hint align="end">{{
-        language.t().guide.fieldLimits.charactersRemaining(titleMaxLength - form.controls.title.value.length)
+        language.t().fieldLimits.charactersRemaining(titleMaxLength - form.controls.title.value.length)
       }}</mat-hint>
     </mat-form-field>
 

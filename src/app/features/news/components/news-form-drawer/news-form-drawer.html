@@ -1,0 +1,176 @@
+<form
+  [formGroup]="form"
+  class="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden sm:w-[26rem]"
+>
+  <div class="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden p-6">
+    <h2 class="text-lg font-semibold">
+      {{ item() ? language.t().news.newsForm.editHeading : language.t().news.newsForm.newHeading }}
+    </h2>
+
+    <span data-testid="working-language-indicator" class="w-fit rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+      {{ language.t().news.newsForm.workingLanguageLabel(contentLanguageLabels[targetLanguage()]) }}
+    </span>
+
+    @if (loading()) {
+      <p data-testid="suggestion-loading" class="text-sm text-gray-500">
+        {{ language.t().news.newsForm.suggestionLoadingText }}
+      </p>
+    }
+
+    @if (staleSourceLanguage() && staleSuggestionLoading()) {
+      <p data-testid="stale-preview-loading" class="text-sm text-gray-500">
+        {{ language.t().news.newsForm.previewLoadingText }}
+      </p>
+    }
+
+    <fieldset class="flex min-w-0 flex-col gap-2">
+      <legend class="text-sm font-medium text-gray-700">{{ language.t().news.newsForm.categoryLabel }}</legend>
+      <label class="flex items-center gap-2">
+        <input
+          type="radio"
+          name="category"
+          data-testid="category-news"
+          [checked]="form.controls.category.value === 'news'"
+          [disabled]="form.controls.category.disabled"
+          (change)="form.controls.category.setValue('news')"
+        />
+        {{ language.t().news.newsForm.categoryNewsOption }}
+      </label>
+      <label class="flex items-center gap-2">
+        <input
+          type="radio"
+          name="category"
+          data-testid="category-event"
+          [checked]="form.controls.category.value === 'event'"
+          [disabled]="form.controls.category.disabled"
+          (change)="form.controls.category.setValue('event')"
+        />
+        {{ language.t().news.newsForm.categoryEventOption }}
+      </label>
+    </fieldset>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().news.newsForm.titleLabel }}</mat-label>
+      <input matInput formControlName="title" />
+    </mat-form-field>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().news.newsForm.slugLabel }}</mat-label>
+      <input matInput formControlName="slug" />
+      @if (form.controls.slug.hasError('pattern')) {
+        <mat-error>{{ language.t().news.newsForm.slugPatternError }}</mat-error>
+      } @else if (form.controls.slug.hasError('duplicateSlug')) {
+        <mat-error>{{ language.t().news.newsForm.duplicateSlugError }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().news.newsForm.subtitleLabel }}</mat-label>
+      <input matInput formControlName="subtitle" />
+    </mat-form-field>
+
+    @if (staleSourceLanguage() && suggestionDiffers()) {
+      <div class="flex flex-col gap-1">
+        @if (!previewRevealed()) {
+          <button
+            mat-stroked-button
+            type="button"
+            data-testid="preview-button"
+            (click)="previewStaleSuggestion()"
+          >
+            {{ language.t().news.newsForm.previewButton }}
+          </button>
+        }
+        @if (previewRevealed()) {
+          <div
+            data-testid="suggestion-preview-panel"
+            class="flex items-center justify-between gap-2 rounded border border-amber-200 bg-amber-50 p-2 text-sm"
+          >
+            <span>{{ staleSuggestion()?.title }}</span>
+            <button
+              mat-stroked-button
+              type="button"
+              data-testid="accept-suggestion-button"
+              (click)="acceptSuggestion()"
+            >
+              {{ language.t().news.newsForm.acceptTranslationButton }}
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    <div class="min-w-0">
+      <label data-testid="description-label" class="mb-1 block text-sm font-medium text-gray-700">
+        {{ language.t().news.newsForm.descriptionLabel }}
+      </label>
+      <app-markdown-editor formControlName="description" />
+    </div>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().news.newsForm.imageUrlLabel }}</mat-label>
+      <input matInput formControlName="imageUrl" />
+    </mat-form-field>
+
+    @if (form.controls.imageUrl.valid && form.controls.imageUrl.value) {
+      <img
+        data-testid="image-preview"
+        [src]="form.controls.imageUrl.value"
+        alt=""
+        class="h-32 w-32 rounded object-cover"
+      />
+    }
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().news.newsForm.publishedAtLabel }}</mat-label>
+      <input matInput type="date" formControlName="publishedAt" />
+    </mat-form-field>
+
+    @if (form.controls.category.value === 'event') {
+      <mat-form-field class="min-w-0">
+        <mat-label>{{ language.t().news.newsForm.eventDateLabel }}</mat-label>
+        <input matInput type="date" formControlName="eventDate" />
+        @if (form.controls.eventDate.hasError('eventDateRequired')) {
+          <mat-error>{{ language.t().news.newsForm.eventDateRequiredError }}</mat-error>
+        }
+      </mat-form-field>
+    }
+
+    <div>
+      <label class="mb-1 block text-sm font-medium text-gray-700">
+        {{ language.t().news.newsForm.sourceLinksLabel }}
+      </label>
+      <app-string-list-editor
+        formControlName="sourceLinks"
+        [urlMode]="true"
+        [addButtonLabel]="language.t().stringListEditor.addRowButton(language.t().news.newsForm.sourceLinksLabel)"
+      />
+    </div>
+  </div>
+
+  <div class="flex gap-2 border-t border-gray-200 p-6">
+    <button
+      mat-flat-button
+      type="button"
+      data-testid="save-button"
+      [disabled]="form.invalid"
+      (click)="save()"
+    >
+      {{ language.t().news.newsForm.saveButton }}
+    </button>
+    @if (!item()) {
+      <button
+        mat-flat-button
+        type="button"
+        data-testid="publish-button"
+        [disabled]="form.invalid"
+        (click)="publish()"
+      >
+        {{ language.t().news.newsForm.publishButton }}
+      </button>
+    }
+    <button mat-stroked-button type="button" data-testid="cancel-button" (click)="cancel()">
+      {{ language.t().news.newsForm.cancelButton }}
+    </button>
+  </div>
+</form>

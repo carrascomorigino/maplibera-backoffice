@@ -13,7 +13,7 @@ import {
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { StringListEditor } from '../../string-list-editor/string-list-editor';
+import { StringListEditor } from '../../../../../shared/components/string-list-editor/string-list-editor';
 import { LanguageService } from '../../../../../core/i18n/language.service';
 
 export interface RecipeFieldsValue {

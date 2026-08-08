@@ -13,8 +13,8 @@ import { NutritionFieldsForm } from '../category-fields/nutrition-fields-form/nu
 import { RecipeFieldsForm } from '../category-fields/recipe-fields-form/recipe-fields-form';
 import { MultimediaFieldsForm } from '../category-fields/multimedia-fields-form/multimedia-fields-form';
 import { AppFieldsForm } from '../category-fields/app-fields-form/app-fields-form';
-import { slugify } from '../../../guide/utils/slugify';
-import { SLUG_PATTERN } from '../../../guide/utils/patterns';
+import { slugify } from '../../../../shared/utils/slugify';
+import { SLUG_PATTERN } from '../../../../shared/utils/patterns';
 import { LanguageService } from '../../../../core/i18n/language.service';
 
 const SHARED_FIELD_KEYS: Record<ResourceCategory, readonly string[]> = {

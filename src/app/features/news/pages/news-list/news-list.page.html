@@ -1,0 +1,51 @@
+<mat-drawer-container class="h-full">
+  <mat-drawer #drawer mode="over" position="end" [opened]="isDrawerOpen()" (closedStart)="onCancelled()">
+    @if (isDrawerOpen()) {
+      <app-news-form-drawer
+        [item]="drawerItem()"
+        [targetLanguage]="drawerTargetLanguage()"
+        [sourceLanguage]="drawerSourceLanguage()"
+        [staleSourceLanguage]="drawerStaleSourceLanguage()"
+        (saved)="onSaved()"
+        (cancelled)="onCancelled()"
+      />
+    }
+  </mat-drawer>
+
+  <mat-drawer-content class="p-6">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-4">
+      <h1 class="text-xl font-semibold">{{ language.t().news.newsList.heading }}</h1>
+
+      <mat-button-toggle-group
+        [value]="activeFilter()"
+        (change)="activeFilter.set($event.value)"
+        aria-label="Filter"
+      >
+        <mat-button-toggle value="all" data-testid="filter-all">
+          {{ language.t().news.newsList.filterAllLabel }}
+        </mat-button-toggle>
+        @for (category of categories; track category) {
+          <mat-button-toggle [value]="category" [attr.data-testid]="'filter-' + category">
+            {{ filterLabel(category) }}
+          </mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+
+      <button mat-flat-button type="button" data-testid="add-button" (click)="openCreate()">
+        {{ language.t().news.newsList.addButton }}
+      </button>
+    </div>
+
+    @if (visibleItems().length === 0) {
+      <p data-testid="empty-state" class="text-gray-600">
+        {{ language.t().news.newsList.emptyState }}
+      </p>
+    } @else {
+      <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))">
+        @for (item of visibleItems(); track item.slug) {
+          <app-news-card [item]="item" (editRequested)="openEdit($event)" (translateRequested)="openTranslate($event)" />
+        }
+      </div>
+    }
+  </mat-drawer-content>
+</mat-drawer-container>

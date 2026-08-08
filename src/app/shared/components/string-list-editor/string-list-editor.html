@@ -9,14 +9,14 @@
           (blur)="onBlur()"
         />
         @if (urlMode() && row.hasError('pattern')) {
-          <mat-error>{{ language.t().resources.stringListEditor.invalidUrlError }}</mat-error>
+          <mat-error>{{ language.t().stringListEditor.invalidUrlError }}</mat-error>
         }
       </mat-form-field>
       <button
         mat-icon-button
         type="button"
         data-testid="string-list-remove-button"
-        [attr.aria-label]="language.t().resources.stringListEditor.removeRowAria"
+        [attr.aria-label]="language.t().stringListEditor.removeRowAria"
         (click)="removeRow($index)"
       >
         <mat-icon>close</mat-icon>
