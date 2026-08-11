@@ -1,0 +1,67 @@
+<mat-drawer-container class="h-full">
+  <mat-drawer #drawer mode="over" position="end" [opened]="isDrawerOpen()" (closedStart)="onCancelled()">
+    @if (isDrawerOpen()) {
+      <app-organization-form-drawer
+        [organization]="drawerOrganization()"
+        [targetLanguage]="drawerTargetLanguage()"
+        [sourceLanguage]="drawerSourceLanguage()"
+        [staleSourceLanguage]="drawerStaleSourceLanguage()"
+        (saved)="onSaved()"
+        (cancelled)="onCancelled()"
+      />
+    }
+  </mat-drawer>
+
+  <mat-drawer-content class="p-6">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-4">
+      <h1 class="text-xl font-semibold">{{ language.t().organizations.organizationsList.heading }}</h1>
+
+      <mat-button-toggle-group
+        [value]="activeFilter()"
+        (change)="activeFilter.set($event.value)"
+        aria-label="Filter"
+      >
+        <mat-button-toggle value="all" data-testid="filter-all">
+          {{ language.t().organizations.organizationsList.filterAllLabel }}
+        </mat-button-toggle>
+        @for (type of types; track type) {
+          <mat-button-toggle [value]="type" [attr.data-testid]="'filter-' + type">
+            {{ filterLabel(type) }}
+          </mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+
+      <button mat-flat-button type="button" data-testid="add-button" (click)="openCreate()">
+        {{ language.t().organizations.organizationsList.addButton }}
+      </button>
+    </div>
+
+    @if (visibleOrganizations().length === 0) {
+      <p data-testid="empty-state" class="text-gray-600">
+        {{ language.t().organizations.organizationsList.emptyState }}
+      </p>
+    } @else {
+      <ul
+        cdkDropList
+        [cdkDropListData]="visibleOrganizations()"
+        [cdkDropListDisabled]="activeFilter() !== 'all'"
+        class="flex flex-col gap-2"
+        (cdkDropListDropped)="onDrop($event)"
+      >
+        @for (org of visibleOrganizations(); track org.slug) {
+          <li
+            cdkDrag
+            tabindex="0"
+            [attr.aria-label]="language.t().organizations.organizationsList.reorderAriaLabel(org.slug)"
+          >
+            <app-organization-list-item
+              [organization]="org"
+              (editRequested)="openEdit($event)"
+              (translateRequested)="openTranslate($event)"
+            />
+          </li>
+        }
+      </ul>
+    }
+  </mat-drawer-content>
+</mat-drawer-container>
