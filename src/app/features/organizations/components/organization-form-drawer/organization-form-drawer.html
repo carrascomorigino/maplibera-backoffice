@@ -1,0 +1,275 @@
+<form
+  [formGroup]="form"
+  class="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden sm:w-[26rem]"
+>
+  <div class="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden p-6">
+    <h2 class="text-lg font-semibold">
+      {{
+        organization()
+          ? language.t().organizations.organizationForm.editHeading
+          : language.t().organizations.organizationForm.newHeading
+      }}
+    </h2>
+
+    <span data-testid="working-language-indicator" class="w-fit rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+      {{ language.t().organizations.organizationForm.workingLanguageLabel(contentLanguageLabels[targetLanguage()]) }}
+    </span>
+
+    @if (loading()) {
+      <p data-testid="suggestion-loading" class="text-sm text-gray-500">
+        {{ language.t().organizations.organizationForm.suggestionLoadingText }}
+      </p>
+    }
+
+    @if (staleSourceLanguage() && staleSuggestionLoading()) {
+      <p data-testid="stale-preview-loading" class="text-sm text-gray-500">
+        {{ language.t().organizations.organizationForm.previewLoadingText }}
+      </p>
+    }
+
+    <fieldset class="flex min-w-0 flex-col gap-2">
+      <legend class="text-sm font-medium text-gray-700">{{ language.t().organizations.organizationForm.typeLabel }}</legend>
+      <label class="flex items-center gap-2">
+        <input
+          type="radio"
+          name="type"
+          data-testid="type-local-group"
+          [checked]="form.controls.type.value === 'local-group'"
+          [disabled]="form.controls.type.disabled"
+          (change)="form.controls.type.setValue('local-group')"
+        />
+        {{ language.t().organizations.organizationForm.typeLocalGroupOption }}
+      </label>
+      <label class="flex items-center gap-2">
+        <input
+          type="radio"
+          name="type"
+          data-testid="type-ngo"
+          [checked]="form.controls.type.value === 'ngo'"
+          [disabled]="form.controls.type.disabled"
+          (change)="form.controls.type.setValue('ngo')"
+        />
+        {{ language.t().organizations.organizationForm.typeNgoOption }}
+      </label>
+      <label class="flex items-center gap-2">
+        <input
+          type="radio"
+          name="type"
+          data-testid="type-social-network"
+          [checked]="form.controls.type.value === 'social-network'"
+          [disabled]="form.controls.type.disabled"
+          (change)="form.controls.type.setValue('social-network')"
+        />
+        {{ language.t().organizations.organizationForm.typeSocialNetworkOption }}
+      </label>
+      <label class="flex items-center gap-2">
+        <input
+          type="radio"
+          name="type"
+          data-testid="type-campaign"
+          [checked]="form.controls.type.value === 'campaign'"
+          [disabled]="form.controls.type.disabled"
+          (change)="form.controls.type.setValue('campaign')"
+        />
+        {{ language.t().organizations.organizationForm.typeCampaignOption }}
+      </label>
+    </fieldset>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().organizations.organizationForm.nameLabel }}</mat-label>
+      <input matInput formControlName="name" [maxlength]="nameMaxLength" />
+      <mat-hint align="end">{{
+        language.t().fieldLimits.charactersRemaining(nameMaxLength - form.controls.name.value.length)
+      }}</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().organizations.organizationForm.slugLabel }}</mat-label>
+      <input matInput formControlName="slug" />
+      @if (form.controls.slug.hasError('pattern')) {
+        <mat-error>{{ language.t().organizations.organizationForm.slugPatternError }}</mat-error>
+      } @else if (form.controls.slug.hasError('duplicateSlug')) {
+        <mat-error>{{ language.t().organizations.organizationForm.duplicateSlugError }}</mat-error>
+      }
+    </mat-form-field>
+
+    @if (staleSourceLanguage() && suggestionDiffers()) {
+      <div class="flex flex-col gap-1">
+        @if (!previewRevealed()) {
+          <button
+            mat-stroked-button
+            type="button"
+            data-testid="preview-button"
+            (click)="previewStaleSuggestion()"
+          >
+            {{ language.t().organizations.organizationForm.previewButton }}
+          </button>
+        }
+        @if (previewRevealed()) {
+          <div
+            data-testid="suggestion-preview-panel"
+            class="flex items-center justify-between gap-2 rounded border border-amber-200 bg-amber-50 p-2 text-sm"
+          >
+            <span>{{ staleSuggestion()?.name }}</span>
+            <button
+              mat-stroked-button
+              type="button"
+              data-testid="accept-suggestion-button"
+              (click)="acceptSuggestion()"
+            >
+              {{ language.t().organizations.organizationForm.acceptTranslationButton }}
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    <div class="min-w-0">
+      <label data-testid="description-label" class="mb-1 block text-sm font-medium text-gray-700">
+        {{ language.t().organizations.organizationForm.descriptionLabel }}
+      </label>
+      <app-markdown-editor formControlName="description" [maxLength]="descriptionMaxLength" />
+    </div>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().organizations.organizationForm.logoUrlLabel }}</mat-label>
+      <input matInput formControlName="logoUrl" />
+    </mat-form-field>
+
+    @if (form.controls.logoUrl.valid && form.controls.logoUrl.value) {
+      <img
+        data-testid="logo-preview"
+        [src]="form.controls.logoUrl.value"
+        alt=""
+        class="h-32 w-32 rounded object-cover"
+      />
+    }
+
+    <fieldset class="flex min-w-0 flex-col gap-2">
+      <legend class="text-sm font-medium text-gray-700">{{ language.t().organizations.organizationForm.scopeLabel }}</legend>
+      <label class="flex items-center gap-2">
+        <input
+          type="radio"
+          name="scopeType"
+          data-testid="scope-global"
+          [checked]="form.controls.scopeType.value === 'global'"
+          (change)="form.controls.scopeType.setValue('global')"
+        />
+        {{ language.t().organizations.organizationForm.scopeGlobalOption }}
+      </label>
+      <label class="flex items-center gap-2">
+        <input
+          type="radio"
+          name="scopeType"
+          data-testid="scope-country"
+          [checked]="form.controls.scopeType.value === 'country'"
+          (change)="form.controls.scopeType.setValue('country')"
+        />
+        {{ language.t().organizations.organizationForm.scopeCountryOption }}
+      </label>
+      <label class="flex items-center gap-2">
+        <input
+          type="radio"
+          name="scopeType"
+          data-testid="scope-city"
+          [checked]="form.controls.scopeType.value === 'city'"
+          (change)="form.controls.scopeType.setValue('city')"
+        />
+        {{ language.t().organizations.organizationForm.scopeCityOption }}
+      </label>
+
+      @if (form.controls.scopeType.value === 'country') {
+        <div class="flex min-w-0 flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700" for="country-select">{{
+            language.t().organizations.organizationForm.countryLabel
+          }}</label>
+          <select id="country-select" data-testid="country-select" formControlName="countryCode" class="rounded border border-gray-300 p-2">
+            <option [value]="null"></option>
+            @for (option of countryOptions; track option.code) {
+              <option [value]="option.code">{{ option.label }}</option>
+            }
+          </select>
+          @if (form.controls.countryCode.hasError('countryCodeRequired')) {
+            <mat-error>{{ language.t().organizations.organizationForm.countryRequiredError }}</mat-error>
+          }
+        </div>
+      }
+
+      @if (form.controls.scopeType.value === 'city') {
+        <mat-form-field class="min-w-0">
+          <mat-label>{{ language.t().organizations.organizationForm.cityLabel }}</mat-label>
+          <input matInput formControlName="city" data-testid="city-input" />
+          @if (form.controls.city.hasError('cityRequired')) {
+            <mat-error>{{ language.t().organizations.organizationForm.cityRequiredError }}</mat-error>
+          }
+        </mat-form-field>
+      }
+    </fieldset>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().organizations.organizationForm.websiteLabel }}</mat-label>
+      <input matInput formControlName="website" />
+      @if (form.controls.website.hasError('pattern')) {
+        <mat-error>{{ language.t().stringListEditor.invalidUrlError }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().organizations.organizationForm.instagramLabel }}</mat-label>
+      <input matInput formControlName="instagram" />
+      @if (form.controls.instagram.hasError('pattern')) {
+        <mat-error>{{ language.t().stringListEditor.invalidUrlError }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().organizations.organizationForm.telegramLabel }}</mat-label>
+      <input matInput formControlName="telegram" />
+      @if (form.controls.telegram.hasError('pattern')) {
+        <mat-error>{{ language.t().stringListEditor.invalidUrlError }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().organizations.organizationForm.whatsappLabel }}</mat-label>
+      <input matInput formControlName="whatsapp" />
+      @if (form.controls.whatsapp.hasError('pattern')) {
+        <mat-error>{{ language.t().stringListEditor.invalidUrlError }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().organizations.organizationForm.volunteerFormUrlLabel }}</mat-label>
+      <input matInput formControlName="volunteerFormUrl" />
+      @if (form.controls.volunteerFormUrl.hasError('pattern')) {
+        <mat-error>{{ language.t().stringListEditor.invalidUrlError }}</mat-error>
+      }
+    </mat-form-field>
+  </div>
+
+  <div class="flex gap-2 border-t border-gray-200 p-6">
+    <button
+      mat-flat-button
+      type="button"
+      data-testid="save-button"
+      [disabled]="form.invalid"
+      (click)="save()"
+    >
+      {{ language.t().organizations.organizationForm.saveButton }}
+    </button>
+    @if (!organization()) {
+      <button
+        mat-flat-button
+        type="button"
+        data-testid="publish-button"
+        [disabled]="form.invalid"
+        (click)="publish()"
+      >
+        {{ language.t().organizations.organizationForm.publishButton }}
+      </button>
+    }
+    <button mat-stroked-button type="button" data-testid="cancel-button" (click)="cancel()">
+      {{ language.t().organizations.organizationForm.cancelButton }}
+    </button>
+  </div>
+</form>
