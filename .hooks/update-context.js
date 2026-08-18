@@ -131,6 +131,14 @@ function collectDocs() {
 
 // ------------------------------------------------------------------ renderer
 
+// Local YYYY-MM-DD: git log dates below are local too, so a UTC stamp here would
+// read as a different day from the commits it summarises.
+function localDate() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 function bullets(items, empty = '_(none)_') {
   return items.length ? items.map((line) => `- ${line}`).join('\n') : empty;
 }
@@ -143,7 +151,7 @@ function render() {
   const deps = Object.entries(pkg.dependencies || {});
   const specCount = countFiles('src', (f) => f.endsWith('.spec.ts'));
   const head = gitInfo.commits[0];
-  const now = new Date().toISOString().slice(0, 10);
+  const now = localDate();
 
   const featureTable = features.length
     ? [
