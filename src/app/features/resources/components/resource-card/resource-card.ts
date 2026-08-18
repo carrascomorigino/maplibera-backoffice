@@ -32,7 +32,8 @@ export interface ResourceTranslateRequestedEvent {
   templateUrl: './resource-card.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    class: 'flex flex-col gap-2 rounded border border-gray-200 p-3',
+    class:
+      'flex flex-col gap-2 rounded-xl border border-ink-100 bg-surface-card p-3 shadow-[0_1px_2px_-1px_rgba(23,21,31,0.06),0_1px_3px_rgba(23,21,31,0.04)] transition-shadow hover:shadow-[0_2px_4px_-1px_rgba(23,21,31,0.08),0_4px_8px_rgba(23,21,31,0.05)]',
   },
 })
 export class ResourceCard {
@@ -141,11 +142,11 @@ export class ResourceCard {
   protected statusBadgeClass(status: ResourceStatus): string {
     switch (status) {
       case 'published':
-        return 'bg-green-100 text-green-800';
+        return 'bg-emerald-50 text-emerald-700';
       case 'paused':
-        return 'bg-amber-100 text-amber-800';
+        return 'bg-gold-100 text-gold-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-ink-100 text-ink-600';
     }
   }
 

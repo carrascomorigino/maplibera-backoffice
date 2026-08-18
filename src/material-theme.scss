@@ -10,13 +10,29 @@ html {
   @include mat.theme(
     (
       color: (
-        primary: mat.$azure-palette,
-        tertiary: mat.$blue-palette,
+        // Cyan is Material's closest built-in family to mapagino.com's brand teal
+        // (#41B7CB / #40B0D0 sampled from its nav and app icon).
+        primary: mat.$cyan-palette,
+        tertiary: mat.$yellow-palette,
       ),
       typography: Roboto,
       density: 0,
     )
   );
+
+  // Warm surface overrides so Material components sit on the same cream/ink
+  // world as the rest of the app, instead of Material's default cool neutrals —
+  // sampled from mapagino.com's cream background (#F8F7DB) and navy wordmark (#202030).
+  --mat-sys-surface: #faf9f5;
+  --mat-sys-surface-container-lowest: #ffffff;
+  --mat-sys-surface-container-low: #f8f7f2;
+  --mat-sys-surface-container: #f2f1ec;
+  --mat-sys-surface-container-high: #ebe9e1;
+  --mat-sys-surface-container-highest: #e4e2d8;
+  --mat-sys-on-surface: #17151f;
+  --mat-sys-on-surface-variant: #4f4c5c;
+  --mat-sys-outline: #918da0;
+  --mat-sys-outline-variant: #dcdae3;
 }
 
 body {

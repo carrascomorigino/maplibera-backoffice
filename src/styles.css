@@ -1,3 +1,67 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import 'tailwindcss';
+
+@theme {
+  /* Brand teal — sampled from mapagino.com (nav gradient #41B7CB, app icon #40B0D0) */
+  --color-brand-50: #eefaf9;
+  --color-brand-100: #d2f1ef;
+  --color-brand-200: #a6e3e1;
+  --color-brand-300: #72cdcc;
+  --color-brand-400: #43b3b9;
+  --color-brand-500: #279aa8;
+  --color-brand-600: #1c7c8c;
+  --color-brand-700: #196374;
+  --color-brand-800: #184e5c;
+  --color-brand-900: #17414d;
+
+  /* Gold accent — sampled from mapagino.com's app icon coin motif (#F0E030) */
+  --color-gold-50: #fdf8e9;
+  --color-gold-100: #faedc0;
+  --color-gold-200: #f5db8a;
+  --color-gold-300: #edc251;
+  --color-gold-400: #dea52c;
+  --color-gold-500: #c1861b;
+  --color-gold-600: #9a6816;
+  --color-gold-700: #7a5316;
+  --color-gold-800: #634418;
+  --color-gold-900: #533a19;
+
+  /* Ink — warm charcoal-navy neutral, echoes the mapagino wordmark (#202030) */
+  --color-ink-50: #f7f7fa;
+  --color-ink-100: #eeedf2;
+  --color-ink-200: #dcdae3;
+  --color-ink-300: #bfbcc9;
+  --color-ink-400: #918da0;
+  --color-ink-500: #6c6879;
+  --color-ink-600: #4f4c5c;
+  --color-ink-700: #3a3745;
+  --color-ink-800: #262432;
+  --color-ink-900: #17151f;
+
+  /* Warm surfaces — canvas/card/sunken, echoes the mapagino cream background (#F8F7DB) */
+  --color-surface: #faf9f5;
+  --color-surface-card: #ffffff;
+  --color-surface-sunken: #f1efe6;
+  --color-surface-muted: #f2f1ec;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background-color: var(--color-brand-200);
+  color: var(--color-brand-900);
+}
+
+/* Active nav link indicator — kept as a plain class (not a Tailwind arbitrary
+   utility) so it can be toggled via [class.x] without cascade-order collisions
+   against the sibling text-color utilities. */
+.shadow-nav-active {
+  box-shadow: inset 0 -2px 0 0 var(--color-brand-500);
+}

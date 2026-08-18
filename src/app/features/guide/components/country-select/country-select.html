@@ -4,7 +4,7 @@
       @for (option of selectedOptions(); track option.code) {
         <span
           [attr.data-testid]="'country-chip-' + option.code"
-          class="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700"
+          class="flex items-center gap-1 rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700"
         >
           {{ option.label }}
           <button
@@ -37,7 +37,7 @@
       [attr.placeholder]="language.t().guide.sectionForm.countryFilterPlaceholder"
       [value]="filterText()"
       [disabled]="disabled()"
-      class="w-full min-w-0 rounded border border-gray-300 p-2 text-sm"
+      class="w-full min-w-0 rounded-lg border border-ink-300 bg-surface-sunken p-2 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
       (input)="onFilterInput($any($event.target).value)"
       (keydown)="onFilterKeydown($event)"
       (focus)="onFocus()"
@@ -47,7 +47,7 @@
       <ul
         [attr.id]="inputId() + '-listbox'"
         role="listbox"
-        class="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded border border-gray-300 bg-white text-sm shadow"
+        class="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-ink-200 bg-surface-card text-sm shadow-[0_4px_12px_-2px_rgba(23,21,31,0.12)]"
       >
         @for (option of filteredOptions(); track option.code; let i = $index) {
           <li
@@ -55,8 +55,8 @@
             role="option"
             [attr.aria-selected]="i === highlightedIndex()"
             [attr.data-testid]="'country-option-' + option.code"
-            class="cursor-pointer px-2 py-1"
-            [class.bg-blue-50]="i === highlightedIndex()"
+            class="cursor-pointer px-2 py-1 text-ink-800"
+            [class.bg-brand-50]="i === highlightedIndex()"
             (mousedown)="$event.preventDefault()"
             (click)="select(option.code)"
           >

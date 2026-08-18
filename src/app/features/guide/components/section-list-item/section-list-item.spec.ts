@@ -182,7 +182,7 @@ describe('SectionListItem', () => {
   });
 
   describe('language tags', () => {
-    it("reflects the section's translated languages as colored tags and the rest as gray", () => {
+    it("reflects the section's translated languages as colored tags and the rest as untranslated", () => {
       language.setLanguage('en');
       const created = twoLanguageSection();
       service.saveTranslation(created.slug, {
@@ -195,9 +195,9 @@ describe('SectionListItem', () => {
 
       const fixture = createFixture(section);
 
-      expect(languageTag(fixture, 'en').className).not.toContain('gray');
-      expect(languageTag(fixture, 'es').className).not.toContain('gray');
-      expect(languageTag(fixture, 'fr').className).toContain('gray');
+      expect(languageTag(fixture, 'en').className).not.toContain('ink');
+      expect(languageTag(fixture, 'es').className).not.toContain('ink');
+      expect(languageTag(fixture, 'fr').className).toContain('ink');
     });
 
     it('renders after the title and question summary, not beside the title', () => {

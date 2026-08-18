@@ -15,21 +15,21 @@
 
   @if (form.controls.text.value.trim()) {
     <div class="min-w-0">
-      <label class="mb-1 block text-sm font-medium text-gray-700">{{
+      <label class="mb-1 block text-sm font-medium text-ink-700">{{
         language.t().guide.questionEditor.detailLabel
       }}</label>
       <app-markdown-editor formControlName="detail" [maxLength]="questionDetailMaxLength" />
     </div>
 
     <div class="flex min-w-0 flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700" for="question-type-select">{{
+      <label class="text-sm font-medium text-ink-700" for="question-type-select">{{
         language.t().guide.questionEditor.questionTypeLabel
       }}</label>
       <select
         id="question-type-select"
         data-testid="question-type-select"
         formControlName="type"
-        class="w-full min-w-0 rounded border border-gray-300 p-2 text-sm"
+        class="w-full min-w-0 rounded-lg border border-ink-300 bg-surface-sunken p-2 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
       >
         <option value="" disabled>{{ language.t().guide.questionEditor.selectTypePlaceholder }}</option>
         <option value="yes-no">{{ language.t().guide.questionEditor.typeYesNo }}</option>
@@ -40,7 +40,7 @@
 
     @if (form.controls.type.value === 'yes-no') {
       <fieldset class="flex min-w-0 flex-col gap-2">
-        <legend class="text-sm font-medium text-gray-700">{{
+        <legend class="text-sm font-medium text-ink-700">{{
           language.t().guide.questionEditor.correctAnswerLegend
         }}</legend>
         <label class="flex items-center gap-2">
@@ -72,7 +72,7 @@
           <div
             [formGroup]="row"
             [attr.data-testid]="'answer-row-' + i"
-            class="flex min-w-0 flex-col gap-2 rounded border border-gray-200 p-3"
+            class="flex min-w-0 flex-col gap-2 rounded-lg border border-ink-200 bg-surface-muted p-3"
           >
             <div class="flex min-w-0 items-start gap-2">
               @if (form.controls.type.value === 'single') {
@@ -202,7 +202,7 @@
         }
 
         @if (form.invalid) {
-          <p class="text-sm text-red-600" data-testid="question-error">
+          <p class="text-sm text-red-700" data-testid="question-error">
             {{ language.t().guide.questionEditor.questionErrorText }}
           </p>
         }

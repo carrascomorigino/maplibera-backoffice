@@ -7,7 +7,10 @@ import { LanguageToggle } from './core/i18n/components/language-toggle/language-
   selector: 'app-root',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, LanguageToggle],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.css',
+  host: {
+    class: 'flex h-full flex-col bg-surface',
+  },
 })
 export class App {
   protected readonly language = inject(LanguageService);

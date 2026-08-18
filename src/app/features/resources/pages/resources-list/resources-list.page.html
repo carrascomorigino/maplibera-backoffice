@@ -13,9 +13,11 @@
     }
   </mat-drawer>
 
-  <mat-drawer-content class="p-6">
-    <div class="mb-4 flex flex-wrap items-center justify-between gap-4">
-      <h1 class="text-xl font-semibold">{{ language.t().resources.resourcesList.heading }}</h1>
+  <mat-drawer-content class="p-6 md:p-8">
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <h1 class="text-2xl font-semibold tracking-tight text-ink-900">
+        {{ language.t().resources.resourcesList.heading }}
+      </h1>
 
       <mat-button-toggle-group
         [value]="activeFilter()"
@@ -47,11 +49,16 @@
     </div>
 
     @for (category of visibleCategories(); track category) {
-      <section [attr.data-testid]="'category-section-' + category" class="mb-8">
-        <h2 class="mb-3 text-lg font-semibold">{{ categoryHeading(category) }}</h2>
+      <section [attr.data-testid]="'category-section-' + category" class="mb-10">
+        <h2 class="mb-3 text-base font-semibold tracking-tight text-ink-800">
+          {{ categoryHeading(category) }}
+        </h2>
 
         @if (resourcesByCategory()[category].length === 0) {
-          <p [attr.data-testid]="'empty-category-' + category" class="text-gray-600">
+          <p
+            [attr.data-testid]="'empty-category-' + category"
+            class="rounded-xl border border-dashed border-ink-200 bg-surface-muted p-8 text-center text-sm text-ink-500"
+          >
             {{ language.t().resources.resourcesList.emptyCategoryState }}
           </p>
         } @else {

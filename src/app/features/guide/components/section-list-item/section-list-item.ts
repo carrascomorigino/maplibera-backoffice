@@ -139,11 +139,11 @@ export class SectionListItem {
   protected statusBadgeClass(status: SectionStatus): string {
     switch (status) {
       case 'published':
-        return 'bg-green-100 text-green-800';
+        return 'bg-emerald-50 text-emerald-700';
       case 'paused':
-        return 'bg-amber-100 text-amber-800';
+        return 'bg-gold-100 text-gold-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-ink-100 text-ink-600';
     }
   }
 

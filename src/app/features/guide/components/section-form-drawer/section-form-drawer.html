@@ -3,22 +3,22 @@
   class="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden sm:w-[26rem]"
 >
   <div class="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden p-6">
-    <h2 class="text-lg font-semibold">
+    <h2 class="text-lg font-semibold tracking-tight text-ink-900">
       {{ section() ? language.t().guide.sectionForm.editHeading : language.t().guide.sectionForm.newHeading }}
     </h2>
 
-    <span data-testid="working-language-indicator" class="w-fit rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+    <span data-testid="working-language-indicator" class="w-fit rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700">
       {{ language.t().guide.sectionForm.workingLanguageLabel(contentLanguageLabels[targetLanguage()]) }}
     </span>
 
     @if (loading()) {
-      <p data-testid="suggestion-loading" class="text-sm text-gray-500">
+      <p data-testid="suggestion-loading" class="text-sm text-ink-500">
         {{ language.t().guide.sectionForm.suggestionLoadingText }}
       </p>
     }
 
     @if (staleSourceLanguage() && staleSuggestionLoading()) {
-      <p data-testid="stale-preview-loading" class="text-sm text-gray-500">
+      <p data-testid="stale-preview-loading" class="text-sm text-ink-500">
         {{ language.t().guide.sectionForm.previewLoadingText }}
       </p>
     }
@@ -46,7 +46,7 @@
         @if (previewRevealed()) {
           <div
             data-testid="title-preview-panel"
-            class="flex items-center justify-between gap-2 rounded border border-amber-200 bg-amber-50 p-2 text-sm"
+            class="flex items-center justify-between gap-2 rounded-lg border border-gold-200 bg-gold-50 p-2 text-sm"
           >
             <span>{{ staleSuggestion()?.title }}</span>
             <button
@@ -75,7 +75,7 @@
     <div class="min-w-0">
       <label
         data-testid="description-label"
-        class="mb-1 block text-sm font-medium text-gray-700"
+        class="mb-1 block text-sm font-medium text-ink-700"
         >{{ language.t().guide.sectionForm.descriptionLabel }}</label
       >
       <app-markdown-editor formControlName="description" [maxLength]="descriptionMaxLength" />
@@ -96,7 +96,7 @@
         @if (previewRevealed()) {
           <div
             data-testid="description-preview-panel"
-            class="flex items-center justify-between gap-2 rounded border border-amber-200 bg-amber-50 p-2 text-sm"
+            class="flex items-center justify-between gap-2 rounded-lg border border-gold-200 bg-gold-50 p-2 text-sm"
           >
             <span>{{ staleSuggestion()?.description }}</span>
             <button
@@ -122,12 +122,12 @@
         data-testid="image-preview"
         [src]="form.controls.imageUrl.value"
         alt=""
-        class="h-32 w-32 rounded object-cover"
+        class="h-32 w-32 rounded-lg object-cover"
       />
     }
 
     <fieldset class="flex min-w-0 flex-col gap-2">
-      <legend class="text-sm font-medium text-gray-700">{{
+      <legend class="text-sm font-medium text-ink-700">{{
         language.t().guide.sectionForm.countryScopeLabel
       }}</legend>
       <label class="flex items-center gap-2">
@@ -153,7 +153,7 @@
 
       @if (form.controls.countryScope.value === 'specific') {
         <div class="flex min-w-0 flex-col gap-1">
-          <label class="text-sm font-medium text-gray-700" for="countries-select">{{
+          <label class="text-sm font-medium text-ink-700" for="countries-select">{{
             language.t().guide.sectionForm.countriesLabel
           }}</label>
           <app-country-select id="countries-select" formControlName="countries" />
@@ -179,7 +179,7 @@
         @if (previewRevealed()) {
           <div
             data-testid="question-preview-panel"
-            class="flex items-center justify-between gap-2 rounded border border-amber-200 bg-amber-50 p-2 text-sm"
+            class="flex items-center justify-between gap-2 rounded-lg border border-gold-200 bg-gold-50 p-2 text-sm"
           >
             <span>{{ staleSuggestion()?.question?.text }}</span>
             <button
@@ -198,7 +198,7 @@
     <app-question-editor formControlName="question" />
   </div>
 
-  <div class="flex gap-2 border-t border-gray-200 p-6">
+  <div class="flex gap-2 border-t border-ink-100 bg-surface-muted p-6">
     <button
       mat-flat-button
       type="button"

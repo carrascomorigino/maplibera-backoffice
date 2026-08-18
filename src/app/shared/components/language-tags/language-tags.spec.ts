@@ -30,11 +30,11 @@ describe('LanguageTags', () => {
     ) as HTMLButtonElement | null;
   }
 
-  it('renders a gray tag with no remove button for an untranslated language', () => {
+  it('renders an untranslated tag with no remove button for an untranslated language', () => {
     const fixture = createFixture({ translatedLanguages: ['en'], selectedLanguage: 'en' });
 
     const esTag = tag(fixture, 'es');
-    expect(esTag.className).toContain('gray');
+    expect(esTag.className).toContain('ink');
     expect(removeButton(fixture, 'es')).toBeNull();
   });
 
@@ -42,7 +42,7 @@ describe('LanguageTags', () => {
     const fixture = createFixture({ translatedLanguages: ['en', 'es'], selectedLanguage: 'en' });
 
     const esTag = tag(fixture, 'es');
-    expect(esTag.className).not.toContain('gray');
+    expect(esTag.className).not.toContain('ink');
     expect(removeButton(fixture, 'es')).not.toBeNull();
   });
 
