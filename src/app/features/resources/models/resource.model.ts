@@ -5,6 +5,8 @@ export type ResourceStatus = 'draft' | 'published' | 'paused';
 export type MultimediaType = 'documentary' | 'book' | 'podcast';
 
 interface ResourceBase {
+  /** Stable backend identifier — unlike slug, this never changes on rename. */
+  id: string;
   slug: string;
   category: ResourceCategory;
   status: ResourceStatus;

@@ -198,19 +198,32 @@ export class OrganizationFormDrawer {
     this.form.patchValue({ name: suggestion.name, description: suggestion.description }, { emitEvent: false });
   }
 
-  protected save(): void {
-    this.persist();
-    this.saved.emit();
+  protected async save(): Promise<void> {
+    try {
+      await this.persist();
+      this.saved.emit();
+    } catch {
+      this.notifyActionFailed();
+    }
   }
 
-  protected publish(): void {
-    const slug = this.persist();
-    this.organizationService.publish(slug);
-    this.saved.emit();
+  protected async publish(): Promise<void> {
+    try {
+      const organization = await this.persist();
+      await this.organizationService.publish(organization.id);
+      this.saved.emit();
+    } catch {
+      this.notifyActionFailed();
+    }
   }
 
   protected cancel(): void {
     this.cancelled.emit();
+  }
+
+  private notifyActionFailed(): void {
+    const form = this.language.t().organizations.organizationForm;
+    this.snackBar.open(form.actionFailedNotice, form.actionFailedDismiss);
   }
 
   private requestSuggestion(
@@ -282,7 +295,7 @@ export class OrganizationFormDrawer {
     );
   }
 
-  private persist(): string {
+  private async persist(): Promise<Organization> {
     const {
       type,
       name,
@@ -316,9 +329,8 @@ export class OrganizationFormDrawer {
 
     const existing = this.organization();
     if (existing) {
-      this.organizationService.updateSharedFields(existing.slug, sharedFields);
-      this.organizationService.saveTranslation(existing.slug, this.targetLanguage(), translation, slug);
-      return slug;
+      await this.organizationService.updateSharedFields(existing.id, sharedFields);
+      return this.organizationService.saveTranslation(existing.id, this.targetLanguage(), translation, slug);
     }
 
     return this.organizationService.create({
@@ -327,6 +339,6 @@ export class OrganizationFormDrawer {
       sharedFields,
       language: this.targetLanguage(),
       translation,
-    }).slug;
+    });
   }
 }

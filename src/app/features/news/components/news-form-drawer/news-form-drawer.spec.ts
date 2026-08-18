@@ -5,29 +5,36 @@ import { NewsFormDrawer } from './news-form-drawer';
 import { NewsItemService } from '../../services/news-item.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { FakeNewsItemService, makeNewsItem } from '../../testing/fake-news-item-service';
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+async function settle(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+}
+
 describe('NewsFormDrawer', () => {
-  let service: NewsItemService;
+  let service: FakeNewsItemService;
   let language: LanguageService;
   let suggestionService: { suggest: ReturnType<typeof vi.fn> };
   let snackBarOpen: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    localStorage.clear();
+    service = new FakeNewsItemService();
     suggestionService = { suggest: vi.fn() };
     snackBarOpen = vi.fn();
     TestBed.configureTestingModule({
       providers: [
         provideNoopAnimations(),
+        { provide: NewsItemService, useValue: service },
         { provide: TranslationSuggestionService, useValue: suggestionService },
         { provide: MatSnackBar, useValue: { open: snackBarOpen } },
       ],
     });
-    service = TestBed.inject(NewsItemService);
     language = TestBed.inject(LanguageService);
   });
 
@@ -55,6 +62,16 @@ describe('NewsFormDrawer', () => {
     component.form.controls.imageUrl.setValue('https://example.com/banner.jpg');
   }
 
+  function existingItem() {
+    const item = makeNewsItem({
+      slug: 'existing',
+      publishedAt: todayIso(),
+      translations: { en: { title: 'Existing', subtitle: 'Sub', description: 'Desc' } },
+    });
+    service.seed([item]);
+    return item;
+  }
+
   it('defaults category to news and publishedAt to today', () => {
     const fixture = createFixture();
     const component = fixture.componentInstance;
@@ -67,13 +84,7 @@ describe('NewsFormDrawer', () => {
     const createFixtureInstance = createFixture();
     expect(createFixtureInstance.componentInstance.form.controls.category.disabled).toBe(false);
 
-    const created = service.create({
-      category: 'news',
-      slug: 'existing',
-      sharedFields: { imageUrl: '', publishedAt: todayIso(), sourceLinks: [] },
-      language: 'en',
-      translation: { title: 'Existing', subtitle: 'Sub', description: 'Desc' },
-    });
+    const created = existingItem();
     const editFixture = TestBed.createComponent(NewsFormDrawer);
     editFixture.componentRef.setInput('item', created);
     editFixture.componentRef.setInput('targetLanguage', 'en');
@@ -116,7 +127,7 @@ describe('NewsFormDrawer', () => {
     expect(buttons(fixture).save.disabled).toBe(false);
   });
 
-  it('creates a draft news item on Save', () => {
+  it('creates a draft news item on Save', async () => {
     const fixture = createFixture();
     const component = fixture.componentInstance;
     let saved = false;
@@ -125,6 +136,7 @@ describe('NewsFormDrawer', () => {
     fillRequiredFields(component);
     fixture.detectChanges();
     buttons(fixture).save.click();
+    await settle();
 
     expect(service.items()).toHaveLength(1);
     expect(service.items()[0].category).toBe('news');
@@ -133,7 +145,7 @@ describe('NewsFormDrawer', () => {
     expect(saved).toBe(true);
   });
 
-  it('creates an event with its eventDate on Save', () => {
+  it('creates an event with its eventDate on Save', async () => {
     const fixture = createFixture();
     const component = fixture.componentInstance;
 
@@ -142,30 +154,39 @@ describe('NewsFormDrawer', () => {
     component.form.controls.eventDate.setValue('2026-08-15');
     fixture.detectChanges();
     buttons(fixture).save.click();
+    await settle();
 
     expect(service.items()[0].category).toBe('event');
     expect(service.items()[0].eventDate).toBe('2026-08-15');
   });
 
-  it('creates and publishes on Publish for a new item', () => {
+  it('creates and publishes on Publish for a new item', async () => {
     const fixture = createFixture();
     const component = fixture.componentInstance;
 
     fillRequiredFields(component);
     fixture.detectChanges();
     buttons(fixture).publish?.click();
+    await settle();
 
     expect(service.items()[0].status).toBe('published');
   });
 
+  it('shows an error notice when Save fails', async () => {
+    service.create.mockRejectedValueOnce(new Error('network error'));
+    const fixture = createFixture();
+    const component = fixture.componentInstance;
+
+    fillRequiredFields(component);
+    fixture.detectChanges();
+    buttons(fixture).save.click();
+    await settle();
+
+    expect(snackBarOpen).toHaveBeenCalled();
+  });
+
   it('hides the Publish button when editing an existing item', () => {
-    const created = service.create({
-      category: 'news',
-      slug: 'existing',
-      sharedFields: { imageUrl: '', publishedAt: todayIso(), sourceLinks: [] },
-      language: 'en',
-      translation: { title: 'Existing', subtitle: 'Sub', description: 'Desc' },
-    });
+    const created = existingItem();
     const fixture = TestBed.createComponent(NewsFormDrawer);
     fixture.componentRef.setInput('item', created);
     fixture.componentRef.setInput('targetLanguage', 'en');
@@ -174,14 +195,14 @@ describe('NewsFormDrawer', () => {
     expect(buttons(fixture).publish).toBeNull();
   });
 
-  it('splits shared vs. translated fields correctly on save', () => {
-    const created = service.create({
-      category: 'news',
+  it('splits shared vs. translated fields correctly on save', async () => {
+    const created = makeNewsItem({
       slug: 'existing',
-      sharedFields: { imageUrl: 'https://example.com/old.jpg', publishedAt: '2026-01-01', sourceLinks: [] },
-      language: 'en',
-      translation: { title: 'Existing', subtitle: 'Sub', description: 'Desc' },
+      imageUrl: 'https://example.com/old.jpg',
+      publishedAt: '2026-01-01',
+      translations: { en: { title: 'Existing', subtitle: 'Sub', description: 'Desc' } },
     });
+    service.seed([created]);
     const fixture = TestBed.createComponent(NewsFormDrawer);
     fixture.componentRef.setInput('item', created);
     fixture.componentRef.setInput('targetLanguage', 'en');
@@ -194,6 +215,7 @@ describe('NewsFormDrawer', () => {
     component.form.controls.title.setValue('Updated title');
     fixture.detectChanges();
     buttons(fixture).save.click();
+    await settle();
 
     const updated = service.items()[0];
     expect(updated.imageUrl).toBe('https://example.com/new.jpg');
@@ -213,13 +235,7 @@ describe('NewsFormDrawer', () => {
     });
 
     it('blocks submission with a duplicate slug', () => {
-      service.create({
-        category: 'news',
-        slug: 'existing-item',
-        sharedFields: { imageUrl: '', publishedAt: todayIso(), sourceLinks: [] },
-        language: 'en',
-        translation: { title: 'Existing', subtitle: 'Sub', description: 'Desc' },
-      });
+      service.seed([makeNewsItem({ slug: 'existing-item' })]);
       const fixture = createFixture();
       const component = fixture.componentInstance;
 
@@ -240,13 +256,7 @@ describe('NewsFormDrawer', () => {
           resolveSuggest = resolve;
         }),
       );
-      const existing = service.create({
-        category: 'news',
-        slug: 'existing',
-        sharedFields: { imageUrl: '', publishedAt: todayIso(), sourceLinks: [] },
-        language: 'en',
-        translation: { title: 'Existing', subtitle: 'Sub', description: 'Desc' },
-      });
+      const existing = existingItem();
       const fixture = TestBed.createComponent(NewsFormDrawer);
       fixture.componentRef.setInput('item', existing);
       fixture.componentRef.setInput('targetLanguage', 'es');
@@ -260,9 +270,7 @@ describe('NewsFormDrawer', () => {
       expect(fixture.componentInstance.loading()).toBe(true);
 
       resolveSuggest({ title: 'Existente', subtitle: 'Sub es', description: 'Desc es' });
-      await Promise.resolve();
-      await Promise.resolve();
-      await Promise.resolve();
+      await settle();
       fixture.detectChanges();
 
       expect(fixture.componentInstance.loading()).toBe(false);
@@ -270,13 +278,7 @@ describe('NewsFormDrawer', () => {
     });
 
     it('does not request a suggestion when editing an already-translated language', () => {
-      const existing = service.create({
-        category: 'news',
-        slug: 'existing',
-        sharedFields: { imageUrl: '', publishedAt: todayIso(), sourceLinks: [] },
-        language: 'en',
-        translation: { title: 'Existing', subtitle: 'Sub', description: 'Desc' },
-      });
+      const existing = existingItem();
       const fixture = TestBed.createComponent(NewsFormDrawer);
       fixture.componentRef.setInput('item', existing);
       fixture.componentRef.setInput('targetLanguage', 'en');

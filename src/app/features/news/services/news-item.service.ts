@@ -1,12 +1,10 @@
-import { Injectable, computed, signal } from '@angular/core';
-import { NewsCategory, NewsItem, NewsTranslation } from '../models/news-item.model';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { NewsCategory, NewsItem, NewsStatus, NewsTranslation } from '../models/news-item.model';
 import { ContentLanguage } from '../../guide/models/content-language.model';
 
-const STORAGE_KEY = 'app-news-items';
-
-function translationsEqual(a: NewsTranslation, b: NewsTranslation): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
-}
+const BASE_URL = '/backend/news';
 
 export interface NewsItemSharedFields {
   imageUrl: string;
@@ -25,7 +23,9 @@ export interface NewsItemCreateInput {
 
 @Injectable({ providedIn: 'root' })
 export class NewsItemService {
-  private readonly state = signal<NewsItem[]>(this.loadFromStorage());
+  private readonly http = inject(HttpClient);
+
+  private readonly state = signal<NewsItem[]>([]);
 
   readonly items = computed(() =>
     [...this.state()].sort((a, b) => {
@@ -34,158 +34,66 @@ export class NewsItemService {
     }),
   );
 
-  create(input: NewsItemCreateInput): NewsItem {
-    const now = new Date().toISOString();
-    const item: NewsItem = {
-      slug: input.slug,
-      category: input.category,
-      status: 'draft',
-      imageUrl: input.sharedFields.imageUrl,
-      publishedAt: input.sharedFields.publishedAt,
-      eventDate: input.sharedFields.eventDate,
-      sourceLinks: input.sharedFields.sourceLinks,
-      createdAt: now,
-      updatedAt: now,
-      translations: { [input.language]: input.translation },
-    };
+  constructor() {
+    void this.refresh();
+  }
 
+  async refresh(): Promise<void> {
+    const items = await firstValueFrom(this.http.get<NewsItem[]>(BASE_URL));
+    this.state.set(items);
+  }
+
+  async create(input: NewsItemCreateInput): Promise<NewsItem> {
+    const item = await firstValueFrom(this.http.post<NewsItem>(BASE_URL, input));
     this.state.update((items) => [...items, item]);
-    this.persist();
     return item;
   }
 
-  saveTranslation(
-    slug: string,
+  async saveTranslation(
+    id: string,
     language: ContentLanguage,
     translation: NewsTranslation,
     newSlug?: string,
-  ): void {
-    this.state.update((items) =>
-      items.map((item) => {
-        if (item.slug !== slug) {
-          return item;
-        }
-
-        const previousTranslation = item.translations[language];
-        const contentChanged = !previousTranslation || !translationsEqual(previousTranslation, translation);
-        const translations = { ...item.translations, [language]: translation };
-        const staleLanguages = { ...item.staleLanguages };
-        delete staleLanguages[language];
-        if (previousTranslation && contentChanged) {
-          for (const lang of Object.keys(translations) as ContentLanguage[]) {
-            if (lang !== language) {
-              staleLanguages[lang] = language;
-            }
-          }
-        }
-
-        return {
-          ...item,
-          slug: newSlug ?? item.slug,
-          translations,
-          staleLanguages,
-          updatedAt: new Date().toISOString(),
-        };
-      }),
+  ): Promise<NewsItem> {
+    const updated = await firstValueFrom(
+      this.http.put<NewsItem>(`${BASE_URL}/${id}/translations`, { language, translation, newSlug }),
     );
-    this.persist();
+    this.replace(updated);
+    return updated;
   }
 
-  removeTranslation(slug: string, language: ContentLanguage): void {
-    this.state.update((items) =>
-      items.map((item) => {
-        if (item.slug !== slug || Object.keys(item.translations).length <= 1) {
-          return item;
-        }
-
-        const translations = { ...item.translations };
-        delete translations[language];
-
-        const staleLanguages = { ...item.staleLanguages };
-        delete staleLanguages[language];
-        for (const lang of Object.keys(staleLanguages) as ContentLanguage[]) {
-          if (staleLanguages[lang] === language) {
-            delete staleLanguages[lang];
-          }
-        }
-
-        return {
-          ...item,
-          translations,
-          staleLanguages,
-          updatedAt: new Date().toISOString(),
-        };
-      }),
+  async removeTranslation(id: string, language: ContentLanguage): Promise<NewsItem> {
+    const updated = await firstValueFrom(
+      this.http.delete<NewsItem>(`${BASE_URL}/${id}/translations/${language}`),
     );
-    this.persist();
+    this.replace(updated);
+    return updated;
   }
 
-  updateSharedFields(slug: string, sharedFields: NewsItemSharedFields): void {
-    this.state.update((items) =>
-      items.map((item) =>
-        item.slug === slug
-          ? {
-              ...item,
-              imageUrl: sharedFields.imageUrl,
-              publishedAt: sharedFields.publishedAt,
-              eventDate: sharedFields.eventDate,
-              sourceLinks: sharedFields.sourceLinks,
-              updatedAt: new Date().toISOString(),
-            }
-          : item,
-      ),
+  async updateSharedFields(id: string, sharedFields: NewsItemSharedFields): Promise<NewsItem> {
+    const updated = await firstValueFrom(
+      this.http.patch<NewsItem>(`${BASE_URL}/${id}/shared-fields`, { sharedFields }),
     );
-    this.persist();
+    this.replace(updated);
+    return updated;
   }
 
-  publish(slug: string): void {
-    this.setStatus(slug, 'published');
+  async publish(id: string): Promise<NewsItem> {
+    return this.setStatus(id, 'published');
   }
 
-  pause(slug: string): void {
-    this.setStatus(slug, 'paused');
+  async pause(id: string): Promise<NewsItem> {
+    return this.setStatus(id, 'paused');
   }
 
-  private setStatus(slug: string, status: NewsItem['status']): void {
-    this.state.update((items) =>
-      items.map((item) =>
-        item.slug === slug ? { ...item, status, updatedAt: new Date().toISOString() } : item,
-      ),
-    );
-    this.persist();
+  private async setStatus(id: string, status: NewsStatus): Promise<NewsItem> {
+    const action = status === 'published' ? 'publish' : 'pause';
+    const updated = await firstValueFrom(this.http.post<NewsItem>(`${BASE_URL}/${id}/${action}`, {}));
+    this.replace(updated);
+    return updated;
   }
 
-  private persist(): void {
-    if (typeof localStorage === 'undefined') {
-      return;
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state()));
-  }
-
-  private loadFromStorage(): NewsItem[] {
-    if (typeof localStorage === 'undefined') {
-      return [];
-    }
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return [];
-    }
-    try {
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) {
-        return [];
-      }
-      return parsed.filter(
-        (item): item is NewsItem =>
-          typeof item?.slug === 'string' &&
-          item.slug.length > 0 &&
-          (item.category === 'news' || item.category === 'event') &&
-          typeof item?.translations === 'object' &&
-          item.translations !== null &&
-          Object.keys(item.translations).length > 0,
-      );
-    } catch {
-      return [];
-    }
+  private replace(updated: NewsItem): void {
+    this.state.update((items) => items.map((item) => (item.id === updated.id ? updated : item)));
   }
 }

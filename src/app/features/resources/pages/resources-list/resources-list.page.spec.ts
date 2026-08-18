@@ -1,24 +1,26 @@
 import { TestBed } from '@angular/core/testing';
 import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { ResourcesListPage } from './resources-list.page';
 import { ResourceService } from '../../services/resource.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
-import { Resource } from '../../models/resource.model';
+import { Resource, ResourceCategory } from '../../models/resource.model';
+import { FakeResourceService, makeResource } from '../../testing/fake-resource-service';
 
 describe('ResourcesListPage', () => {
-  let service: ResourceService;
-  let language: LanguageService;
+  let service: FakeResourceService;
 
   beforeEach(() => {
-    localStorage.clear();
+    service = new FakeResourceService();
     TestBed.configureTestingModule({
       providers: [
+        { provide: ResourceService, useValue: service },
         { provide: TranslationSuggestionService, useValue: { suggest: vi.fn(() => new Promise(() => {})) } },
+        { provide: MatSnackBar, useValue: { open: vi.fn() } },
       ],
     });
-    service = TestBed.inject(ResourceService);
-    language = TestBed.inject(LanguageService);
+    TestBed.inject(LanguageService);
   });
 
   function createFixture() {
@@ -27,41 +29,20 @@ describe('ResourcesListPage', () => {
     return fixture;
   }
 
-  function createResource(category: 'nutrition' | 'recipes' | 'multimedia' | 'apps', slug: string) {
-    switch (category) {
-      case 'nutrition':
-        return service.create({
-          category,
-          slug,
-          sharedFields: { sourceLinks: [], pdfUrls: [] },
-          language: 'en',
-          translation: { title: slug, shortDescription: '', explanatoryText: '' },
-        });
-      case 'recipes':
-        return service.create({
-          category,
-          slug,
-          sharedFields: { preparationMinutes: 10, photoUrls: [] },
-          language: 'en',
-          translation: { title: slug, shortDescription: '', ingredients: [], steps: [] },
-        });
-      case 'multimedia':
-        return service.create({
-          category,
-          slug,
-          sharedFields: { mediaType: 'podcast', externalUrl: 'https://example.com', posterUrl: '' },
-          language: 'en',
-          translation: { title: slug, shortDescription: '' },
-        });
-      case 'apps':
-        return service.create({
-          category,
-          slug,
-          sharedFields: { iconUrl: '' },
-          language: 'en',
-          translation: { title: slug, shortDescription: '' },
-        });
-    }
+  function resourceFixture(category: ResourceCategory, slug: string, order = 0): Resource {
+    const sharedFields: Record<string, unknown> = {
+      nutrition: { sourceLinks: [], pdfUrls: [] },
+      recipes: { preparationMinutes: 10, photoUrls: [] },
+      multimedia: { mediaType: 'podcast', externalUrl: 'https://example.com', posterUrl: '' },
+      apps: { iconUrl: '' },
+    }[category]!;
+    return makeResource({
+      category,
+      slug,
+      order,
+      translations: { en: { title: slug, shortDescription: '' } },
+      ...sharedFields,
+    } as Partial<Resource>);
   }
 
   it('shows an empty-category state for each category with no resources', () => {
@@ -73,8 +54,7 @@ describe('ResourcesListPage', () => {
   });
 
   it('groups resources into their category section', () => {
-    createResource('nutrition', 'omega-3');
-    createResource('recipes', 'soup');
+    service.seed([resourceFixture('nutrition', 'omega-3'), resourceFixture('recipes', 'soup')]);
     const fixture = createFixture();
 
     expect(
@@ -86,8 +66,7 @@ describe('ResourcesListPage', () => {
   });
 
   it('filters to a single category when a filter option is selected', () => {
-    createResource('nutrition', 'omega-3');
-    createResource('recipes', 'soup');
+    service.seed([resourceFixture('nutrition', 'omega-3'), resourceFixture('recipes', 'soup')]);
     const fixture = createFixture();
 
     fixture.componentInstance['activeFilter'].set('nutrition');
@@ -110,11 +89,12 @@ describe('ResourcesListPage', () => {
     expect(fixture.componentInstance['drawerContext']()).toEqual({ mode: 'create', category: 'nutrition' });
   });
 
-  it('reorders resources within a category via drag-and-drop without touching other categories', () => {
-    const a = createResource('nutrition', 'a');
-    const b = createResource('nutrition', 'b');
-    const c = createResource('nutrition', 'c');
-    const recipe = createResource('recipes', 'a-recipe');
+  it('reorders resources within a category via drag-and-drop without touching other categories', async () => {
+    const a = resourceFixture('nutrition', 'a', 0);
+    const b = resourceFixture('nutrition', 'b', 1);
+    const c = resourceFixture('nutrition', 'c', 2);
+    const recipe = resourceFixture('recipes', 'a-recipe', 0);
+    service.seed([a, b, c, recipe]);
     const fixture = createFixture();
 
     const event = {
@@ -123,6 +103,8 @@ describe('ResourcesListPage', () => {
       container: { data: [a, b, c] as Resource[] },
     } as unknown as CdkDragDrop<Resource[]>;
     fixture.componentInstance.onDrop('nutrition', event);
+    await Promise.resolve();
+    await Promise.resolve();
 
     const bySlug = new Map(service.resources().map((r) => [r.slug, r.order]));
     expect(bySlug.get('b')).toBe(0);

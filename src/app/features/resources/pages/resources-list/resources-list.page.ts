@@ -3,6 +3,7 @@ import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDrawer, MatDrawerContainer, MatDrawerContent } from '@angular/material/sidenav';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { RESOURCE_CATEGORIES, Resource, ResourceCategory } from '../../models/resource.model';
 import { ContentLanguage } from '../../../guide/models/content-language.model';
 import { ResourceService } from '../../services/resource.service';
@@ -42,6 +43,7 @@ type DrawerContext =
 })
 export class ResourcesListPage {
   private readonly resourceService = inject(ResourceService);
+  private readonly snackBar = inject(MatSnackBar);
   protected readonly language = inject(LanguageService);
 
   protected readonly categories = RESOURCE_CATEGORIES;
@@ -117,9 +119,12 @@ export class ResourcesListPage {
   }
 
   onDrop(category: ResourceCategory, event: CdkDragDrop<Resource[]>): void {
-    const slugs = event.container.data.map((resource) => resource.slug);
-    moveItemInArray(slugs, event.previousIndex, event.currentIndex);
-    this.resourceService.reorder(category, slugs);
+    const ids = event.container.data.map((resource) => resource.id);
+    moveItemInArray(ids, event.previousIndex, event.currentIndex);
+    this.resourceService.reorder(category, ids).catch(() => {
+      const form = this.language.t().resources.resourceForm;
+      this.snackBar.open(form.actionFailedNotice, form.actionFailedDismiss);
+    });
   }
 
   protected categoryHeading(category: ResourceCategory): string {

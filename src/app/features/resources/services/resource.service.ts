@@ -1,4 +1,6 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import {
   AppTranslation,
   MultimediaTranslation,
@@ -8,15 +10,12 @@ import {
   RESOURCE_CATEGORIES,
   Resource,
   ResourceCategory,
+  ResourceStatus,
   ResourceTranslation,
 } from '../models/resource.model';
 import { ContentLanguage } from '../../guide/models/content-language.model';
 
-const STORAGE_KEY = 'resources';
-
-function translationsEqual(a: ResourceTranslation, b: ResourceTranslation): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
-}
+const BASE_URL = '/backend/resources';
 
 export type ResourceCreateInput =
   | {
@@ -50,7 +49,9 @@ export type ResourceCreateInput =
 
 @Injectable({ providedIn: 'root' })
 export class ResourceService {
-  private readonly state = signal<Resource[]>(this.loadFromStorage());
+  private readonly http = inject(HttpClient);
+
+  private readonly state = signal<Resource[]>([]);
 
   private readonly categoryOrder = new Map(RESOURCE_CATEGORIES.map((category, index) => [category, index]));
 
@@ -75,190 +76,80 @@ export class ResourceService {
     return groups;
   });
 
-  create(input: ResourceCreateInput): Resource {
-    const now = new Date().toISOString();
-    const order = this.state().filter((r) => r.category === input.category).length;
-    const resource = this.buildResource(input, order, now);
+  constructor() {
+    void this.refresh();
+  }
 
+  async refresh(): Promise<void> {
+    const resources = await firstValueFrom(this.http.get<Resource[]>(BASE_URL));
+    this.state.set(resources);
+  }
+
+  async create(input: ResourceCreateInput): Promise<Resource> {
+    const resource = await firstValueFrom(this.http.post<Resource>(BASE_URL, input));
     this.state.update((resources) => [...resources, resource]);
-    this.persist();
     return resource;
   }
 
-  saveTranslation(
-    slug: string,
+  async saveTranslation(
+    id: string,
     language: ContentLanguage,
     translation: ResourceTranslation,
     newSlug?: string,
-  ): void {
-    this.state.update((resources) =>
-      resources.map((resource) => {
-        if (resource.slug !== slug) {
-          return resource;
-        }
-
-        const previousTranslation = resource.translations[language];
-        const contentChanged =
-          !previousTranslation || !translationsEqual(previousTranslation, translation);
-        const translations = { ...resource.translations, [language]: translation };
-        const staleLanguages = { ...resource.staleLanguages };
-        delete staleLanguages[language];
-        if (previousTranslation && contentChanged) {
-          for (const lang of Object.keys(translations) as ContentLanguage[]) {
-            if (lang !== language) {
-              staleLanguages[lang] = language;
-            }
-          }
-        }
-
-        return {
-          ...resource,
-          slug: newSlug ?? resource.slug,
-          translations,
-          staleLanguages,
-          updatedAt: new Date().toISOString(),
-        } as Resource;
-      }),
+  ): Promise<Resource> {
+    const updated = await firstValueFrom(
+      this.http.put<Resource>(`${BASE_URL}/${id}/translations`, { language, translation, newSlug }),
     );
-    this.persist();
+    this.replace(updated);
+    return updated;
   }
 
-  removeTranslation(slug: string, language: ContentLanguage): void {
-    this.state.update((resources) =>
-      resources.map((resource) => {
-        if (resource.slug !== slug || Object.keys(resource.translations).length <= 1) {
-          return resource;
-        }
-
-        const translations = { ...resource.translations };
-        delete translations[language];
-
-        const staleLanguages = { ...resource.staleLanguages };
-        delete staleLanguages[language];
-        for (const lang of Object.keys(staleLanguages) as ContentLanguage[]) {
-          if (staleLanguages[lang] === language) {
-            delete staleLanguages[lang];
-          }
-        }
-
-        return {
-          ...resource,
-          translations,
-          staleLanguages,
-          updatedAt: new Date().toISOString(),
-        } as Resource;
-      }),
+  async removeTranslation(id: string, language: ContentLanguage): Promise<Resource> {
+    const updated = await firstValueFrom(
+      this.http.delete<Resource>(`${BASE_URL}/${id}/translations/${language}`),
     );
-    this.persist();
+    this.replace(updated);
+    return updated;
   }
 
-  updateSharedFields(slug: string, sharedFields: Record<string, unknown>): void {
-    this.state.update((resources) =>
-      resources.map((resource) =>
-        resource.slug === slug
-          ? ({ ...resource, ...sharedFields, updatedAt: new Date().toISOString() } as Resource)
-          : resource,
-      ),
+  async updateSharedFields(id: string, sharedFields: Record<string, unknown>): Promise<Resource> {
+    const updated = await firstValueFrom(
+      this.http.patch<Resource>(`${BASE_URL}/${id}/shared-fields`, { sharedFields }),
     );
-    this.persist();
+    this.replace(updated);
+    return updated;
   }
 
-  reorder(category: ResourceCategory, orderedSlugs: string[]): void {
-    const orderBySlug = new Map(orderedSlugs.map((slug, index) => [slug, index]));
+  async reorder(category: ResourceCategory, orderedIds: string[]): Promise<void> {
+    await firstValueFrom(this.http.post(`${BASE_URL}/reorder`, { category, orderedIds }));
+    const orderById = new Map(orderedIds.map((id, index) => [id, index]));
     this.state.update((resources) =>
       resources.map((resource) =>
         resource.category === category
-          ? { ...resource, order: orderBySlug.get(resource.slug) ?? resource.order }
+          ? { ...resource, order: orderById.get(resource.id) ?? resource.order }
           : resource,
       ),
     );
-    this.persist();
   }
 
-  publish(slug: string): void {
-    this.setStatus(slug, 'published');
+  async publish(id: string): Promise<Resource> {
+    return this.setStatus(id, 'published');
   }
 
-  pause(slug: string): void {
-    this.setStatus(slug, 'paused');
+  async pause(id: string): Promise<Resource> {
+    return this.setStatus(id, 'paused');
   }
 
-  private setStatus(slug: string, status: Resource['status']): void {
+  private async setStatus(id: string, status: ResourceStatus): Promise<Resource> {
+    const action = status === 'published' ? 'publish' : 'pause';
+    const updated = await firstValueFrom(this.http.post<Resource>(`${BASE_URL}/${id}/${action}`, {}));
+    this.replace(updated);
+    return updated;
+  }
+
+  private replace(updated: Resource): void {
     this.state.update((resources) =>
-      resources.map((resource) =>
-        resource.slug === slug
-          ? { ...resource, status, updatedAt: new Date().toISOString() }
-          : resource,
-      ),
+      resources.map((resource) => (resource.id === updated.id ? updated : resource)),
     );
-    this.persist();
-  }
-
-  private buildResource(input: ResourceCreateInput, order: number, now: string): Resource {
-    const base = { slug: input.slug, status: 'draft' as const, order, createdAt: now, updatedAt: now };
-    switch (input.category) {
-      case 'nutrition':
-        return {
-          ...base,
-          category: 'nutrition',
-          ...input.sharedFields,
-          translations: { [input.language]: input.translation },
-        };
-      case 'recipes':
-        return {
-          ...base,
-          category: 'recipes',
-          ...input.sharedFields,
-          translations: { [input.language]: input.translation },
-        };
-      case 'multimedia':
-        return {
-          ...base,
-          category: 'multimedia',
-          ...input.sharedFields,
-          translations: { [input.language]: input.translation },
-        };
-      case 'apps':
-        return {
-          ...base,
-          category: 'apps',
-          ...input.sharedFields,
-          translations: { [input.language]: input.translation },
-        };
-    }
-  }
-
-  private persist(): void {
-    if (typeof localStorage === 'undefined') {
-      return;
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state()));
-  }
-
-  private loadFromStorage(): Resource[] {
-    if (typeof localStorage === 'undefined') {
-      return [];
-    }
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return [];
-    }
-    try {
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) {
-        return [];
-      }
-      return parsed.filter(
-        (resource): resource is Resource =>
-          typeof resource?.slug === 'string' &&
-          resource.slug.length > 0 &&
-          RESOURCE_CATEGORIES.includes(resource.category) &&
-          typeof resource?.translations === 'object' &&
-          resource.translations !== null &&
-          Object.keys(resource.translations).length > 0,
-      );
-    } catch {
-      return [];
-    }
   }
 }

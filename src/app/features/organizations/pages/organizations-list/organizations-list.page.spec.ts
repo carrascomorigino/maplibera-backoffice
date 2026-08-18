@@ -1,24 +1,27 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { OrganizationsListPage } from './organizations-list.page';
 import { OrganizationService } from '../../services/organization.service';
 import { Organization, OrganizationType } from '../../models/organization.model';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { FakeOrganizationService, makeOrganization } from '../../testing/fake-organization-service';
 
 describe('OrganizationsListPage', () => {
-  let service: OrganizationService;
+  let service: FakeOrganizationService;
   let language: LanguageService;
 
   beforeEach(() => {
-    localStorage.clear();
+    service = new FakeOrganizationService();
     TestBed.configureTestingModule({
       providers: [
+        { provide: OrganizationService, useValue: service },
         { provide: TranslationSuggestionService, useValue: { suggest: vi.fn(() => new Promise(() => {})) } },
+        { provide: MatSnackBar, useValue: { open: vi.fn() } },
       ],
     });
-    service = TestBed.inject(OrganizationService);
     language = TestBed.inject(LanguageService);
   });
 
@@ -28,13 +31,12 @@ describe('OrganizationsListPage', () => {
     return fixture;
   }
 
-  function createOrg(type: OrganizationType, slug: string) {
-    return service.create({
+  function orgFixture(type: OrganizationType, slug: string, order: number): Organization {
+    return makeOrganization({
       type,
       slug,
-      sharedFields: { logoUrl: '', scopeType: 'global', contactLinks: {} },
-      language: 'en',
-      translation: { name: slug, description: '' },
+      order,
+      translations: { en: { name: slug, description: '' } },
     });
   }
 
@@ -45,8 +47,7 @@ describe('OrganizationsListPage', () => {
   });
 
   it('lists organizations sorted by order', () => {
-    createOrg('local-group', 'first');
-    createOrg('ngo', 'second');
+    service.seed([orgFixture('local-group', 'first', 0), orgFixture('ngo', 'second', 1)]);
     const fixture = createFixture();
 
     const names = Array.from(
@@ -56,8 +57,7 @@ describe('OrganizationsListPage', () => {
   });
 
   it('filters to a single type when a filter option is selected', () => {
-    createOrg('local-group', 'a-local-group');
-    createOrg('ngo', 'an-ngo');
+    service.seed([orgFixture('local-group', 'a-local-group', 0), orgFixture('ngo', 'an-ngo', 1)]);
     const fixture = createFixture();
 
     fixture.componentInstance['activeFilter'].set('ngo');
@@ -92,8 +92,7 @@ describe('OrganizationsListPage', () => {
   });
 
   it('binds the rendered drop list data to the currently visible organizations', () => {
-    createOrg('local-group', 'a');
-    createOrg('ngo', 'b');
+    service.seed([orgFixture('local-group', 'a', 0), orgFixture('ngo', 'b', 1)]);
     const fixture = createFixture();
 
     const dropList = fixture.debugElement.query(By.directive(CdkDropList)).injector.get(CdkDropList);
@@ -101,10 +100,11 @@ describe('OrganizationsListPage', () => {
     expect(dropList.data).toEqual(service.organizations());
   });
 
-  it('reorders organizations through the service when a drop occurs while unfiltered', () => {
-    const a = createOrg('local-group', 'a');
-    const b = createOrg('ngo', 'b');
-    const c = createOrg('social-network', 'c');
+  it('reorders organizations through the service when a drop occurs while unfiltered', async () => {
+    const a = orgFixture('local-group', 'a', 0);
+    const b = orgFixture('ngo', 'b', 1);
+    const c = orgFixture('social-network', 'c', 2);
+    service.seed([a, b, c]);
     const fixture = createFixture();
     const component = fixture.componentInstance;
 
@@ -114,13 +114,14 @@ describe('OrganizationsListPage', () => {
       currentIndex: 2,
       container: { data: orgs },
     } as CdkDragDrop<Organization[]>);
+    await Promise.resolve();
+    await Promise.resolve();
 
     expect(service.organizations().map((o) => o.slug)).toEqual([b.slug, c.slug, a.slug]);
   });
 
   it('disables the drop list when a specific type filter is active', () => {
-    createOrg('local-group', 'a');
-    createOrg('ngo', 'b');
+    service.seed([orgFixture('local-group', 'a', 0), orgFixture('ngo', 'b', 1)]);
     const fixture = createFixture();
 
     fixture.componentInstance['activeFilter'].set('ngo');
@@ -131,7 +132,7 @@ describe('OrganizationsListPage', () => {
   });
 
   it('keeps the drop list enabled when the filter is "all"', () => {
-    createOrg('local-group', 'a');
+    service.seed([orgFixture('local-group', 'a', 0)]);
     const fixture = createFixture();
 
     const dropList = fixture.debugElement.query(By.directive(CdkDropList)).injector.get(CdkDropList);

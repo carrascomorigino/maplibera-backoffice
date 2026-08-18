@@ -84,6 +84,8 @@ export const es: Translations = {
       previewButton: 'Previsualizar',
       acceptTranslationButton: 'Aceptar traducción',
       previewLoadingText: 'Generando sugerencia…',
+      actionFailedNotice: 'Algo salió mal. Intentá de nuevo.',
+      actionFailedDismiss: 'Descartar',
     },
     questionEditor: {
       questionLabel: 'Pregunta (opcional)',
@@ -153,6 +155,8 @@ export const es: Translations = {
       previewButton: 'Previsualizar',
       acceptTranslationButton: 'Aceptar traducción',
       previewLoadingText: 'Generando sugerencia…',
+      actionFailedNotice: 'Algo salió mal. Intentá de nuevo.',
+      actionFailedDismiss: 'Descartar',
     },
     categoryFields: {
       nutrition: {
@@ -225,6 +229,8 @@ export const es: Translations = {
       previewButton: 'Previsualizar',
       acceptTranslationButton: 'Aceptar traducción',
       previewLoadingText: 'Generando sugerencia…',
+      actionFailedNotice: 'Algo salió mal. Intentá de nuevo.',
+      actionFailedDismiss: 'Descartar',
     },
   },
   organizations: {
@@ -291,6 +297,8 @@ export const es: Translations = {
       previewButton: 'Previsualizar',
       acceptTranslationButton: 'Aceptar traducción',
       previewLoadingText: 'Generando sugerencia…',
+      actionFailedNotice: 'Algo salió mal. Intentá de nuevo.',
+      actionFailedDismiss: 'Descartar',
     },
   },
 };

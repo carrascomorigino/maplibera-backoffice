@@ -7,25 +7,32 @@ import { TranslationSuggestionService } from '../../../../shared/services/transl
 import { Question, QuestionType } from '../../models/section.model';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { TITLE_MAX_LENGTH } from '../../utils/field-limits';
+import { FakeSectionService, makeSection } from '../../testing/fake-section-service';
+
+async function settle(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+}
 
 describe('SectionFormDrawer', () => {
-  let service: SectionService;
+  let service: FakeSectionService;
   let language: LanguageService;
   let suggestionService: { suggest: ReturnType<typeof vi.fn> };
   let snackBarOpen: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    localStorage.clear();
+    service = new FakeSectionService();
     suggestionService = { suggest: vi.fn() };
     snackBarOpen = vi.fn();
     TestBed.configureTestingModule({
       providers: [
         provideNoopAnimations(),
+        { provide: SectionService, useValue: service },
         { provide: TranslationSuggestionService, useValue: suggestionService },
         { provide: MatSnackBar, useValue: { open: snackBarOpen } },
       ],
     });
-    service = TestBed.inject(SectionService);
     language = TestBed.inject(LanguageService);
   });
 
@@ -68,7 +75,7 @@ describe('SectionFormDrawer', () => {
     expect(publish?.disabled).toBe(false);
   });
 
-  it('creates a draft section on Save for a new section', () => {
+  it('creates a draft section on Save for a new section', async () => {
     const fixture = createFixture('en');
     const component = fixture.componentInstance;
     let saved = false;
@@ -78,6 +85,7 @@ describe('SectionFormDrawer', () => {
     component.form.controls.description.setValue('Description');
     fixture.detectChanges();
     buttons(fixture).save.click();
+    await settle();
 
     expect(service.sections()).toHaveLength(1);
     expect(service.sections()[0].status).toBe('draft');
@@ -86,7 +94,7 @@ describe('SectionFormDrawer', () => {
     expect(suggestionService.suggest).not.toHaveBeenCalled();
   });
 
-  it('creates and publishes a section on Publish for a new section', () => {
+  it('creates and publishes a section on Publish for a new section', async () => {
     const fixture = createFixture('en');
     const component = fixture.componentInstance;
 
@@ -94,9 +102,27 @@ describe('SectionFormDrawer', () => {
     component.form.controls.description.setValue('Description');
     fixture.detectChanges();
     buttons(fixture).publish?.click();
+    await settle();
 
     expect(service.sections()).toHaveLength(1);
     expect(service.sections()[0].status).toBe('published');
+  });
+
+  it('shows an error notice and does not emit saved when Save fails', async () => {
+    service.create.mockRejectedValueOnce(new Error('network error'));
+    const fixture = createFixture('en');
+    const component = fixture.componentInstance;
+    let saved = false;
+    component.saved.subscribe(() => (saved = true));
+
+    component.form.controls.title.setValue('New section');
+    component.form.controls.description.setValue('Description');
+    fixture.detectChanges();
+    buttons(fixture).save.click();
+    await settle();
+
+    expect(saved).toBe(false);
+    expect(snackBarOpen).toHaveBeenCalled();
   });
 
   it('shows the working-language indicator using the current UI language when creating', () => {
@@ -108,16 +134,15 @@ describe('SectionFormDrawer', () => {
     );
   });
 
-  it('updates an existing translation on Save without changing status', () => {
-    const existing = service.create({
+  it('updates an existing translation on Save without changing status', async () => {
+    const existing = makeSection({
       slug: 'original',
-      imageUrl: '',
-      language: 'en',
-      translation: { title: 'Original', description: 'Original desc' },
+      status: 'published',
+      translations: { en: { title: 'Original', description: 'Original desc' } },
     });
-    service.publish(existing.slug);
+    service.seed([existing]);
     const fixture = TestBed.createComponent(SectionFormDrawer);
-    fixture.componentRef.setInput('section', service.sections()[0]);
+    fixture.componentRef.setInput('section', existing);
     fixture.componentRef.setInput('targetLanguage', 'en');
     fixture.detectChanges();
     const component = fixture.componentInstance;
@@ -125,6 +150,7 @@ describe('SectionFormDrawer', () => {
     component.form.controls.title.setValue('Updated title');
     fixture.detectChanges();
     buttons(fixture).save.click();
+    await settle();
 
     const updated = service.sections()[0];
     expect(updated.translations.en?.title).toBe('Updated title');
@@ -133,12 +159,11 @@ describe('SectionFormDrawer', () => {
   });
 
   it('hides the Publish button when editing an existing section', () => {
-    const existing = service.create({
+    const existing = makeSection({
       slug: 'original',
-      imageUrl: '',
-      language: 'en',
-      translation: { title: 'Original', description: 'Original desc' },
+      translations: { en: { title: 'Original', description: 'Original desc' } },
     });
+    service.seed([existing]);
     const fixture = TestBed.createComponent(SectionFormDrawer);
     fixture.componentRef.setInput('section', existing);
     fixture.componentRef.setInput('targetLanguage', 'en');
@@ -213,12 +238,12 @@ describe('SectionFormDrawer', () => {
     });
 
     it('blocks submission with a duplicate slug', () => {
-      service.create({
-        slug: 'existing-section',
-        imageUrl: '',
-        language: 'en',
-        translation: { title: 'Existing Section', description: 'Existing desc' },
-      });
+      service.seed([
+        makeSection({
+          slug: 'existing-section',
+          translations: { en: { title: 'Existing Section', description: 'Existing desc' } },
+        }),
+      ]);
       const fixture = createFixture('en');
       const component = fixture.componentInstance;
 
@@ -242,12 +267,11 @@ describe('SectionFormDrawer', () => {
     });
 
     it('allows keeping the same slug when editing the section that already owns it', () => {
-      const existing = service.create({
+      const existing = makeSection({
         slug: 'original-slug',
-        imageUrl: '',
-        language: 'en',
-        translation: { title: 'Original', description: 'Original desc' },
+        translations: { en: { title: 'Original', description: 'Original desc' } },
       });
+      service.seed([existing]);
       const fixture = TestBed.createComponent(SectionFormDrawer);
       fixture.componentRef.setInput('section', existing);
       fixture.componentRef.setInput('targetLanguage', 'en');
@@ -280,7 +304,7 @@ describe('SectionFormDrawer', () => {
       expect(buttons(fixture).save.disabled).toBe(false);
     });
 
-    it('persists the slug on save and keys updates by the section slug', () => {
+    it('persists the slug on save and keys updates by the section slug', async () => {
       const fixture = createFixture('en');
       const component = fixture.componentInstance;
 
@@ -289,13 +313,14 @@ describe('SectionFormDrawer', () => {
       component.form.controls.slug.setValue('new-section');
       fixture.detectChanges();
       buttons(fixture).save.click();
+      await settle();
 
       expect(service.sections()[0].slug).toBe('new-section');
     });
   });
 
   describe('question', () => {
-    it('omits the question when its text is left empty', () => {
+    it('omits the question when its text is left empty', async () => {
       const fixture = createFixture('en');
       const component = fixture.componentInstance;
 
@@ -303,11 +328,12 @@ describe('SectionFormDrawer', () => {
       component.form.controls.description.setValue('Description');
       fixture.detectChanges();
       buttons(fixture).save.click();
+      await settle();
 
       expect(service.sections()[0].translations.en?.question).toBeUndefined();
     });
 
-    it('persists a filled-in valid question on Save', () => {
+    it('persists a filled-in valid question on Save', async () => {
       const fixture = createFixture('en');
       const component = fixture.componentInstance;
       const question: Question = {
@@ -321,6 +347,7 @@ describe('SectionFormDrawer', () => {
       component.form.controls.question.setValue(question);
       fixture.detectChanges();
       buttons(fixture).save.click();
+      await settle();
 
       expect(service.sections()[0].translations.en?.question).toEqual(question);
     });
@@ -360,12 +387,11 @@ describe('SectionFormDrawer', () => {
           { text: 'B', isCorrect: false },
         ],
       };
-      const existing = service.create({
+      const existing = makeSection({
         slug: 'with-question',
-        imageUrl: '',
-        language: 'en',
-        translation: { title: 'With question', description: 'Desc', question },
+        translations: { en: { title: 'With question', description: 'Desc', question } },
       });
+      service.seed([existing]);
       const fixture = TestBed.createComponent(SectionFormDrawer);
       fixture.componentRef.setInput('section', existing);
       fixture.componentRef.setInput('targetLanguage', 'en');
@@ -393,7 +419,7 @@ describe('SectionFormDrawer', () => {
   });
 
   describe('country availability', () => {
-    it('persists availableCountries as undefined when scope is "all" (the default)', () => {
+    it('persists availableCountries as undefined when scope is "all" (the default)', async () => {
       const fixture = createFixture('en');
       const component = fixture.componentInstance;
 
@@ -401,11 +427,12 @@ describe('SectionFormDrawer', () => {
       component.form.controls.description.setValue('Description');
       fixture.detectChanges();
       buttons(fixture).save.click();
+      await settle();
 
       expect(service.sections()[0].availableCountries).toBeUndefined();
     });
 
-    it('persists the selected countries when scope is "specific"', () => {
+    it('persists the selected countries when scope is "specific"', async () => {
       const fixture = createFixture('en');
       const component = fixture.componentInstance;
 
@@ -415,6 +442,7 @@ describe('SectionFormDrawer', () => {
       component.form.controls.countries.setValue(['AR', 'BR']);
       fixture.detectChanges();
       buttons(fixture).save.click();
+      await settle();
 
       expect(service.sections()[0].availableCountries).toEqual(['AR', 'BR']);
     });
@@ -449,12 +477,12 @@ describe('SectionFormDrawer', () => {
 
   describe('AI-suggested translation', () => {
     function sectionWithEnglish() {
-      return service.create({
+      const section = makeSection({
         slug: 'multi',
-        imageUrl: '',
-        language: 'en',
-        translation: { title: 'Getting started', description: 'Intro text' },
+        translations: { en: { title: 'Getting started', description: 'Intro text' } },
       });
+      service.seed([section]);
+      return section;
     }
 
     it('requests a suggestion when adding a new language, shows loading, and pre-fills on success', async () => {
@@ -478,9 +506,7 @@ describe('SectionFormDrawer', () => {
       expect(fixture.componentInstance.loading()).toBe(true);
 
       resolveSuggest({ title: 'Empezando', description: 'Texto de introducción' });
-      await Promise.resolve();
-      await Promise.resolve();
-      await Promise.resolve();
+      await settle();
       fixture.detectChanges();
 
       expect(fixture.componentInstance.loading()).toBe(false);
@@ -514,9 +540,7 @@ describe('SectionFormDrawer', () => {
       fixture.componentRef.setInput('sourceLanguage', 'en');
       fixture.detectChanges();
 
-      await Promise.resolve();
-      await Promise.resolve();
-      await Promise.resolve();
+      await settle();
       fixture.detectChanges();
 
       expect(fixture.componentInstance.loading()).toBe(false);
@@ -539,19 +563,15 @@ describe('SectionFormDrawer', () => {
 
   describe('stale translation review', () => {
     function sectionWithEnglishAndSpanish() {
-      const created = service.create({
+      const section = makeSection({
         slug: 'multi',
-        imageUrl: '',
-        language: 'en',
-        translation: { title: 'Getting started v2', description: 'Intro text v2' },
+        translations: {
+          en: { title: 'Getting started v2', description: 'Intro text v2' },
+          es: { title: 'Empezando', description: 'Texto intro' },
+        },
       });
-      service.saveTranslation(created.slug, {
-        slug: created.slug,
-        imageUrl: '',
-        language: 'es',
-        translation: { title: 'Empezando', description: 'Texto intro' },
-      });
-      return service.sections()[0];
+      service.seed([section]);
+      return section;
     }
 
     function createStaleFixture() {
@@ -605,8 +625,7 @@ describe('SectionFormDrawer', () => {
         description: 'Texto intro',
       });
       const fixture = createStaleFixture();
-      await Promise.resolve();
-      await Promise.resolve();
+      await settle();
       fixture.detectChanges();
 
       expect(
@@ -623,8 +642,7 @@ describe('SectionFormDrawer', () => {
         description: 'Intro text v2 (es)',
       });
       const fixture = createStaleFixture();
-      await Promise.resolve();
-      await Promise.resolve();
+      await settle();
       fixture.detectChanges();
 
       (
@@ -652,8 +670,7 @@ describe('SectionFormDrawer', () => {
       first.componentRef.setInput('targetLanguage', 'es');
       first.componentRef.setInput('staleSourceLanguage', 'en');
       first.detectChanges();
-      await Promise.resolve();
-      await Promise.resolve();
+      await settle();
       expect(suggestionService.suggest).toHaveBeenCalledTimes(1);
 
       const second = TestBed.createComponent(SectionFormDrawer);
@@ -661,8 +678,7 @@ describe('SectionFormDrawer', () => {
       second.componentRef.setInput('targetLanguage', 'es');
       second.componentRef.setInput('staleSourceLanguage', 'en');
       second.detectChanges();
-      await Promise.resolve();
-      await Promise.resolve();
+      await settle();
       second.detectChanges();
 
       expect(suggestionService.suggest).toHaveBeenCalledTimes(1);
@@ -685,10 +701,9 @@ describe('SectionFormDrawer', () => {
       first.componentRef.setInput('targetLanguage', 'es');
       first.componentRef.setInput('staleSourceLanguage', 'en');
       first.detectChanges();
-      await Promise.resolve();
-      await Promise.resolve();
+      await settle();
 
-      service.saveTranslation(section.slug, {
+      await service.saveTranslation(section.id, {
         slug: section.slug,
         imageUrl: '',
         language: 'en',
@@ -700,8 +715,7 @@ describe('SectionFormDrawer', () => {
       second.componentRef.setInput('targetLanguage', 'es');
       second.componentRef.setInput('staleSourceLanguage', 'en');
       second.detectChanges();
-      await Promise.resolve();
-      await Promise.resolve();
+      await settle();
 
       expect(suggestionService.suggest).toHaveBeenCalledTimes(2);
     });
@@ -713,8 +727,7 @@ describe('SectionFormDrawer', () => {
       });
       const fixture = createStaleFixture();
       const component = fixture.componentInstance;
-      await Promise.resolve();
-      await Promise.resolve();
+      await settle();
       fixture.detectChanges();
 
       (
@@ -737,8 +750,7 @@ describe('SectionFormDrawer', () => {
       });
       const fixture = createStaleFixture();
       const component = fixture.componentInstance;
-      await Promise.resolve();
-      await Promise.resolve();
+      await settle();
       fixture.detectChanges();
 
       (
@@ -761,8 +773,7 @@ describe('SectionFormDrawer', () => {
       suggestionService.suggest.mockRejectedValue(new Error('network error'));
       const fixture = createStaleFixture();
 
-      await Promise.resolve();
-      await Promise.resolve();
+      await settle();
       fixture.detectChanges();
 
       expect(snackBarOpen).toHaveBeenCalled();

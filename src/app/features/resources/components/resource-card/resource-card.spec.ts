@@ -1,19 +1,27 @@
 import { TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { of } from 'rxjs';
 import { ResourceCard } from './resource-card';
 import { ResourceService } from '../../services/resource.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { Resource } from '../../models/resource.model';
+import { FakeResourceService, makeResource } from '../../testing/fake-resource-service';
 
 describe('ResourceCard', () => {
-  let service: ResourceService;
+  let service: FakeResourceService;
   let language: LanguageService;
+  let snackBarOpen: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    localStorage.clear();
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(ResourceService);
+    service = new FakeResourceService();
+    snackBarOpen = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: ResourceService, useValue: service },
+        { provide: MatSnackBar, useValue: { open: snackBarOpen } },
+      ],
+    });
     language = TestBed.inject(LanguageService);
   });
 
@@ -25,23 +33,23 @@ describe('ResourceCard', () => {
   }
 
   function nutritionResource(): Resource {
-    return service.create({
+    return makeResource({
       category: 'nutrition',
       slug: 'omega-3',
-      sharedFields: { sourceLinks: [], pdfUrls: [] },
-      language: 'en',
-      translation: { title: 'Omega 3', shortDescription: 'Good fats', explanatoryText: '' },
-    });
+      sourceLinks: [],
+      pdfUrls: [],
+      translations: { en: { title: 'Omega 3', shortDescription: 'Good fats', explanatoryText: '' } },
+    } as Partial<Resource>);
   }
 
   function recipeResource(): Resource {
-    return service.create({
+    return makeResource({
       category: 'recipes',
       slug: 'soup',
-      sharedFields: { preparationMinutes: 10, photoUrls: ['https://example.com/soup.png'] },
-      language: 'en',
-      translation: { title: 'Soup', shortDescription: 'Warm', ingredients: [], steps: [] },
-    });
+      preparationMinutes: 10,
+      photoUrls: ['https://example.com/soup.png'],
+      translations: { en: { title: 'Soup', shortDescription: 'Warm', ingredients: [], steps: [] } },
+    } as unknown as Partial<Resource>);
   }
 
   it('shows a category icon placeholder for nutrition (no image field)', () => {
@@ -67,15 +75,30 @@ describe('ResourceCard', () => {
     );
   });
 
-  it('toggles publish/pause via the service', () => {
+  it('toggles publish/pause via the service', async () => {
     const resource = nutritionResource();
     const fixture = createFixture(resource);
 
     (fixture.nativeElement.querySelector(
       `[data-testid="status-action-${resource.slug}"]`,
     ) as HTMLButtonElement).click();
+    await Promise.resolve();
 
-    expect(service.resources()[0].status).toBe('published');
+    expect(service.publish).toHaveBeenCalledWith(resource.id);
+  });
+
+  it('shows an error notice when the status action fails', async () => {
+    service.publish.mockRejectedValueOnce(new Error('network error'));
+    const resource = nutritionResource();
+    const fixture = createFixture(resource);
+
+    (fixture.nativeElement.querySelector(
+      `[data-testid="status-action-${resource.slug}"]`,
+    ) as HTMLButtonElement).click();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(snackBarOpen).toHaveBeenCalled();
   });
 
   it('shows a drag handle', () => {
@@ -99,20 +122,15 @@ describe('ResourceCard', () => {
     });
   });
 
-  it('removes a translation via the confirm dialog, same as guide', () => {
-    const created = nutritionResource();
-    service.saveTranslation(created.slug, 'es', {
-      title: 'Omega 3 es',
-      shortDescription: 'Buenas grasas',
-      explanatoryText: '',
-    });
-    const resource = service.resources()[0];
+  it('removes a translation via the confirm dialog, same as guide', async () => {
+    const resource = nutritionResource();
     const fixture = createFixture(resource);
     const dialog = TestBed.inject(MatDialog);
     vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<MatDialog['open']>);
 
     fixture.componentInstance['onLanguageRemoved']('es');
+    await Promise.resolve();
 
-    expect(service.resources()[0].translations.es).toBeUndefined();
+    expect(service.removeTranslation).toHaveBeenCalledWith(resource.id, 'es');
   });
 });

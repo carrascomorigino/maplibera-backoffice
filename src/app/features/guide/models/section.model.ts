@@ -29,6 +29,8 @@ export interface SectionTranslation {
 }
 
 export interface Section {
+  /** Stable backend identifier — unlike slug, this never changes on rename. */
+  id: string;
   slug: string;
   imageUrl: string;
   status: SectionStatus;

@@ -80,6 +80,8 @@ export interface Translations {
       previewButton: string;
       acceptTranslationButton: string;
       previewLoadingText: string;
+      actionFailedNotice: string;
+      actionFailedDismiss: string;
     };
     questionEditor: {
       questionLabel: string;
@@ -146,6 +148,8 @@ export interface Translations {
       previewButton: string;
       acceptTranslationButton: string;
       previewLoadingText: string;
+      actionFailedNotice: string;
+      actionFailedDismiss: string;
     };
     categoryFields: {
       nutrition: {
@@ -217,6 +221,8 @@ export interface Translations {
       previewButton: string;
       acceptTranslationButton: string;
       previewLoadingText: string;
+      actionFailedNotice: string;
+      actionFailedDismiss: string;
     };
   };
   organizations: {
@@ -281,6 +287,8 @@ export interface Translations {
       previewButton: string;
       acceptTranslationButton: string;
       previewLoadingText: string;
+      actionFailedNotice: string;
+      actionFailedDismiss: string;
     };
   };
 }

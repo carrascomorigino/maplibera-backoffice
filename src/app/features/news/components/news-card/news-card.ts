@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { NewsItem, NewsStatus } from '../../models/news-item.model';
 import {
   ContentLanguage,
@@ -37,6 +38,7 @@ export interface NewsTranslateRequestedEvent {
 export class NewsCard {
   private readonly newsItemService = inject(NewsItemService);
   private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
   protected readonly language = inject(LanguageService);
   protected readonly contentLanguages = CONTENT_LANGUAGES;
   protected readonly contentLanguageLabels = CONTENT_LANGUAGE_LABELS;
@@ -93,7 +95,7 @@ export class NewsCard {
     });
     dialogRef.afterClosed().subscribe((confirmed) => {
       if (confirmed) {
-        this.newsItemService.removeTranslation(this.item().slug, lang);
+        this.newsItemService.removeTranslation(this.item().id, lang).catch(() => this.notifyActionFailed());
       }
     });
   }
@@ -114,11 +116,13 @@ export class NewsCard {
 
   protected onStatusAction(): void {
     const item = this.item();
-    if (item.status === 'published') {
-      this.newsItemService.pause(item.slug);
-    } else {
-      this.newsItemService.publish(item.slug);
-    }
+    const action = item.status === 'published' ? this.newsItemService.pause(item.id) : this.newsItemService.publish(item.id);
+    action.catch(() => this.notifyActionFailed());
+  }
+
+  private notifyActionFailed(): void {
+    const form = this.language.t().news.newsForm;
+    this.snackBar.open(form.actionFailedNotice, form.actionFailedDismiss);
   }
 
   protected statusBadgeClass(status: NewsStatus): string {
