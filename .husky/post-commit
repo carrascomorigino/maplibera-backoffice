@@ -1,3 +1,57 @@
-# Refresh the auto-generated block of CLAUDE_CONTEXT.md after every commit.
-# The script never fails a commit: it exits 0 even when generation breaks.
-node .hooks/update-context.js
+# Refresh the auto-generated blocks of CLAUDE_CONTEXT.md and .claude-resume.md
+# and fold them into the commit that produced them, so neither file ever lags
+# behind the tree.
+#
+# Husky runs this under `sh -e`, so every check below is an explicit `if`.
+# Escape hatches: HUSKY=0 skips husky entirely; CLAUDE_CONTEXT_AMEND=1 keeps the
+# regeneration but skips the amend.
+node .hooks/update-context.js || exit 0
+
+GENERATED_FILES="CLAUDE_CONTEXT.md .claude-resume.md"
+
+# Nothing to fold in.
+if git diff --quiet -- $GENERATED_FILES; then
+  exit 0
+fi
+
+# The amend below re-fires this hook: --no-verify would not prevent it, since it
+# only skips pre-commit and commit-msg. This is the recursion guard.
+if [ -n "${CLAUDE_CONTEXT_AMEND:-}" ]; then
+  exit 0
+fi
+
+git_dir=$(git rev-parse --git-dir)
+
+# Never rewrite a commit that is mid-operation, shared, merged or signed.
+if [ -d "$git_dir/rebase-merge" ] || [ -d "$git_dir/rebase-apply" ] ||
+  [ -f "$git_dir/MERGE_HEAD" ] || [ -f "$git_dir/CHERRY_PICK_HEAD" ] ||
+  [ -f "$git_dir/REVERT_HEAD" ] || [ -f "$git_dir/BISECT_LOG" ]; then
+  echo "[update-context] git operation in progress - leaving generated files unstaged."
+  exit 0
+fi
+
+if git rev-parse --verify --quiet HEAD^2 >/dev/null; then
+  echo "[update-context] HEAD is a merge commit - leaving generated files unstaged."
+  exit 0
+fi
+
+if [ -n "$(git branch -r --contains HEAD 2>/dev/null)" ]; then
+  echo "[update-context] HEAD is already on a remote - leaving generated files unstaged."
+  exit 0
+fi
+
+if [ "$(git config --get commit.gpgsign || true)" = "true" ]; then
+  echo "[update-context] commit signing is on - leaving generated files unstaged."
+  exit 0
+fi
+
+# --only limits the amend to these paths, so anything else the user left
+# staged (e.g. after `git commit <some-file>`) stays staged and uncommitted.
+# It's safe to list a path with no actual diff here - git just skips it.
+if CLAUDE_CONTEXT_AMEND=1 git commit --amend --no-edit --only -- $GENERATED_FILES >/dev/null; then
+  echo "[update-context] folded generated files into $(git rev-parse --short HEAD)."
+else
+  echo "[update-context] amend failed - generated files left unstaged."
+fi
+
+exit 0

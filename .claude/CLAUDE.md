@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**Before doing anything else in a new session, read [.claude-resume.md](../.claude-resume.md).**
+It says what the last commit did, the next planned step, and any open blockers — regenerated
+automatically after every commit by [.hooks/update-context.js](../.hooks/update-context.js).
+
 ## Commands
 
 - `npm start` (or `npx ng serve`) — dev server at http://localhost:4200 with auto-reload.
