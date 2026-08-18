@@ -1,36 +1,76 @@
-<nav class="flex items-center justify-between gap-4 border-b border-gray-200 px-6 py-3">
-  <div class="flex items-center gap-4">
-    <span data-testid="nav-title" class="font-semibold">{{ language.t().nav.appTitle }}</span>
-    <a
-      routerLink="/guide/sections"
-      routerLinkActive="font-semibold text-blue-700"
-      class="text-blue-600 hover:underline"
-    >
-      {{ language.t().nav.sectionsLink }}
-    </a>
-    <a
-      routerLink="/resources"
-      routerLinkActive="font-semibold text-blue-700"
-      class="text-blue-600 hover:underline"
-    >
-      {{ language.t().nav.resourcesLink }}
-    </a>
-    <a
-      routerLink="/news"
-      routerLinkActive="font-semibold text-blue-700"
-      class="text-blue-600 hover:underline"
-    >
-      {{ language.t().nav.newsLink }}
-    </a>
-    <a
-      routerLink="/organizations"
-      routerLinkActive="font-semibold text-blue-700"
-      class="text-blue-600 hover:underline"
-    >
-      {{ language.t().nav.organizationsLink }}
-    </a>
-  </div>
-  <app-language-toggle />
-</nav>
+<header class="sticky top-0 z-20 shrink-0 border-b border-ink-100 bg-surface-card/90 backdrop-blur supports-[backdrop-filter]:bg-surface-card/75">
+  <div class="h-0.5 w-full bg-gradient-to-r from-brand-500 via-brand-400 to-gold-400"></div>
+  <nav class="flex items-center justify-between gap-6 px-6 py-3">
+    <div class="flex items-center gap-6">
+      <div class="flex items-center gap-2">
+        <span
+          aria-hidden="true"
+          class="flex h-7 w-7 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white"
+          >M</span
+        >
+        <span data-testid="nav-title" class="text-sm font-semibold tracking-tight text-ink-900">
+          {{ language.t().nav.appTitle }}
+        </span>
+      </div>
+      <div class="flex items-center gap-1">
+        <a
+          routerLink="/guide/sections"
+          routerLinkActive
+          #sectionsActive="routerLinkActive"
+          [class.text-brand-700]="sectionsActive.isActive"
+          [class.text-ink-600]="!sectionsActive.isActive"
+          [class.font-semibold]="sectionsActive.isActive"
+          [class.font-medium]="!sectionsActive.isActive"
+          [class.shadow-nav-active]="sectionsActive.isActive"
+          class="rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-brand-50 hover:text-brand-700"
+        >
+          {{ language.t().nav.sectionsLink }}
+        </a>
+        <a
+          routerLink="/resources"
+          routerLinkActive
+          #resourcesActive="routerLinkActive"
+          [class.text-brand-700]="resourcesActive.isActive"
+          [class.text-ink-600]="!resourcesActive.isActive"
+          [class.font-semibold]="resourcesActive.isActive"
+          [class.font-medium]="!resourcesActive.isActive"
+          [class.shadow-nav-active]="resourcesActive.isActive"
+          class="rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-brand-50 hover:text-brand-700"
+        >
+          {{ language.t().nav.resourcesLink }}
+        </a>
+        <a
+          routerLink="/news"
+          routerLinkActive
+          #newsActive="routerLinkActive"
+          [class.text-brand-700]="newsActive.isActive"
+          [class.text-ink-600]="!newsActive.isActive"
+          [class.font-semibold]="newsActive.isActive"
+          [class.font-medium]="!newsActive.isActive"
+          [class.shadow-nav-active]="newsActive.isActive"
+          class="rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-brand-50 hover:text-brand-700"
+        >
+          {{ language.t().nav.newsLink }}
+        </a>
+        <a
+          routerLink="/organizations"
+          routerLinkActive
+          #organizationsActive="routerLinkActive"
+          [class.text-brand-700]="organizationsActive.isActive"
+          [class.text-ink-600]="!organizationsActive.isActive"
+          [class.font-semibold]="organizationsActive.isActive"
+          [class.font-medium]="!organizationsActive.isActive"
+          [class.shadow-nav-active]="organizationsActive.isActive"
+          class="rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-brand-50 hover:text-brand-700"
+        >
+          {{ language.t().nav.organizationsLink }}
+        </a>
+      </div>
+    </div>
+    <app-language-toggle />
+  </nav>
+</header>
 
-<router-outlet />
+<div class="min-h-0 flex-1 overflow-y-auto">
+  <router-outlet />
+</div>

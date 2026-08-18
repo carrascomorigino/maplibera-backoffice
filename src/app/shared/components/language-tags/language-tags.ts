@@ -36,12 +36,12 @@ export class LanguageTags {
   }
 
   protected tagClass(lang: ContentLanguage): string {
-    const base = 'flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium';
-    const selected = lang === this.selectedLanguage() ? ' ring-2 ring-blue-500' : '';
+    const base = 'flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-colors';
+    const selected = lang === this.selectedLanguage() ? ' ring-2 ring-brand-500 ring-offset-1' : '';
     if (!this.isTranslated(lang)) {
-      return `${base} bg-gray-100 text-gray-500${selected}`;
+      return `${base} bg-ink-100 text-ink-500${selected}`;
     }
-    return `${base} bg-blue-50 text-blue-700${selected}`;
+    return `${base} bg-brand-50 text-brand-700${selected}`;
   }
 
   protected onTagClick(lang: ContentLanguage): void {

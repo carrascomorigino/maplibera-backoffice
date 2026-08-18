@@ -1,7 +1,7 @@
 <div class="flex items-start justify-between gap-2">
   <span
     data-testid="type-badge"
-    class="rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700"
+    class="rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700"
   >
     {{ typeBadgeLabel() }}
   </span>
@@ -15,20 +15,20 @@
 </div>
 
 @if (organization().logoUrl) {
-  <img data-testid="logo-image" [src]="organization().logoUrl" alt="" class="h-20 w-20 rounded object-cover" />
+  <img data-testid="logo-image" [src]="organization().logoUrl" alt="" class="h-20 w-20 rounded-lg object-cover" />
 } @else {
   <div
     data-testid="logo-placeholder"
-    class="flex h-20 w-20 items-center justify-center rounded bg-gray-100 text-gray-400"
+    class="flex h-20 w-20 items-center justify-center rounded-lg bg-surface-sunken text-ink-300"
   >
     <mat-icon>apartment</mat-icon>
   </div>
 }
 
-<p data-testid="organization-name" class="font-medium">{{ translation()?.name }}</p>
-<p class="line-clamp-2 text-sm text-gray-600">{{ translation()?.description }}</p>
+<p data-testid="organization-name" class="font-medium text-ink-900">{{ translation()?.name }}</p>
+<p class="line-clamp-2 text-sm text-ink-500">{{ translation()?.description }}</p>
 
-<span data-testid="scope-badge" class="w-fit rounded-full bg-gray-50 px-2 py-1 text-xs text-gray-600">
+<span data-testid="scope-badge" class="w-fit rounded-full bg-ink-50 px-2 py-1 text-xs text-ink-600">
   {{ scopeLabel() }}
 </span>
 
@@ -41,7 +41,7 @@
         target="_blank"
         rel="noopener noreferrer"
         [attr.aria-label]="entry.ariaLabel"
-        class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200"
+        class="flex h-8 w-8 items-center justify-center rounded-full bg-ink-50 text-ink-500 transition-colors hover:bg-brand-50 hover:text-brand-700"
       >
         <mat-icon>{{ entry.icon }}</mat-icon>
       </a>

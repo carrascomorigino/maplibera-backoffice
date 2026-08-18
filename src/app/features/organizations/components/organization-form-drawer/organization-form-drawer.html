@@ -3,7 +3,7 @@
   class="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden sm:w-[26rem]"
 >
   <div class="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden p-6">
-    <h2 class="text-lg font-semibold">
+    <h2 class="text-lg font-semibold tracking-tight text-ink-900">
       {{
         organization()
           ? language.t().organizations.organizationForm.editHeading
@@ -11,24 +11,24 @@
       }}
     </h2>
 
-    <span data-testid="working-language-indicator" class="w-fit rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+    <span data-testid="working-language-indicator" class="w-fit rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700">
       {{ language.t().organizations.organizationForm.workingLanguageLabel(contentLanguageLabels[targetLanguage()]) }}
     </span>
 
     @if (loading()) {
-      <p data-testid="suggestion-loading" class="text-sm text-gray-500">
+      <p data-testid="suggestion-loading" class="text-sm text-ink-500">
         {{ language.t().organizations.organizationForm.suggestionLoadingText }}
       </p>
     }
 
     @if (staleSourceLanguage() && staleSuggestionLoading()) {
-      <p data-testid="stale-preview-loading" class="text-sm text-gray-500">
+      <p data-testid="stale-preview-loading" class="text-sm text-ink-500">
         {{ language.t().organizations.organizationForm.previewLoadingText }}
       </p>
     }
 
     <fieldset class="flex min-w-0 flex-col gap-2">
-      <legend class="text-sm font-medium text-gray-700">{{ language.t().organizations.organizationForm.typeLabel }}</legend>
+      <legend class="text-sm font-medium text-ink-700">{{ language.t().organizations.organizationForm.typeLabel }}</legend>
       <label class="flex items-center gap-2">
         <input
           type="radio"
@@ -108,7 +108,7 @@
         @if (previewRevealed()) {
           <div
             data-testid="suggestion-preview-panel"
-            class="flex items-center justify-between gap-2 rounded border border-amber-200 bg-amber-50 p-2 text-sm"
+            class="flex items-center justify-between gap-2 rounded-lg border border-gold-200 bg-gold-50 p-2 text-sm"
           >
             <span>{{ staleSuggestion()?.name }}</span>
             <button
@@ -125,7 +125,7 @@
     }
 
     <div class="min-w-0">
-      <label data-testid="description-label" class="mb-1 block text-sm font-medium text-gray-700">
+      <label data-testid="description-label" class="mb-1 block text-sm font-medium text-ink-700">
         {{ language.t().organizations.organizationForm.descriptionLabel }}
       </label>
       <app-markdown-editor formControlName="description" [maxLength]="descriptionMaxLength" />
@@ -141,12 +141,12 @@
         data-testid="logo-preview"
         [src]="form.controls.logoUrl.value"
         alt=""
-        class="h-32 w-32 rounded object-cover"
+        class="h-32 w-32 rounded-lg object-cover"
       />
     }
 
     <fieldset class="flex min-w-0 flex-col gap-2">
-      <legend class="text-sm font-medium text-gray-700">{{ language.t().organizations.organizationForm.scopeLabel }}</legend>
+      <legend class="text-sm font-medium text-ink-700">{{ language.t().organizations.organizationForm.scopeLabel }}</legend>
       <label class="flex items-center gap-2">
         <input
           type="radio"
@@ -180,10 +180,10 @@
 
       @if (form.controls.scopeType.value === 'country') {
         <div class="flex min-w-0 flex-col gap-1">
-          <label class="text-sm font-medium text-gray-700" for="country-select">{{
+          <label class="text-sm font-medium text-ink-700" for="country-select">{{
             language.t().organizations.organizationForm.countryLabel
           }}</label>
-          <select id="country-select" data-testid="country-select" formControlName="countryCode" class="rounded border border-gray-300 p-2">
+          <select id="country-select" data-testid="country-select" formControlName="countryCode" class="rounded-lg border border-ink-300 bg-surface-sunken p-2 text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200">
             <option [value]="null"></option>
             @for (option of countryOptions; track option.code) {
               <option [value]="option.code">{{ option.label }}</option>
@@ -247,7 +247,7 @@
     </mat-form-field>
   </div>
 
-  <div class="flex gap-2 border-t border-gray-200 p-6">
+  <div class="flex gap-2 border-t border-ink-100 bg-surface-muted p-6">
     <button
       mat-flat-button
       type="button"

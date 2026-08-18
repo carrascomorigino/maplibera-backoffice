@@ -80,14 +80,14 @@
   @if (previewing()) {
     <div
       data-testid="markdown-preview"
-      class="min-h-32 rounded border border-gray-300 p-3"
+      class="min-h-32 rounded-lg border border-ink-200 bg-surface-card p-3"
       [innerHTML]="renderedHtml()"
     ></div>
   } @else {
     <textarea
       #textarea
       data-testid="markdown-textarea"
-      class="min-h-32 w-full rounded border border-gray-300 p-2 font-mono text-sm"
+      class="min-h-32 w-full rounded-lg border border-ink-300 bg-surface-sunken p-2 font-mono text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
       [value]="value()"
       [disabled]="disabled()"
       [attr.maxlength]="maxLength() ?? null"
@@ -95,7 +95,7 @@
       (blur)="onBlur()"
     ></textarea>
     @if (maxLength(); as max) {
-      <span data-testid="markdown-char-counter" class="self-end text-xs text-gray-500">{{
+      <span data-testid="markdown-char-counter" class="self-end text-xs text-ink-400">{{
         language.t().fieldLimits.charactersRemaining(charactersRemaining())
       }}</span>
     }

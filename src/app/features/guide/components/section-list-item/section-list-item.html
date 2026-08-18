@@ -2,37 +2,37 @@
   cdkDragHandle
   data-testid="drag-handle"
   aria-hidden="true"
-  class="cursor-move text-gray-400"
+  class="cursor-move text-ink-300 hover:text-ink-500"
 >
   <mat-icon>drag_indicator</mat-icon>
 </span>
 
 @if (section().imageUrl) {
-  <img [src]="section().imageUrl" alt="" class="h-12 w-12 rounded object-cover" />
+  <img [src]="section().imageUrl" alt="" class="h-12 w-12 rounded-lg object-cover" />
 } @else {
   <div
     data-testid="thumbnail-placeholder"
-    class="flex h-12 w-12 items-center justify-center rounded bg-gray-100 text-gray-400"
+    class="flex h-12 w-12 items-center justify-center rounded-lg bg-surface-sunken text-ink-300"
   >
     <mat-icon>image</mat-icon>
   </div>
 }
 
 <div class="flex-1">
-  <p data-testid="section-title" class="font-medium">{{ translation()?.title }}</p>
-  <p data-testid="section-slug" class="font-mono text-xs text-gray-500">{{ section().slug }}</p>
-  <p class="text-sm text-gray-600">{{ translation()?.description }}</p>
+  <p data-testid="section-title" class="font-medium text-ink-900">{{ translation()?.title }}</p>
+  <p data-testid="section-slug" class="font-mono text-xs text-ink-400">{{ section().slug }}</p>
+  <p class="text-sm text-ink-500">{{ translation()?.description }}</p>
 
   @if (translation()?.question; as question) {
     <div class="mt-1">
-      <p class="text-xs font-medium text-gray-500">
+      <p class="text-xs font-medium text-ink-500">
         <span data-testid="question-type">{{ questionTypeLabel(question.type) }}</span>
         &mdash;
         <span data-testid="question-text">{{ question.text }}</span>
       </p>
       @if (correctAnswerLabels(question); as correctAnswers) {
         @if (correctAnswers.length) {
-          <ul class="mt-0.5 list-disc pl-4 text-xs text-gray-600">
+          <ul class="mt-0.5 list-disc pl-4 text-xs text-ink-500">
             @for (answer of correctAnswers; track answer) {
               <li data-testid="correct-answer">{{ answer }}</li>
             }
@@ -42,7 +42,7 @@
     </div>
   }
 
-  <p data-testid="country-availability-indicator" class="mt-1 text-xs text-gray-500">
+  <p data-testid="country-availability-indicator" class="mt-1 text-xs text-ink-400">
     {{ countryAvailabilityIndicator() }}
   </p>
 
@@ -66,7 +66,7 @@
   {{ section().status }}
 </span>
 
-<button mat-stroked-button type="button" data-testid="edit-button" (click)="onEdit()">
+<button mat-stroked-button type="button" data-testid="edit-button" class="shrink-0" (click)="onEdit()">
   {{ language.t().guide.sectionsList.editButton }}
 </button>
 <button

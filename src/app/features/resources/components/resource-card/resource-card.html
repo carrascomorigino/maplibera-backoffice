@@ -1,5 +1,5 @@
 <div class="flex items-start justify-between gap-2">
-  <span cdkDragHandle data-testid="drag-handle" aria-hidden="true" class="cursor-move text-gray-400">
+  <span cdkDragHandle data-testid="drag-handle" aria-hidden="true" class="cursor-move text-ink-300 hover:text-ink-500">
     <mat-icon>drag_indicator</mat-icon>
   </span>
   <span
@@ -12,18 +12,18 @@
 </div>
 
 @if (thumbnailUrl()) {
-  <img [src]="thumbnailUrl()" alt="" class="h-32 w-full rounded object-cover" />
+  <img [src]="thumbnailUrl()" alt="" class="h-32 w-full rounded-lg object-cover" />
 } @else {
   <div
     data-testid="thumbnail-placeholder"
-    class="flex h-32 w-full items-center justify-center rounded bg-gray-100 text-gray-400"
+    class="flex h-32 w-full items-center justify-center rounded-lg bg-surface-sunken text-ink-300"
   >
     <mat-icon>image</mat-icon>
   </div>
 }
 
-<p data-testid="resource-title" class="font-medium">{{ translation()?.title }}</p>
-<p class="line-clamp-2 text-sm text-gray-600">{{ translation()?.shortDescription }}</p>
+<p data-testid="resource-title" class="font-medium text-ink-900">{{ translation()?.title }}</p>
+<p class="line-clamp-2 text-sm text-ink-500">{{ translation()?.shortDescription }}</p>
 
 <app-language-tags
   [languages]="contentLanguages"
