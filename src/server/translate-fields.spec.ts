@@ -9,7 +9,58 @@ function fakeClient(responseText: string) {
   } as unknown as GoogleGenAI;
 }
 
+function modelOfLastCall(client: GoogleGenAI): string {
+  const [[call]] = (client.models.generateContent as ReturnType<typeof vi.fn>).mock.calls;
+  return call.model;
+}
+
 describe('translateFields', () => {
+  const originalModel = process.env['GEMINI_API_MODEL'];
+
+  afterEach(() => {
+    if (originalModel === undefined) delete process.env['GEMINI_API_MODEL'];
+    else process.env['GEMINI_API_MODEL'] = originalModel;
+  });
+
+  it('uses the default model when GEMINI_API_MODEL is unset', async () => {
+    delete process.env['GEMINI_API_MODEL'];
+    const client = fakeClient(JSON.stringify({ title: 'Título' }));
+
+    await translateFields(client, {
+      sourceLanguage: 'en',
+      targetLanguage: 'es',
+      fields: { title: 'Title' },
+    });
+
+    expect(modelOfLastCall(client)).toBe('gemini-2.5-flash');
+  });
+
+  it('uses the default model when GEMINI_API_MODEL is set but empty', async () => {
+    process.env['GEMINI_API_MODEL'] = '';
+    const client = fakeClient(JSON.stringify({ title: 'Título' }));
+
+    await translateFields(client, {
+      sourceLanguage: 'en',
+      targetLanguage: 'es',
+      fields: { title: 'Title' },
+    });
+
+    expect(modelOfLastCall(client)).toBe('gemini-2.5-flash');
+  });
+
+  it('overrides the model from GEMINI_API_MODEL', async () => {
+    process.env['GEMINI_API_MODEL'] = 'gemini-custom-model';
+    const client = fakeClient(JSON.stringify({ title: 'Título' }));
+
+    await translateFields(client, {
+      sourceLanguage: 'en',
+      targetLanguage: 'es',
+      fields: { title: 'Title' },
+    });
+
+    expect(modelOfLastCall(client)).toBe('gemini-custom-model');
+  });
+
   it('sends the source/target languages and fields in the request', async () => {
     const client = fakeClient(JSON.stringify({ title: 'Título', description: 'Descripción' }));
 
@@ -152,9 +203,7 @@ describe('translateFields', () => {
   });
 
   it('does not deep-validate the shape of object-valued fields, only their presence', async () => {
-    const client = fakeClient(
-      JSON.stringify({ title: 'Título', question: { anything: 'goes' } }),
-    );
+    const client = fakeClient(JSON.stringify({ title: 'Título', question: { anything: 'goes' } }));
 
     const result = await translateFields(client, {
       sourceLanguage: 'en',

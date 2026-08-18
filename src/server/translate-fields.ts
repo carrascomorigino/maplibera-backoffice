@@ -1,6 +1,8 @@
 import type { GoogleGenAI } from '@google/genai';
 import { ContentLanguage } from '../app/features/guide/models/content-language.model';
 
+const DEFAULT_MODEL = 'gemini-2.5-flash';
+
 export interface TranslateFieldsRequest {
   sourceLanguage: ContentLanguage;
   targetLanguage: ContentLanguage;
@@ -11,10 +13,13 @@ export async function translateFields(
   client: GoogleGenAI,
   request: TranslateFieldsRequest,
 ): Promise<Record<string, unknown>> {
-  const MODEL = process.env['GEMINI_API_MODEL'] ?? '';
+  // Read per request, not at module load, so the value reflects the environment
+  // once dotenv has run. `||` rather than `??`: an empty GEMINI_API_MODEL (as in
+  // .env.example) must fall back to the default instead of asking for model "".
+  const model = process.env['GEMINI_API_MODEL'] || DEFAULT_MODEL;
 
   const response = await client.models.generateContent({
-    model: MODEL,
+    model,
     contents: JSON.stringify(request.fields),
     config: {
       systemInstruction:
