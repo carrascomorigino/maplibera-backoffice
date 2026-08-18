@@ -19,6 +19,12 @@
       "skillPath": "changelog-generator/SKILL.md",
       "computedHash": "f84bcb773a67ade28878d63103e3d4dc1f5031d6103be5107ff99c15b8d4a992"
     },
+    "create-readme": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/create-readme/SKILL.md",
+      "computedHash": "d0ece1b2164ce1376e4ab6e98d6ac079df3a2a94f5f02224362b6a1ce2516ae9"
+    },
     "developing-genkit-js": {
       "source": "genkit-ai/skills",
       "sourceType": "github",
