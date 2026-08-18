@@ -1,0 +1,3 @@
+# Refresh the auto-generated block of CLAUDE_CONTEXT.md after every commit.
+# The script never fails a commit: it exits 0 even when generation breaks.
+node .hooks/update-context.js

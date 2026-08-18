@@ -8,7 +8,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:maplibera-backoffice": "node dist/maplibera-backoffice/server/server.mjs"
+    "serve:ssr:maplibera-backoffice": "node dist/maplibera-backoffice/server/server.mjs",
+    "prepare": "husky || true"
   },
   "private": true,
   "packageManager": "npm@11.12.1",
@@ -37,6 +38,7 @@
     "@tailwindcss/postcss": "^4.1.12",
     "@types/express": "^5.0.1",
     "@types/node": "^20.17.19",
+    "husky": "^9.1.7",
     "jsdom": "^28.0.0",
     "postcss": "^8.5.3",
     "prettier": "^3.8.1",
