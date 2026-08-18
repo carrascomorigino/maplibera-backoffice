@@ -1,8 +1,6 @@
 import type { GoogleGenAI } from '@google/genai';
 import { ContentLanguage } from '../app/features/guide/models/content-language.model';
 
-const MODEL = process.env['GEMINI_API_MODEL'] ?? 'gemini-2.5-flash';
-
 export interface TranslateFieldsRequest {
   sourceLanguage: ContentLanguage;
   targetLanguage: ContentLanguage;
@@ -13,6 +11,8 @@ export async function translateFields(
   client: GoogleGenAI,
   request: TranslateFieldsRequest,
 ): Promise<Record<string, unknown>> {
+  const MODEL = process.env['GEMINI_API_MODEL'] ?? '';
+
   const response = await client.models.generateContent({
     model: MODEL,
     contents: JSON.stringify(request.fields),
