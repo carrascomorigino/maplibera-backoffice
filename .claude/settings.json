@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const fs=require('node:fs'),p=require('node:path');const f=p.join(process.env.CLAUDE_PROJECT_DIR||process.cwd(),'.claude-resume.md');try{const c=fs.readFileSync(f,'utf8');process.stdout.write(JSON.stringify({hookSpecificOutput:{hookEventName:'SessionStart',additionalContext:c}}))}catch{}\"",
+            "timeout": 10,
+            "statusMessage": "Loading .claude-resume.md"
+          }
+        ]
+      }
+    ]
+  }
+}
