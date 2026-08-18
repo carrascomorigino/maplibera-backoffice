@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output, si
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Organization, OrganizationStatus } from '../../models/organization.model';
 import {
   ContentLanguage,
@@ -46,6 +47,7 @@ interface ContactLinkEntry {
 export class OrganizationListItem {
   private readonly organizationService = inject(OrganizationService);
   private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
   protected readonly language = inject(LanguageService);
   protected readonly contentLanguages = CONTENT_LANGUAGES;
   protected readonly contentLanguageLabels = CONTENT_LANGUAGE_LABELS;
@@ -160,7 +162,9 @@ export class OrganizationListItem {
     });
     dialogRef.afterClosed().subscribe((confirmed) => {
       if (confirmed) {
-        this.organizationService.removeTranslation(this.organization().slug, lang);
+        this.organizationService
+          .removeTranslation(this.organization().id, lang)
+          .catch(() => this.notifyActionFailed());
       }
     });
   }
@@ -181,11 +185,13 @@ export class OrganizationListItem {
 
   protected onStatusAction(): void {
     const org = this.organization();
-    if (org.status === 'published') {
-      this.organizationService.pause(org.slug);
-    } else {
-      this.organizationService.publish(org.slug);
-    }
+    const action = org.status === 'published' ? this.organizationService.pause(org.id) : this.organizationService.publish(org.id);
+    action.catch(() => this.notifyActionFailed());
+  }
+
+  private notifyActionFailed(): void {
+    const form = this.language.t().organizations.organizationForm;
+    this.snackBar.open(form.actionFailedNotice, form.actionFailedDismiss);
   }
 
   protected statusBadgeClass(status: OrganizationStatus): string {

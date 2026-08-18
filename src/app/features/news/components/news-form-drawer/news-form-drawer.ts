@@ -180,19 +180,32 @@ export class NewsFormDrawer {
     );
   }
 
-  protected save(): void {
-    this.persist();
-    this.saved.emit();
+  protected async save(): Promise<void> {
+    try {
+      await this.persist();
+      this.saved.emit();
+    } catch {
+      this.notifyActionFailed();
+    }
   }
 
-  protected publish(): void {
-    const slug = this.persist();
-    this.newsItemService.publish(slug);
-    this.saved.emit();
+  protected async publish(): Promise<void> {
+    try {
+      const item = await this.persist();
+      await this.newsItemService.publish(item.id);
+      this.saved.emit();
+    } catch {
+      this.notifyActionFailed();
+    }
   }
 
   protected cancel(): void {
     this.cancelled.emit();
+  }
+
+  private notifyActionFailed(): void {
+    const form = this.language.t().news.newsForm;
+    this.snackBar.open(form.actionFailedNotice, form.actionFailedDismiss);
   }
 
   private requestSuggestion(
@@ -264,7 +277,7 @@ export class NewsFormDrawer {
     );
   }
 
-  private persist(): string {
+  private async persist(): Promise<NewsItem> {
     const { category, title, slug, subtitle, description, imageUrl, publishedAt, eventDate, sourceLinks } =
       this.form.getRawValue();
     const translation: NewsTranslation = { title, subtitle, description };
@@ -277,9 +290,8 @@ export class NewsFormDrawer {
 
     const existing = this.item();
     if (existing) {
-      this.newsItemService.updateSharedFields(existing.slug, sharedFields);
-      this.newsItemService.saveTranslation(existing.slug, this.targetLanguage(), translation, slug);
-      return slug;
+      await this.newsItemService.updateSharedFields(existing.id, sharedFields);
+      return this.newsItemService.saveTranslation(existing.id, this.targetLanguage(), translation, slug);
     }
 
     return this.newsItemService.create({
@@ -288,6 +300,6 @@ export class NewsFormDrawer {
       sharedFields,
       language: this.targetLanguage(),
       translation,
-    }).slug;
+    });
   }
 }

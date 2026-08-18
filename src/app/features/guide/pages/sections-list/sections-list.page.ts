@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDrawer, MatDrawerContainer, MatDrawerContent } from '@angular/material/sidenav';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Section } from '../../models/section.model';
 import { ContentLanguage } from '../../models/content-language.model';
 import { SectionService } from '../../services/section.service';
@@ -41,6 +42,7 @@ type DrawerContext =
 })
 export class SectionsListPage {
   private readonly sectionService = inject(SectionService);
+  private readonly snackBar = inject(MatSnackBar);
   protected readonly language = inject(LanguageService);
 
   protected readonly sections = this.sectionService.sections;
@@ -106,8 +108,11 @@ export class SectionsListPage {
   }
 
   onDrop(event: CdkDragDrop<Section[]>): void {
-    const slugs = event.container.data.map((section) => section.slug);
-    moveItemInArray(slugs, event.previousIndex, event.currentIndex);
-    this.sectionService.reorder(slugs);
+    const ids = event.container.data.map((section) => section.id);
+    moveItemInArray(ids, event.previousIndex, event.currentIndex);
+    this.sectionService.reorder(ids).catch(() => {
+      const labels = this.language.t().guide.sectionForm;
+      this.snackBar.open(labels.actionFailedNotice, labels.actionFailedDismiss);
+    });
   }
 }

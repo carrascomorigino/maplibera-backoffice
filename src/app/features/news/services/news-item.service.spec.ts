@@ -1,225 +1,144 @@
-import { NewsItemService } from './news-item.service';
+import { TestBed } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { NewsItemCreateInput, NewsItemService } from './news-item.service';
+import { NewsItem } from '../models/news-item.model';
 
-const STORAGE_KEY = 'app-news-items';
+const BASE_URL = '/backend/news';
 
-function setup(): NewsItemService {
-  return new NewsItemService();
-}
-
-function newsInput(overrides: { slug?: string; publishedAt?: string } = {}) {
+function createInput(overrides: Partial<NewsItemCreateInput> = {}): NewsItemCreateInput {
   return {
-    category: 'news' as const,
-    slug: overrides.slug ?? 'new-visitor-center',
-    sharedFields: {
-      imageUrl: 'https://example.com/banner.jpg',
-      publishedAt: overrides.publishedAt ?? '2026-08-01',
-      sourceLinks: [] as string[],
-    },
-    language: 'en' as const,
-    translation: { title: 'New visitor center', subtitle: 'Now open', description: 'Details' },
+    category: 'news',
+    slug: 'news-one',
+    sharedFields: { imageUrl: 'https://example.com/n.jpg', publishedAt: '2026-01-01', sourceLinks: [] },
+    language: 'en',
+    translation: { title: 'News One', subtitle: 'Sub', description: 'Desc' },
+    ...overrides,
   };
 }
 
-function eventInput(overrides: { slug?: string; publishedAt?: string; eventDate?: string } = {}) {
+function item(overrides: Partial<NewsItem> = {}): NewsItem {
   return {
-    category: 'event' as const,
-    slug: overrides.slug ?? 'summer-festival',
-    sharedFields: {
-      imageUrl: 'https://example.com/festival.jpg',
-      publishedAt: overrides.publishedAt ?? '2026-07-01',
-      eventDate: overrides.eventDate ?? '2026-08-15',
-      sourceLinks: [] as string[],
-    },
-    language: 'en' as const,
-    translation: { title: 'Summer festival', subtitle: 'Join us', description: 'Details' },
+    id: 'n1',
+    slug: 'news-one',
+    category: 'news',
+    status: 'draft',
+    imageUrl: 'https://example.com/n.jpg',
+    publishedAt: '2026-01-01',
+    sourceLinks: [],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    translations: { en: { title: 'News One', subtitle: 'Sub', description: 'Desc' } },
+    ...overrides,
   };
 }
 
 describe('NewsItemService', () => {
-  beforeEach(() => {
-    localStorage.clear();
+  let service: NewsItemService;
+  let httpMock: HttpTestingController;
+
+  async function setup(initial: NewsItem[] = []): Promise<void> {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    service = TestBed.inject(NewsItemService);
+    httpMock = TestBed.inject(HttpTestingController);
+
+    const req = httpMock.expectOne(BASE_URL);
+    expect(req.request.method).toBe('GET');
+    req.flush(initial);
+    await Promise.resolve();
+  }
+
+  afterEach(() => {
+    httpMock.verify();
   });
 
-  describe('create', () => {
-    it('creates a news item with draft status and a single translation', () => {
-      const service = setup();
+  it('fetches items from the backend on construction', async () => {
+    await setup([item()]);
 
-      const item = service.create(newsInput());
-
-      expect(item.category).toBe('news');
-      expect(item.status).toBe('draft');
-      expect(Object.keys(item.translations)).toEqual(['en']);
-      expect(item.eventDate).toBeUndefined();
-      expect(service.items()).toEqual([item]);
-    });
-
-    it('creates an event with an eventDate', () => {
-      const service = setup();
-
-      const item = service.create(eventInput());
-
-      expect(item.category).toBe('event');
-      expect(item.eventDate).toBe('2026-08-15');
-    });
+    expect(service.items()).toEqual([item()]);
   });
 
-  describe('items ordering', () => {
-    it('sorts items by publishedAt descending regardless of category', () => {
-      const service = setup();
-      service.create(newsInput({ slug: 'oldest', publishedAt: '2026-01-01' }));
-      service.create(eventInput({ slug: 'newest', publishedAt: '2026-08-01' }));
-      service.create(newsInput({ slug: 'middle', publishedAt: '2026-04-01' }));
+  it('POSTs the input on create and appends the returned item', async () => {
+    await setup([]);
 
-      expect(service.items().map((item) => item.slug)).toEqual(['newest', 'middle', 'oldest']);
-    });
+    const promise = service.create(createInput());
+    const req = httpMock.expectOne(BASE_URL);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(createInput());
+    req.flush(item());
+
+    await expect(promise).resolves.toEqual(item());
+    expect(service.items()).toEqual([item()]);
   });
 
-  describe('saveTranslation / removeTranslation / staleLanguages', () => {
-    it('adds a new language without dropping existing translations', () => {
-      const service = setup();
-      const created = service.create(newsInput());
+  it('PUTs to /:id/translations on saveTranslation', async () => {
+    await setup([item()]);
+    const updated = item({ translations: { en: { title: 'Updated', subtitle: 'Sub', description: 'Desc' } } });
 
-      service.saveTranslation(created.slug, 'es', {
-        title: 'Nuevo centro de visitantes',
-        subtitle: 'Ya abrió',
-        description: 'Detalles',
-      });
+    const promise = service.saveTranslation('n1', 'en', updated.translations.en!, 'news-one');
+    const req = httpMock.expectOne(`${BASE_URL}/n1/translations`);
+    expect(req.request.method).toBe('PUT');
+    req.flush(updated);
 
-      const updated = service.items()[0];
-      expect(Object.keys(updated.translations).sort()).toEqual(['en', 'es']);
-    });
-
-    it('marks other languages stale when an existing translation is edited', () => {
-      const service = setup();
-      const created = service.create(newsInput());
-      service.saveTranslation(created.slug, 'es', {
-        title: 'Nuevo centro de visitantes',
-        subtitle: 'Ya abrió',
-        description: 'Detalles',
-      });
-
-      service.saveTranslation(created.slug, 'en', {
-        title: 'New visitor center v2',
-        subtitle: 'Now open',
-        description: 'Details',
-      });
-
-      expect(service.items()[0].staleLanguages).toEqual({ es: 'en' });
-    });
-
-    it('removeTranslation deletes the language and clears related staleLanguages entries', () => {
-      const service = setup();
-      const created = service.create(newsInput());
-      service.saveTranslation(created.slug, 'es', {
-        title: 'Nuevo centro de visitantes',
-        subtitle: 'Ya abrió',
-        description: 'Detalles',
-      });
-      service.saveTranslation(created.slug, 'en', {
-        title: 'New visitor center v2',
-        subtitle: 'Now open',
-        description: 'Details',
-      });
-      expect(service.items()[0].staleLanguages).toEqual({ es: 'en' });
-
-      service.removeTranslation(created.slug, 'es');
-
-      const item = service.items()[0];
-      expect(Object.keys(item.translations)).toEqual(['en']);
-      expect(item.staleLanguages).toEqual({});
-    });
-
-    it('renames the slug when a newSlug is passed', () => {
-      const service = setup();
-      const created = service.create(newsInput());
-
-      service.saveTranslation(
-        created.slug,
-        'en',
-        { title: 'New visitor center', subtitle: 'Now open', description: 'Details' },
-        'visitor-center-grand-opening',
-      );
-
-      expect(service.items().find((i) => i.slug === created.slug)).toBeUndefined();
-      expect(service.items().find((i) => i.slug === 'visitor-center-grand-opening')).toBeTruthy();
-    });
-
-    it('removeTranslation is a no-op when it would remove the last translation', () => {
-      const service = setup();
-      const created = service.create(newsInput());
-
-      service.removeTranslation(created.slug, 'en');
-
-      expect(Object.keys(service.items()[0].translations)).toEqual(['en']);
-    });
+    await expect(promise).resolves.toEqual(updated);
   });
 
-  describe('updateSharedFields', () => {
-    it('updates shared fields without touching translations', () => {
-      const service = setup();
-      const created = service.create(newsInput());
+  it('DELETEs /:id/translations/:language on removeTranslation', async () => {
+    await setup([item()]);
+    const updated = item({ translations: {} });
 
-      service.updateSharedFields(created.slug, {
-        imageUrl: 'https://example.com/new-banner.jpg',
-        publishedAt: '2026-09-01',
-        sourceLinks: ['https://example.com/source'],
-      });
+    const promise = service.removeTranslation('n1', 'en');
+    const req = httpMock.expectOne(`${BASE_URL}/n1/translations/en`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(updated);
 
-      const updated = service.items()[0];
-      expect(updated.imageUrl).toBe('https://example.com/new-banner.jpg');
-      expect(updated.publishedAt).toBe('2026-09-01');
-      expect(updated.sourceLinks).toEqual(['https://example.com/source']);
-      expect(updated.translations.en?.title).toBe('New visitor center');
-    });
+    await expect(promise).resolves.toEqual(updated);
   });
 
-  describe('publish / pause', () => {
-    it('publish sets status to published, pause sets it to paused', () => {
-      const service = setup();
-      const created = service.create(newsInput());
+  it('PATCHes /:id/shared-fields on updateSharedFields', async () => {
+    await setup([item()]);
+    const sharedFields = { imageUrl: 'https://example.com/new.jpg', publishedAt: '2026-02-01', sourceLinks: [] };
+    const updated = item(sharedFields);
 
-      service.publish(created.slug);
-      expect(service.items()[0].status).toBe('published');
+    const promise = service.updateSharedFields('n1', sharedFields);
+    const req = httpMock.expectOne(`${BASE_URL}/n1/shared-fields`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ sharedFields });
+    req.flush(updated);
 
-      service.pause(created.slug);
-      expect(service.items()[0].status).toBe('paused');
-    });
+    await expect(promise).resolves.toEqual(updated);
   });
 
-  describe('persistence', () => {
-    it('persists created items to localStorage under its own key', () => {
-      const service = setup();
-      service.create(newsInput());
+  it('publish/pause POST to /:id/publish and /:id/pause', async () => {
+    await setup([item()]);
 
-      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
-      expect(stored).toHaveLength(1);
-    });
+    const publishPromise = service.publish('n1');
+    httpMock.expectOne(`${BASE_URL}/n1/publish`).flush(item({ status: 'published' }));
+    await expect(publishPromise).resolves.toMatchObject({ status: 'published' });
 
-    it('loads existing items from localStorage on construction', () => {
-      const first = setup();
-      first.create(newsInput());
+    const pausePromise = service.pause('n1');
+    httpMock.expectOne(`${BASE_URL}/n1/pause`).flush(item({ status: 'paused' }));
+    await expect(pausePromise).resolves.toMatchObject({ status: 'paused' });
+  });
 
-      const second = setup();
-      expect(second.items()).toHaveLength(1);
-    });
+  it('sorts items by publishedAt desc, then createdAt desc', async () => {
+    await setup([
+      item({ id: 'a', publishedAt: '2026-01-01', createdAt: '2026-01-01T00:00:00.000Z' }),
+      item({ id: 'b', publishedAt: '2026-02-01', createdAt: '2026-01-01T00:00:00.000Z' }),
+      item({ id: 'c', publishedAt: '2026-02-01', createdAt: '2026-02-02T00:00:00.000Z' }),
+    ]);
 
-    it('falls back to an empty list when localStorage contains invalid JSON', () => {
-      localStorage.setItem(STORAGE_KEY, '{not valid json');
+    expect(service.items().map((i) => i.id)).toEqual(['c', 'b', 'a']);
+  });
 
-      const service = setup();
+  it('rejects when the backend responds with an error', async () => {
+    await setup([]);
 
-      expect(service.items()).toEqual([]);
-    });
+    const promise = service.create(createInput());
+    httpMock.expectOne(BASE_URL).flush({ error: 'ConflictError' }, { status: 409, statusText: 'Conflict' });
 
-    it('does not throw when localStorage is unavailable (e.g. during SSR)', () => {
-      vi.stubGlobal('localStorage', undefined);
-
-      let service!: NewsItemService;
-      expect(() => (service = setup())).not.toThrow();
-      expect(service.items()).toEqual([]);
-      expect(() => service.create(newsInput())).not.toThrow();
-
-      vi.unstubAllGlobals();
-    });
+    await expect(promise).rejects.toBeTruthy();
   });
 });

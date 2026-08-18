@@ -1,23 +1,25 @@
 import { TestBed } from '@angular/core/testing';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { NewsListPage } from './news-list.page';
 import { NewsItemService } from '../../services/news-item.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { NewsCategory } from '../../models/news-item.model';
+import { FakeNewsItemService, makeNewsItem } from '../../testing/fake-news-item-service';
 
 describe('NewsListPage', () => {
-  let service: NewsItemService;
-  let language: LanguageService;
+  let service: FakeNewsItemService;
 
   beforeEach(() => {
-    localStorage.clear();
+    service = new FakeNewsItemService();
     TestBed.configureTestingModule({
       providers: [
+        { provide: NewsItemService, useValue: service },
         { provide: TranslationSuggestionService, useValue: { suggest: vi.fn(() => new Promise(() => {})) } },
+        { provide: MatSnackBar, useValue: { open: vi.fn() } },
       ],
     });
-    service = TestBed.inject(NewsItemService);
-    language = TestBed.inject(LanguageService);
+    TestBed.inject(LanguageService);
   });
 
   function createFixture() {
@@ -26,18 +28,13 @@ describe('NewsListPage', () => {
     return fixture;
   }
 
-  function createItem(category: NewsCategory, slug: string, publishedAt: string) {
-    return service.create({
+  function itemFixture(category: NewsCategory, slug: string, publishedAt: string) {
+    return makeNewsItem({
       category,
       slug,
-      sharedFields: {
-        imageUrl: '',
-        publishedAt,
-        eventDate: category === 'event' ? '2026-12-01' : undefined,
-        sourceLinks: [],
-      },
-      language: 'en',
-      translation: { title: slug, subtitle: '', description: '' },
+      publishedAt,
+      eventDate: category === 'event' ? '2026-12-01' : undefined,
+      translations: { en: { title: slug, subtitle: '', description: '' } },
     });
   }
 
@@ -48,8 +45,10 @@ describe('NewsListPage', () => {
   });
 
   it('lists items sorted by publishedAt descending regardless of creation order', () => {
-    createItem('news', 'oldest', '2026-01-01');
-    createItem('event', 'newest', '2026-08-01');
+    service.seed([
+      itemFixture('news', 'oldest', '2026-01-01'),
+      itemFixture('event', 'newest', '2026-08-01'),
+    ]);
     const fixture = createFixture();
 
     const titles = Array.from(
@@ -59,8 +58,10 @@ describe('NewsListPage', () => {
   });
 
   it('filters to a single category when a filter option is selected', () => {
-    createItem('news', 'a-news-item', '2026-01-01');
-    createItem('event', 'an-event', '2026-02-01');
+    service.seed([
+      itemFixture('news', 'a-news-item', '2026-01-01'),
+      itemFixture('event', 'an-event', '2026-02-01'),
+    ]);
     const fixture = createFixture();
 
     fixture.componentInstance['activeFilter'].set('event');
@@ -84,7 +85,7 @@ describe('NewsListPage', () => {
   });
 
   it('has no drag-and-drop affordances', () => {
-    createItem('news', 'a-news-item', '2026-01-01');
+    service.seed([itemFixture('news', 'a-news-item', '2026-01-01')]);
     const fixture = createFixture();
 
     expect(fixture.nativeElement.querySelector('[cdkDropList]')).toBeNull();

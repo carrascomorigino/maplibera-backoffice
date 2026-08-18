@@ -18,6 +18,8 @@ export interface OrganizationTranslation {
 }
 
 export interface Organization {
+  /** Stable backend identifier — unlike slug, this never changes on rename. */
+  id: string;
   slug: string;
   type: OrganizationType;
   status: OrganizationStatus;

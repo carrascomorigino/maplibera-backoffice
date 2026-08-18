@@ -5,25 +5,32 @@ import { OrganizationFormDrawer } from './organization-form-drawer';
 import { OrganizationService } from '../../services/organization.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { FakeOrganizationService, makeOrganization } from '../../testing/fake-organization-service';
+
+async function settle(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+}
 
 describe('OrganizationFormDrawer', () => {
-  let service: OrganizationService;
+  let service: FakeOrganizationService;
   let language: LanguageService;
   let suggestionService: { suggest: ReturnType<typeof vi.fn> };
   let snackBarOpen: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    localStorage.clear();
+    service = new FakeOrganizationService();
     suggestionService = { suggest: vi.fn() };
     snackBarOpen = vi.fn();
     TestBed.configureTestingModule({
       providers: [
         provideNoopAnimations(),
+        { provide: OrganizationService, useValue: service },
         { provide: TranslationSuggestionService, useValue: suggestionService },
         { provide: MatSnackBar, useValue: { open: snackBarOpen } },
       ],
     });
-    service = TestBed.inject(OrganizationService);
     language = TestBed.inject(LanguageService);
   });
 
@@ -50,14 +57,14 @@ describe('OrganizationFormDrawer', () => {
     component.form.controls.logoUrl.setValue('https://example.com/logo.png');
   }
 
-  function createOrganization() {
-    return service.create({
-      type: 'local-group',
+  function existingOrganization() {
+    const org = makeOrganization({
       slug: 'existing',
-      sharedFields: { logoUrl: '', scopeType: 'global', contactLinks: {} },
-      language: 'en',
-      translation: { name: 'Existing', description: 'Desc' },
+      type: 'local-group',
+      translations: { en: { name: 'Existing', description: 'Desc' } },
     });
+    service.seed([org]);
+    return org;
   }
 
   it('defaults type to local-group and scopeType to global', () => {
@@ -72,7 +79,7 @@ describe('OrganizationFormDrawer', () => {
     const createFixtureInstance = createFixture();
     expect(createFixtureInstance.componentInstance.form.controls.type.disabled).toBe(false);
 
-    const created = createOrganization();
+    const created = existingOrganization();
     const editFixture = TestBed.createComponent(OrganizationFormDrawer);
     editFixture.componentRef.setInput('organization', created);
     editFixture.componentRef.setInput('targetLanguage', 'en');
@@ -163,7 +170,7 @@ describe('OrganizationFormDrawer', () => {
     );
   });
 
-  it('creates a draft organization on Save', () => {
+  it('creates a draft organization on Save', async () => {
     const fixture = createFixture();
     const component = fixture.componentInstance;
     let saved = false;
@@ -172,6 +179,7 @@ describe('OrganizationFormDrawer', () => {
     fillRequiredFields(component);
     fixture.detectChanges();
     buttons(fixture).save.click();
+    await settle();
 
     expect(service.organizations()).toHaveLength(1);
     expect(service.organizations()[0].type).toBe('local-group');
@@ -180,19 +188,33 @@ describe('OrganizationFormDrawer', () => {
     expect(saved).toBe(true);
   });
 
-  it('creates and publishes on Publish for a new organization', () => {
+  it('creates and publishes on Publish for a new organization', async () => {
     const fixture = createFixture();
     const component = fixture.componentInstance;
 
     fillRequiredFields(component);
     fixture.detectChanges();
     buttons(fixture).publish?.click();
+    await settle();
 
     expect(service.organizations()[0].status).toBe('published');
   });
 
+  it('shows an error notice when Save fails', async () => {
+    service.create.mockRejectedValueOnce(new Error('network error'));
+    const fixture = createFixture();
+    const component = fixture.componentInstance;
+
+    fillRequiredFields(component);
+    fixture.detectChanges();
+    buttons(fixture).save.click();
+    await settle();
+
+    expect(snackBarOpen).toHaveBeenCalled();
+  });
+
   it('hides the Publish button when editing an existing organization', () => {
-    const created = createOrganization();
+    const created = existingOrganization();
     const fixture = TestBed.createComponent(OrganizationFormDrawer);
     fixture.componentRef.setInput('organization', created);
     fixture.componentRef.setInput('targetLanguage', 'en');
@@ -201,8 +223,8 @@ describe('OrganizationFormDrawer', () => {
     expect(buttons(fixture).publish).toBeNull();
   });
 
-  it('splits shared vs. translated fields correctly on save', () => {
-    const created = createOrganization();
+  it('splits shared vs. translated fields correctly on save', async () => {
+    const created = existingOrganization();
     const fixture = TestBed.createComponent(OrganizationFormDrawer);
     fixture.componentRef.setInput('organization', created);
     fixture.componentRef.setInput('targetLanguage', 'en');
@@ -216,6 +238,7 @@ describe('OrganizationFormDrawer', () => {
     component.form.controls.name.setValue('Updated name');
     fixture.detectChanges();
     buttons(fixture).save.click();
+    await settle();
 
     const updated = service.organizations()[0];
     expect(updated.logoUrl).toBe('https://example.com/new-logo.png');
@@ -236,7 +259,7 @@ describe('OrganizationFormDrawer', () => {
     });
 
     it('blocks submission with a duplicate slug', () => {
-      createOrganization();
+      existingOrganization();
       const fixture = createFixture();
       const component = fixture.componentInstance;
 
@@ -257,7 +280,7 @@ describe('OrganizationFormDrawer', () => {
           resolveSuggest = resolve;
         }),
       );
-      const existing = createOrganization();
+      const existing = existingOrganization();
       const fixture = TestBed.createComponent(OrganizationFormDrawer);
       fixture.componentRef.setInput('organization', existing);
       fixture.componentRef.setInput('targetLanguage', 'es');
@@ -271,9 +294,7 @@ describe('OrganizationFormDrawer', () => {
       expect(fixture.componentInstance.loading()).toBe(true);
 
       resolveSuggest({ name: 'Existente', description: 'Desc es' });
-      await Promise.resolve();
-      await Promise.resolve();
-      await Promise.resolve();
+      await settle();
       fixture.detectChanges();
 
       expect(fixture.componentInstance.loading()).toBe(false);
@@ -281,7 +302,7 @@ describe('OrganizationFormDrawer', () => {
     });
 
     it('does not request a suggestion when editing an already-translated language', () => {
-      const existing = createOrganization();
+      const existing = existingOrganization();
       const fixture = TestBed.createComponent(OrganizationFormDrawer);
       fixture.componentRef.setInput('organization', existing);
       fixture.componentRef.setInput('targetLanguage', 'en');

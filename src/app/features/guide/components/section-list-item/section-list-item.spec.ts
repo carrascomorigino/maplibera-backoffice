@@ -1,19 +1,27 @@
 import { TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { of } from 'rxjs';
 import { SectionListItem } from './section-list-item';
 import { SectionService } from '../../services/section.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { Question, Section } from '../../models/section.model';
+import { FakeSectionService, makeSection } from '../../testing/fake-section-service';
 
 describe('SectionListItem', () => {
-  let service: SectionService;
+  let service: FakeSectionService;
   let language: LanguageService;
+  let snackBarOpen: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    localStorage.clear();
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(SectionService);
+    service = new FakeSectionService();
+    snackBarOpen = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: SectionService, useValue: service },
+        { provide: MatSnackBar, useValue: { open: snackBarOpen } },
+      ],
+    });
     language = TestBed.inject(LanguageService);
   });
 
@@ -28,26 +36,23 @@ describe('SectionListItem', () => {
     return fixture.nativeElement.querySelector(`[data-testid="language-tag-${lang}"]`) as HTMLElement;
   }
 
-  function twoLanguageSection(): Section {
-    return service.create({
+  function twoLanguageSection(overrides: Partial<Section> = {}): Section {
+    return makeSection({
       slug: 'multi',
-      imageUrl: '',
-      language: 'en',
-      translation: { title: 'Getting started', description: 'Intro' },
-    }) as Section;
+      translations: { en: { title: 'Getting started', description: 'Intro' } },
+      ...overrides,
+    });
   }
 
   describe('initial language', () => {
     it("defaults to the app's UI language when the section has it translated", () => {
       language.setLanguage('en');
-      const created = twoLanguageSection();
-      service.saveTranslation(created.slug, {
-        slug: created.slug,
-        imageUrl: '',
-        language: 'es',
-        translation: { title: 'Empezando', description: 'Intro es' },
+      const section = twoLanguageSection({
+        translations: {
+          en: { title: 'Getting started', description: 'Intro' },
+          es: { title: 'Empezando', description: 'Intro es' },
+        },
       });
-      const section = service.sections()[0];
 
       const fixture = createFixture(section);
 
@@ -56,13 +61,10 @@ describe('SectionListItem', () => {
 
     it("falls back to the section's first available language otherwise", () => {
       language.setLanguage('en');
-      const created = service.create({
+      const section = makeSection({
         slug: 'fr-only',
-        imageUrl: '',
-        language: 'fr',
-        translation: { title: 'Pour commencer', description: 'Intro' },
+        translations: { fr: { title: 'Pour commencer', description: 'Intro' } },
       });
-      const section = service.sections().find((s) => s.slug === created.slug)!;
 
       const fixture = createFixture(section);
 
@@ -73,14 +75,12 @@ describe('SectionListItem', () => {
   describe('language selection', () => {
     it('switches the displayed language without emitting when already translated and up to date', () => {
       language.setLanguage('en');
-      const created = twoLanguageSection();
-      service.saveTranslation(created.slug, {
-        slug: created.slug,
-        imageUrl: '',
-        language: 'es',
-        translation: { title: 'Empezando', description: 'Intro es' },
+      const section = twoLanguageSection({
+        translations: {
+          en: { title: 'Getting started', description: 'Intro' },
+          es: { title: 'Empezando', description: 'Intro es' },
+        },
       });
-      const section = service.sections()[0];
       const fixture = createFixture(section);
       const translateRequested = vi.fn();
       const editRequested = vi.fn();
@@ -97,21 +97,13 @@ describe('SectionListItem', () => {
 
     it('switches the display and emits editRequested with the stale source when selecting a language flagged as needing an update', () => {
       language.setLanguage('en');
-      const created = twoLanguageSection();
-      service.saveTranslation(created.slug, {
-        slug: created.slug,
-        imageUrl: '',
-        language: 'es',
-        translation: { title: 'Empezando', description: 'Intro es' },
+      const section = twoLanguageSection({
+        translations: {
+          en: { title: 'Getting started v2', description: 'Intro' },
+          es: { title: 'Empezando', description: 'Intro es' },
+        },
+        staleLanguages: { es: 'en' },
       });
-      service.saveTranslation(created.slug, {
-        slug: created.slug,
-        imageUrl: '',
-        language: 'en',
-        translation: { title: 'Getting started v2', description: 'Intro' },
-      });
-      const section = service.sections()[0];
-      expect(section.staleLanguages).toEqual({ es: 'en' });
       const fixture = createFixture(section);
       const translateRequested = vi.fn();
       const editRequested = vi.fn();
@@ -132,8 +124,7 @@ describe('SectionListItem', () => {
 
     it('emits translateRequested with the correct source/target when switching to an untranslated language', () => {
       language.setLanguage('en');
-      const created = twoLanguageSection();
-      const section = service.sections().find((s) => s.slug === created.slug)!;
+      const section = twoLanguageSection();
       const fixture = createFixture(section);
       const translateRequested = vi.fn();
       fixture.componentInstance.translateRequested.subscribe(translateRequested);
@@ -153,8 +144,7 @@ describe('SectionListItem', () => {
   describe('resetRequest', () => {
     it('reverts selectedLanguage when the reset targets this row', () => {
       language.setLanguage('en');
-      const created = twoLanguageSection();
-      const section = service.sections().find((s) => s.slug === created.slug)!;
+      const section = twoLanguageSection();
       const fixture = createFixture(section);
       fixture.componentInstance['onTranslateRequested']('fr');
       fixture.detectChanges();
@@ -168,8 +158,7 @@ describe('SectionListItem', () => {
 
     it('ignores a reset targeting a different slug', () => {
       language.setLanguage('en');
-      const created = twoLanguageSection();
-      const section = service.sections().find((s) => s.slug === created.slug)!;
+      const section = twoLanguageSection();
       const fixture = createFixture(section);
       fixture.componentInstance['onTranslateRequested']('fr');
       fixture.detectChanges();
@@ -184,14 +173,12 @@ describe('SectionListItem', () => {
   describe('language tags', () => {
     it("reflects the section's translated languages as colored tags and the rest as untranslated", () => {
       language.setLanguage('en');
-      const created = twoLanguageSection();
-      service.saveTranslation(created.slug, {
-        slug: created.slug,
-        imageUrl: '',
-        language: 'es',
-        translation: { title: 'Empezando', description: 'Intro es' },
+      const section = twoLanguageSection({
+        translations: {
+          en: { title: 'Getting started', description: 'Intro' },
+          es: { title: 'Empezando', description: 'Intro es' },
+        },
       });
-      const section = service.sections()[0];
 
       const fixture = createFixture(section);
 
@@ -201,17 +188,16 @@ describe('SectionListItem', () => {
     });
 
     it('renders after the title and question summary, not beside the title', () => {
-      const created = service.create({
+      const section = makeSection({
         slug: 'yn',
-        imageUrl: '',
-        language: 'en',
-        translation: {
-          title: 'YN',
-          description: '',
-          question: { text: 'Is this correct?', type: 'yes-no', yesNoCorrectAnswer: 'yes' },
+        translations: {
+          en: {
+            title: 'YN',
+            description: '',
+            question: { text: 'Is this correct?', type: 'yes-no', yesNoCorrectAnswer: 'yes' },
+          },
         },
       });
-      const section = service.sections().find((s) => s.slug === created.slug)!;
 
       const fixture = createFixture(section);
 
@@ -231,8 +217,7 @@ describe('SectionListItem', () => {
   describe('country availability indicator', () => {
     it('shows "worldwide" when availableCountries is not set', () => {
       language.setLanguage('en');
-      const created = twoLanguageSection();
-      const section = service.sections().find((s) => s.slug === created.slug)!;
+      const section = twoLanguageSection();
 
       const fixture = createFixture(section);
 
@@ -251,14 +236,11 @@ describe('SectionListItem', () => {
 
     it('shows the localized, comma-separated country names when set', () => {
       language.setLanguage('en');
-      const created = service.create({
+      const section = makeSection({
         slug: 'restricted',
-        imageUrl: '',
-        language: 'en',
-        translation: { title: 'Restricted', description: '' },
+        translations: { en: { title: 'Restricted', description: '' } },
         availableCountries: ['AR', 'BR'],
       });
-      const section = service.sections().find((s) => s.slug === created.slug)!;
 
       const fixture = createFixture(section);
 
@@ -273,8 +255,7 @@ describe('SectionListItem', () => {
   describe('edit', () => {
     it('emits editRequested for the current section and selected language', () => {
       language.setLanguage('en');
-      const created = twoLanguageSection();
-      const section = service.sections().find((s) => s.slug === created.slug)!;
+      const section = twoLanguageSection();
       const fixture = createFixture(section);
       const editRequested = vi.fn();
       fixture.componentInstance.editRequested.subscribe(editRequested);
@@ -290,22 +271,13 @@ describe('SectionListItem', () => {
 
     it('includes the stale source language when the currently selected (default) language needs an update', () => {
       language.setLanguage('en');
-      const created = twoLanguageSection();
-      service.saveTranslation(created.slug, {
-        slug: created.slug,
-        imageUrl: '',
-        language: 'es',
-        translation: { title: 'Empezando', description: 'Intro es' },
+      const section = twoLanguageSection({
+        translations: {
+          en: { title: 'Getting started', description: 'Intro' },
+          es: { title: 'Empezando v2', description: 'Intro es' },
+        },
+        staleLanguages: { en: 'es' },
       });
-      // Re-saving 'es' (already existing) flips propagation: 'en' becomes stale, sourced from 'es'.
-      service.saveTranslation(created.slug, {
-        slug: created.slug,
-        imageUrl: '',
-        language: 'es',
-        translation: { title: 'Empezando v2', description: 'Intro es' },
-      });
-      const section = service.sections()[0];
-      expect(section.staleLanguages).toEqual({ en: 'es' });
       const fixture = createFixture(section);
       const editRequested = vi.fn();
       fixture.componentInstance.editRequested.subscribe(editRequested);
@@ -322,16 +294,14 @@ describe('SectionListItem', () => {
   });
 
   describe('removing a language', () => {
-    it('opens a confirm dialog and removes the translation via the service on confirm', () => {
+    it('opens a confirm dialog and removes the translation via the service on confirm', async () => {
       language.setLanguage('en');
-      const created = twoLanguageSection();
-      service.saveTranslation(created.slug, {
-        slug: created.slug,
-        imageUrl: '',
-        language: 'es',
-        translation: { title: 'Empezando', description: 'Intro es' },
+      const section = twoLanguageSection({
+        translations: {
+          en: { title: 'Getting started', description: 'Intro' },
+          es: { title: 'Empezando', description: 'Intro es' },
+        },
       });
-      const section = service.sections()[0];
       const fixture = createFixture(section);
       const dialog = TestBed.inject(MatDialog);
       const openSpy = vi.spyOn(dialog, 'open').mockReturnValue({
@@ -339,21 +309,15 @@ describe('SectionListItem', () => {
       } as ReturnType<MatDialog['open']>);
 
       fixture.componentInstance['onLanguageRemoved']('es');
+      await Promise.resolve();
 
       expect(openSpy).toHaveBeenCalled();
-      expect(service.sections()[0].translations.es).toBeUndefined();
+      expect(service.removeTranslation).toHaveBeenCalledWith(section.id, 'es');
     });
 
     it('does not remove the translation when the dialog is cancelled', () => {
       language.setLanguage('en');
-      const created = twoLanguageSection();
-      service.saveTranslation(created.slug, {
-        slug: created.slug,
-        imageUrl: '',
-        language: 'es',
-        translation: { title: 'Empezando', description: 'Intro es' },
-      });
-      const section = service.sections()[0];
+      const section = twoLanguageSection();
       const fixture = createFixture(section);
       const dialog = TestBed.inject(MatDialog);
       vi.spyOn(dialog, 'open').mockReturnValue({
@@ -362,14 +326,30 @@ describe('SectionListItem', () => {
 
       fixture.componentInstance['onLanguageRemoved']('es');
 
-      expect(service.sections()[0].translations.es).toBeTruthy();
+      expect(service.removeTranslation).not.toHaveBeenCalled();
+    });
+
+    it('shows an error notice when removing the translation fails', async () => {
+      language.setLanguage('en');
+      service.removeTranslation.mockRejectedValueOnce(new Error('network error'));
+      const section = twoLanguageSection();
+      const fixture = createFixture(section);
+      const dialog = TestBed.inject(MatDialog);
+      vi.spyOn(dialog, 'open').mockReturnValue({
+        afterClosed: () => of(true),
+      } as ReturnType<MatDialog['open']>);
+
+      fixture.componentInstance['onLanguageRemoved']('es');
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(snackBarOpen).toHaveBeenCalled();
     });
   });
 
   describe('thumbnail and slug', () => {
     it('shows a placeholder icon and no image when the section has none', () => {
-      const created = twoLanguageSection();
-      const section = service.sections().find((s) => s.slug === created.slug)!;
+      const section = twoLanguageSection();
 
       const fixture = createFixture(section);
 
@@ -378,13 +358,11 @@ describe('SectionListItem', () => {
     });
 
     it('shows the image and no placeholder when the section has one', () => {
-      const created = service.create({
+      const section = makeSection({
         slug: 'with-image',
         imageUrl: 'https://example.com/image.png',
-        language: 'en',
-        translation: { title: 'With image', description: '' },
+        translations: { en: { title: 'With image', description: '' } },
       });
-      const section = service.sections().find((s) => s.slug === created.slug)!;
 
       const fixture = createFixture(section);
 
@@ -393,8 +371,7 @@ describe('SectionListItem', () => {
     });
 
     it('shows a drag handle', () => {
-      const created = twoLanguageSection();
-      const section = service.sections().find((s) => s.slug === created.slug)!;
+      const section = twoLanguageSection();
 
       const fixture = createFixture(section);
 
@@ -402,8 +379,7 @@ describe('SectionListItem', () => {
     });
 
     it('shows the slug', () => {
-      const created = twoLanguageSection();
-      const section = service.sections().find((s) => s.slug === created.slug)!;
+      const section = twoLanguageSection();
 
       const fixture = createFixture(section);
 
@@ -415,8 +391,7 @@ describe('SectionListItem', () => {
 
   describe('question summary', () => {
     it('shows nothing extra when the translation has no question', () => {
-      const created = twoLanguageSection();
-      const section = service.sections().find((s) => s.slug === created.slug)!;
+      const section = twoLanguageSection();
 
       const fixture = createFixture(section);
 
@@ -424,17 +399,16 @@ describe('SectionListItem', () => {
     });
 
     it('shows the type, text, and only the correct answer for a yes/no question', () => {
-      const created = service.create({
+      const section = makeSection({
         slug: 'yn',
-        imageUrl: '',
-        language: 'en',
-        translation: {
-          title: 'YN',
-          description: '',
-          question: { text: 'Is this correct?', type: 'yes-no', yesNoCorrectAnswer: 'yes' },
+        translations: {
+          en: {
+            title: 'YN',
+            description: '',
+            question: { text: 'Is this correct?', type: 'yes-no', yesNoCorrectAnswer: 'yes' },
+          },
         },
       });
-      const section = service.sections().find((s) => s.slug === created.slug)!;
 
       const fixture = createFixture(section);
 
@@ -451,27 +425,26 @@ describe('SectionListItem', () => {
     });
 
     it('shows only the correct answers for a multiple choice question, including specials', () => {
-      const created = service.create({
+      const section = makeSection({
         slug: 'mc',
-        imageUrl: '',
-        language: 'en',
-        translation: {
-          title: 'MC',
-          description: '',
-          question: {
-            text: 'Pick all that apply',
-            type: 'multiple',
-            answers: [
-              { text: 'A', isCorrect: false },
-              { text: 'B', isCorrect: false },
-              { text: 'C', isCorrect: false },
-            ],
-            includeAllOfTheAbove: true,
-            allOfTheAboveCorrect: true,
+        translations: {
+          en: {
+            title: 'MC',
+            description: '',
+            question: {
+              text: 'Pick all that apply',
+              type: 'multiple',
+              answers: [
+                { text: 'A', isCorrect: false },
+                { text: 'B', isCorrect: false },
+                { text: 'C', isCorrect: false },
+              ],
+              includeAllOfTheAbove: true,
+              allOfTheAboveCorrect: true,
+            },
           },
         },
       });
-      const section = service.sections().find((s) => s.slug === created.slug)!;
 
       const fixture = createFixture(section);
 
@@ -484,8 +457,7 @@ describe('SectionListItem', () => {
 
   describe('correctAnswerLabels', () => {
     it('returns Yes or No for a yes/no question', () => {
-      const created = twoLanguageSection();
-      const section = service.sections().find((s) => s.slug === created.slug)!;
+      const section = twoLanguageSection();
       const fixture = createFixture(section);
       const component = fixture.componentInstance;
 
@@ -498,8 +470,7 @@ describe('SectionListItem', () => {
     });
 
     it('includes "All of the above" / "None of the above" when marked correct', () => {
-      const created = twoLanguageSection();
-      const section = service.sections().find((s) => s.slug === created.slug)!;
+      const section = twoLanguageSection();
       const fixture = createFixture(section);
       const component = fixture.componentInstance;
       const question: Question = {
@@ -517,9 +488,8 @@ describe('SectionListItem', () => {
   });
 
   describe('status action', () => {
-    it('publishes a draft section via the service', () => {
-      const created = twoLanguageSection();
-      const section = service.sections().find((s) => s.slug === created.slug)!;
+    it('publishes a draft section via the service', async () => {
+      const section = twoLanguageSection();
       const fixture = createFixture(section);
 
       (
@@ -527,8 +497,25 @@ describe('SectionListItem', () => {
           `[data-testid="status-action-${section.slug}"]`,
         ) as HTMLButtonElement
       ).click();
+      await Promise.resolve();
 
-      expect(service.sections()[0].status).toBe('published');
+      expect(service.publish).toHaveBeenCalledWith(section.id);
+    });
+
+    it('shows an error notice when the status action fails', async () => {
+      service.publish.mockRejectedValueOnce(new Error('network error'));
+      const section = twoLanguageSection();
+      const fixture = createFixture(section);
+
+      (
+        fixture.nativeElement.querySelector(
+          `[data-testid="status-action-${section.slug}"]`,
+        ) as HTMLButtonElement
+      ).click();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(snackBarOpen).toHaveBeenCalled();
     });
   });
 });

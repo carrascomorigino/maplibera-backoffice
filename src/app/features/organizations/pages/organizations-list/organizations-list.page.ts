@@ -3,6 +3,7 @@ import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDrawer, MatDrawerContainer, MatDrawerContent } from '@angular/material/sidenav';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { ORGANIZATION_TYPES, Organization, OrganizationType } from '../../models/organization.model';
 import { ContentLanguage } from '../../../guide/models/content-language.model';
 import { OrganizationService } from '../../services/organization.service';
@@ -47,6 +48,7 @@ type DrawerContext =
 })
 export class OrganizationsListPage {
   private readonly organizationService = inject(OrganizationService);
+  private readonly snackBar = inject(MatSnackBar);
   protected readonly language = inject(LanguageService);
 
   protected readonly types = ORGANIZATION_TYPES;
@@ -114,9 +116,12 @@ export class OrganizationsListPage {
   }
 
   onDrop(event: CdkDragDrop<Organization[]>): void {
-    const slugs = event.container.data.map((org) => org.slug);
-    moveItemInArray(slugs, event.previousIndex, event.currentIndex);
-    this.organizationService.reorder(slugs);
+    const ids = event.container.data.map((org) => org.id);
+    moveItemInArray(ids, event.previousIndex, event.currentIndex);
+    this.organizationService.reorder(ids).catch(() => {
+      const form = this.language.t().organizations.organizationForm;
+      this.snackBar.open(form.actionFailedNotice, form.actionFailedDismiss);
+    });
   }
 
   protected filterLabel(type: OrganizationType): string {

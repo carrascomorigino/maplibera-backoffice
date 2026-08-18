@@ -3,6 +3,7 @@ import { CdkDragHandle } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Question, QuestionType, Section, SectionStatus } from '../../models/section.model';
 import { ContentLanguage, CONTENT_LANGUAGES, CONTENT_LANGUAGE_LABELS } from '../../models/content-language.model';
 import { SectionService } from '../../services/section.service';
@@ -40,6 +41,7 @@ export interface ResetSelectionRequest {
 export class SectionListItem {
   private readonly sectionService = inject(SectionService);
   private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
   protected readonly language = inject(LanguageService);
 
   protected readonly contentLanguages = CONTENT_LANGUAGES;
@@ -108,7 +110,7 @@ export class SectionListItem {
     });
     dialogRef.afterClosed().subscribe((confirmed) => {
       if (confirmed) {
-        this.sectionService.removeTranslation(this.section().slug, lang);
+        this.sectionService.removeTranslation(this.section().id, lang).catch(() => this.notifyActionFailed());
       }
     });
   }
@@ -129,11 +131,13 @@ export class SectionListItem {
 
   protected onStatusAction(): void {
     const section = this.section();
-    if (section.status === 'published') {
-      this.sectionService.pause(section.slug);
-    } else {
-      this.sectionService.publish(section.slug);
-    }
+    const action = section.status === 'published' ? this.sectionService.pause(section.id) : this.sectionService.publish(section.id);
+    action.catch(() => this.notifyActionFailed());
+  }
+
+  private notifyActionFailed(): void {
+    const labels = this.language.t().guide.sectionForm;
+    this.snackBar.open(labels.actionFailedNotice, labels.actionFailedDismiss);
   }
 
   protected statusBadgeClass(status: SectionStatus): string {

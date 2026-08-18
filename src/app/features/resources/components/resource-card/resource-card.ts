@@ -3,6 +3,7 @@ import { CdkDragHandle } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Resource, ResourceStatus } from '../../models/resource.model';
 import {
   ContentLanguage,
@@ -39,6 +40,7 @@ export interface ResourceTranslateRequestedEvent {
 export class ResourceCard {
   private readonly resourceService = inject(ResourceService);
   private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
   protected readonly language = inject(LanguageService);
   protected readonly contentLanguages = CONTENT_LANGUAGES;
   protected readonly contentLanguageLabels = CONTENT_LANGUAGE_LABELS;
@@ -111,7 +113,7 @@ export class ResourceCard {
     });
     dialogRef.afterClosed().subscribe((confirmed) => {
       if (confirmed) {
-        this.resourceService.removeTranslation(this.resource().slug, lang);
+        this.resourceService.removeTranslation(this.resource().id, lang).catch(() => this.notifyActionFailed());
       }
     });
   }
@@ -132,11 +134,13 @@ export class ResourceCard {
 
   protected onStatusAction(): void {
     const resource = this.resource();
-    if (resource.status === 'published') {
-      this.resourceService.pause(resource.slug);
-    } else {
-      this.resourceService.publish(resource.slug);
-    }
+    const action = resource.status === 'published' ? this.resourceService.pause(resource.id) : this.resourceService.publish(resource.id);
+    action.catch(() => this.notifyActionFailed());
+  }
+
+  private notifyActionFailed(): void {
+    const form = this.language.t().resources.resourceForm;
+    this.snackBar.open(form.actionFailedNotice, form.actionFailedDismiss);
   }
 
   protected statusBadgeClass(status: ResourceStatus): string {

@@ -1,10 +1,10 @@
+import { TestBed } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 import { SectionService, SectionTranslationInput } from './section.service';
+import { Section } from '../models/section.model';
 
-const STORAGE_KEY = 'guide-sections';
-
-function setup(): SectionService {
-  return new SectionService();
-}
+const BASE_URL = '/backend/sections';
 
 function input(overrides: Partial<SectionTranslationInput> = {}): SectionTranslationInput {
   return {
@@ -16,526 +16,155 @@ function input(overrides: Partial<SectionTranslationInput> = {}): SectionTransla
   };
 }
 
+function section(overrides: Partial<Section> = {}): Section {
+  return {
+    id: 's1',
+    slug: 'getting-started',
+    imageUrl: '',
+    status: 'draft',
+    order: 0,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    translations: { en: { title: 'Getting started', description: 'Intro section' } },
+    ...overrides,
+  };
+}
+
 describe('SectionService', () => {
-  beforeEach(() => {
-    localStorage.clear();
+  let service: SectionService;
+  let httpMock: HttpTestingController;
+
+  async function setup(initial: Section[] = []): Promise<void> {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    service = TestBed.inject(SectionService);
+    httpMock = TestBed.inject(HttpTestingController);
+
+    const req = httpMock.expectOne(BASE_URL);
+    expect(req.request.method).toBe('GET');
+    req.flush(initial);
+    await Promise.resolve();
+  }
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  describe('initial load', () => {
+    it('fetches sections from the backend on construction', async () => {
+      await setup([section()]);
+
+      expect(service.sections()).toEqual([section()]);
+    });
   });
 
   describe('create', () => {
-    it('creates a section with draft status, appended order, timestamps, and a single translation', () => {
-      const service = setup();
+    it('POSTs the input and appends the returned section to the list', async () => {
+      await setup([]);
 
-      const section = service.create(input());
+      const promise = service.create(input());
+      const req = httpMock.expectOne(BASE_URL);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(input());
+      req.flush(section());
 
-      expect(section.slug).toBe('getting-started');
-      expect(section.status).toBe('draft');
-      expect(section.order).toBe(0);
-      expect(section.createdAt).toBeTruthy();
-      expect(section.updatedAt).toBeTruthy();
-      expect(Object.keys(section.translations)).toEqual(['en']);
-      expect(section.translations.en).toEqual({
-        title: 'Getting started',
-        description: 'Intro section',
-      });
-      expect(service.sections()).toEqual([section]);
-    });
-
-    it('appends new sections at the end of the order', () => {
-      const service = setup();
-
-      service.create(input({ slug: 'first' }));
-      const second = service.create(input({ slug: 'second' }));
-
-      expect(second.order).toBe(1);
-    });
-
-    it('round-trips a question through create unchanged', () => {
-      const service = setup();
-      const question = {
-        text: 'Is this correct?',
-        type: 'yes-no' as const,
-        yesNoCorrectAnswer: 'yes' as const,
-      };
-
-      const created = service.create(
-        input({ slug: 'with-question', translation: { title: 'With question', description: 'A', question } }),
-      );
-
-      expect(created.translations.en?.question).toEqual(question);
-      expect(service.sections()[0].translations.en?.question).toEqual(question);
+      await expect(promise).resolves.toEqual(section());
+      expect(service.sections()).toEqual([section()]);
     });
   });
 
   describe('saveTranslation', () => {
-    it('updates an existing translation without changing status', () => {
-      const service = setup();
-      const created = service.create(input({ slug: 'original' }));
-      service.publish(created.slug);
+    it('PUTs to /:id and replaces the matching section in the list', async () => {
+      await setup([section()]);
+      const updated = section({ translations: { en: { title: 'Updated', description: 'Intro section' } } });
 
-      service.saveTranslation(
-        created.slug,
-        input({ slug: 'original', translation: { title: 'Updated', description: 'Intro section' } }),
-      );
+      const promise = service.saveTranslation('s1', input({ translation: updated.translations.en! }));
+      const req = httpMock.expectOne(`${BASE_URL}/s1`);
+      expect(req.request.method).toBe('PUT');
+      req.flush(updated);
 
-      const updated = service.sections().find((s) => s.slug === 'original');
-      expect(updated?.translations.en?.title).toBe('Updated');
-      expect(updated?.status).toBe('published');
-    });
-
-    it('adds a new language without dropping existing translations', () => {
-      const service = setup();
-      const created = service.create(input({ slug: 'multi' }));
-
-      service.saveTranslation(
-        created.slug,
-        input({
-          slug: 'multi',
-          language: 'es',
-          translation: { title: 'Empezando', description: 'Sección de introducción' },
-        }),
-      );
-
-      const updated = service.sections().find((s) => s.slug === 'multi');
-      expect(Object.keys(updated?.translations ?? {}).sort()).toEqual(['en', 'es']);
-      expect(updated?.translations.en?.title).toBe('Getting started');
-      expect(updated?.translations.es?.title).toBe('Empezando');
-    });
-
-    it('renames a section slug and re-keys it', () => {
-      const service = setup();
-      const created = service.create(input({ slug: 'old-slug' }));
-
-      service.saveTranslation(created.slug, input({ slug: 'new-slug' }));
-
-      expect(service.sections().find((s) => s.slug === 'old-slug')).toBeUndefined();
-      const renamed = service.sections().find((s) => s.slug === 'new-slug');
-      expect(renamed).toBeTruthy();
-      expect(renamed?.translations.en?.title).toBe('Getting started');
-    });
-
-    it('updates the shared imageUrl', () => {
-      const service = setup();
-      const created = service.create(input({ slug: 'with-image' }));
-
-      service.saveTranslation(
-        created.slug,
-        input({ slug: 'with-image', imageUrl: 'https://example.com/a.png' }),
-      );
-
-      expect(service.sections()[0].imageUrl).toBe('https://example.com/a.png');
-    });
-  });
-
-  describe('availableCountries', () => {
-    it('round-trips availableCountries unchanged through create', () => {
-      const service = setup();
-
-      const created = service.create(input({ slug: 'with-countries', availableCountries: ['AR', 'BR'] }));
-
-      expect(created.availableCountries).toEqual(['AR', 'BR']);
-      expect(service.sections()[0].availableCountries).toEqual(['AR', 'BR']);
-    });
-
-    it('defaults to undefined (all countries) when omitted on create', () => {
-      const service = setup();
-
-      const created = service.create(input({ slug: 'no-restriction' }));
-
-      expect(created.availableCountries).toBeUndefined();
-    });
-
-    it('overwrites availableCountries on saveTranslation, not merges', () => {
-      const service = setup();
-      const created = service.create(input({ slug: 'editable', availableCountries: ['AR'] }));
-
-      service.saveTranslation(
-        created.slug,
-        input({ slug: 'editable', availableCountries: ['BR', 'CL'] }),
-      );
-
-      expect(service.sections()[0].availableCountries).toEqual(['BR', 'CL']);
-    });
-
-    it('clears availableCountries on saveTranslation when omitted', () => {
-      const service = setup();
-      const created = service.create(input({ slug: 'editable', availableCountries: ['AR'] }));
-
-      service.saveTranslation(created.slug, input({ slug: 'editable' }));
-
-      expect(service.sections()[0].availableCountries).toBeUndefined();
-    });
-  });
-
-  describe('staleLanguages propagation', () => {
-    it('does not mark anything stale on create', () => {
-      const service = setup();
-
-      const section = service.create(input({ slug: 'fresh' }));
-
-      expect(section.staleLanguages ?? {}).toEqual({});
-    });
-
-    it('does not mark other languages stale when adding a language for the first time', () => {
-      const service = setup();
-      const created = service.create(input({ slug: 'multi' }));
-
-      service.saveTranslation(
-        created.slug,
-        input({
-          slug: 'multi',
-          language: 'es',
-          translation: { title: 'Empezando', description: 'Intro' },
-        }),
-      );
-
-      expect(service.sections()[0].staleLanguages ?? {}).toEqual({});
-    });
-
-    it('marks other existing languages stale, sourced from the edited language, when an existing translation is edited', () => {
-      const service = setup();
-      const created = service.create(input({ slug: 'multi' }));
-      service.saveTranslation(
-        created.slug,
-        input({
-          slug: 'multi',
-          language: 'es',
-          translation: { title: 'Empezando', description: 'Intro' },
-        }),
-      );
-      service.saveTranslation(
-        created.slug,
-        input({
-          slug: 'multi',
-          language: 'fr',
-          translation: { title: 'Pour commencer', description: 'Intro' },
-        }),
-      );
-
-      service.saveTranslation(
-        created.slug,
-        input({ slug: 'multi', language: 'en', translation: { title: 'Getting started v2', description: 'Intro' } }),
-      );
-
-      const section = service.sections()[0];
-      expect(section.staleLanguages).toEqual({ es: 'en', fr: 'en' });
-    });
-
-    it('clears the edited language from staleLanguages and flips propagation to the others', () => {
-      const service = setup();
-      const created = service.create(input({ slug: 'multi' }));
-      service.saveTranslation(
-        created.slug,
-        input({ slug: 'multi', language: 'es', translation: { title: 'Empezando', description: 'Intro' } }),
-      );
-      service.saveTranslation(
-        created.slug,
-        input({ slug: 'multi', language: 'en', translation: { title: 'Getting started v2', description: 'Intro' } }),
-      );
-      expect(service.sections()[0].staleLanguages).toEqual({ es: 'en' });
-
-      service.saveTranslation(
-        created.slug,
-        input({ slug: 'multi', language: 'es', translation: { title: 'Empezando v2', description: 'Intro' } }),
-      );
-
-      const section = service.sections()[0];
-      expect(section.staleLanguages).toEqual({ en: 'es' });
-    });
-
-    it('does not mark anything stale when there is only one language', () => {
-      const service = setup();
-      const created = service.create(input({ slug: 'solo' }));
-
-      service.saveTranslation(
-        created.slug,
-        input({ slug: 'solo', translation: { title: 'Getting started v2', description: 'Intro' } }),
-      );
-
-      expect(service.sections()[0].staleLanguages ?? {}).toEqual({});
-    });
-
-    it('does not mark other languages stale when re-saving a translation with identical text', () => {
-      const service = setup();
-      const created = service.create(input({ slug: 'multi' }));
-      service.saveTranslation(
-        created.slug,
-        input({
-          slug: 'multi',
-          language: 'es',
-          translation: { title: 'Empezando', description: 'Intro' },
-        }),
-      );
-
-      service.saveTranslation(
-        created.slug,
-        input({ slug: 'multi', translation: { title: 'Getting started', description: 'Intro section' } }),
-      );
-
-      expect(service.sections()[0].staleLanguages ?? {}).toEqual({});
-    });
-
-    it('does not mark other languages stale when only the slug or imageUrl changes', () => {
-      const service = setup();
-      const created = service.create(input({ slug: 'multi' }));
-      service.saveTranslation(
-        created.slug,
-        input({
-          slug: 'multi',
-          language: 'es',
-          translation: { title: 'Empezando', description: 'Intro' },
-        }),
-      );
-
-      service.saveTranslation(
-        created.slug,
-        input({
-          slug: 'renamed',
-          imageUrl: 'https://example.com/a.png',
-          translation: { title: 'Getting started', description: 'Intro section' },
-        }),
-      );
-
-      expect(service.sections()[0].staleLanguages ?? {}).toEqual({});
-    });
-
-    it('still marks others stale when the question changes even if title/description do not', () => {
-      const service = setup();
-      const created = service.create(
-        input({
-          slug: 'multi',
-          translation: {
-            title: 'Getting started',
-            description: 'Intro section',
-            question: { text: 'Q1', type: 'yes-no', yesNoCorrectAnswer: 'yes' },
-          },
-        }),
-      );
-      service.saveTranslation(
-        created.slug,
-        input({
-          slug: 'multi',
-          language: 'es',
-          translation: { title: 'Empezando', description: 'Intro' },
-        }),
-      );
-
-      service.saveTranslation(
-        created.slug,
-        input({
-          slug: 'multi',
-          translation: {
-            title: 'Getting started',
-            description: 'Intro section',
-            question: { text: 'Q1 updated', type: 'yes-no', yesNoCorrectAnswer: 'yes' },
-          },
-        }),
-      );
-
-      expect(service.sections()[0].staleLanguages).toEqual({ es: 'en' });
+      await expect(promise).resolves.toEqual(updated);
+      expect(service.sections()).toEqual([updated]);
     });
   });
 
   describe('removeTranslation', () => {
-    it('deletes the given language and leaves the rest untouched', () => {
-      const service = setup();
-      const created = service.create(input({ slug: 'multi' }));
-      service.saveTranslation(
-        created.slug,
-        input({ slug: 'multi', language: 'es', translation: { title: 'Empezando', description: 'Intro' } }),
-      );
+    it('DELETEs /:id/translations/:language and replaces the section', async () => {
+      await setup([section()]);
+      const updated = section({ translations: { en: { title: 'Getting started', description: 'Intro section' } } });
 
-      service.removeTranslation('multi', 'es');
+      const promise = service.removeTranslation('s1', 'es');
+      const req = httpMock.expectOne(`${BASE_URL}/s1/translations/es`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(updated);
 
-      const section = service.sections()[0];
-      expect(Object.keys(section.translations)).toEqual(['en']);
-    });
-
-    it('clears staleLanguages entries keyed by or pointing at the removed language', () => {
-      const service = setup();
-      const created = service.create(input({ slug: 'multi' }));
-      service.saveTranslation(
-        created.slug,
-        input({ slug: 'multi', language: 'es', translation: { title: 'Empezando', description: 'Intro' } }),
-      );
-      service.saveTranslation(
-        created.slug,
-        input({ slug: 'multi', language: 'fr', translation: { title: 'Pour commencer', description: 'Intro' } }),
-      );
-      service.saveTranslation(
-        created.slug,
-        input({ slug: 'multi', translation: { title: 'Getting started v2', description: 'Intro' } }),
-      );
-      expect(service.sections()[0].staleLanguages).toEqual({ es: 'en', fr: 'en' });
-
-      service.removeTranslation('multi', 'es');
-
-      const section = service.sections()[0];
-      expect(section.staleLanguages).toEqual({ fr: 'en' });
-    });
-
-    it('removing the language that other languages point to as their stale source clears those entries too', () => {
-      const service = setup();
-      const created = service.create(input({ slug: 'multi' }));
-      service.saveTranslation(
-        created.slug,
-        input({ slug: 'multi', language: 'es', translation: { title: 'Empezando', description: 'Intro' } }),
-      );
-      service.saveTranslation(
-        created.slug,
-        input({ slug: 'multi', translation: { title: 'Getting started v2', description: 'Intro' } }),
-      );
-      expect(service.sections()[0].staleLanguages).toEqual({ es: 'en' });
-
-      service.removeTranslation('multi', 'en');
-
-      const section = service.sections()[0];
-      expect(section.staleLanguages).toEqual({});
-    });
-
-    it('is a no-op when it would remove the last remaining translation', () => {
-      const service = setup();
-      service.create(input({ slug: 'solo' }));
-
-      service.removeTranslation('solo', 'en');
-
-      const section = service.sections()[0];
-      expect(Object.keys(section.translations)).toEqual(['en']);
+      await expect(promise).resolves.toEqual(updated);
     });
   });
 
   describe('publish / pause', () => {
-    it('publish sets status to published', () => {
-      const service = setup();
-      const created = service.create(input({ slug: 'a' }));
+    it('publish POSTs to /:id/publish and updates status locally', async () => {
+      await setup([section()]);
+      const published = section({ status: 'published' });
 
-      service.publish(created.slug);
+      const promise = service.publish('s1');
+      const req = httpMock.expectOne(`${BASE_URL}/s1/publish`);
+      expect(req.request.method).toBe('POST');
+      req.flush(published);
 
+      await expect(promise).resolves.toEqual(published);
       expect(service.sections()[0].status).toBe('published');
     });
 
-    it('pause sets status to paused', () => {
-      const service = setup();
-      const created = service.create(input({ slug: 'a' }));
-      service.publish(created.slug);
+    it('pause POSTs to /:id/pause and updates status locally', async () => {
+      await setup([section({ status: 'published' })]);
+      const paused = section({ status: 'paused' });
 
-      service.pause(created.slug);
+      const promise = service.pause('s1');
+      const req = httpMock.expectOne(`${BASE_URL}/s1/pause`);
+      expect(req.request.method).toBe('POST');
+      req.flush(paused);
 
+      await expect(promise).resolves.toEqual(paused);
       expect(service.sections()[0].status).toBe('paused');
     });
   });
 
   describe('reorder', () => {
-    it('rewrites order to match the given slug sequence', () => {
-      const service = setup();
-      const a = service.create(input({ slug: 'a' }));
-      const b = service.create(input({ slug: 'b' }));
-      const c = service.create(input({ slug: 'c' }));
+    it('POSTs the ordered ids and rewrites local order to match', async () => {
+      await setup([section({ id: 'a', order: 0 }), section({ id: 'b', order: 1 })]);
 
-      service.reorder([c.slug, a.slug, b.slug]);
+      const promise = service.reorder(['b', 'a']);
+      const req = httpMock.expectOne(`${BASE_URL}/reorder`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ orderedIds: ['b', 'a'] });
+      req.flush(null);
+      await promise;
 
-      const bySlug = new Map(service.sections().map((s) => [s.slug, s.order]));
-      expect(bySlug.get(c.slug)).toBe(0);
-      expect(bySlug.get(a.slug)).toBe(1);
-      expect(bySlug.get(b.slug)).toBe(2);
+      const byId = new Map(service.sections().map((s) => [s.id, s.order]));
+      expect(byId.get('b')).toBe(0);
+      expect(byId.get('a')).toBe(1);
     });
   });
 
   describe('sections()', () => {
-    it('exposes sections sorted by order', () => {
-      const service = setup();
-      const a = service.create(input({ slug: 'a' }));
-      const b = service.create(input({ slug: 'b' }));
-      service.reorder([b.slug, a.slug]);
+    it('exposes sections sorted by order', async () => {
+      await setup([section({ id: 'a', order: 1 }), section({ id: 'b', order: 0 })]);
 
-      expect(service.sections().map((s) => s.slug)).toEqual([b.slug, a.slug]);
+      expect(service.sections().map((s) => s.id)).toEqual(['b', 'a']);
     });
   });
 
-  describe('persistence', () => {
-    it('persists created sections to localStorage', () => {
-      const service = setup();
-      service.create(input({ slug: 'a' }));
+  describe('error handling', () => {
+    it('rejects when the backend responds with an error', async () => {
+      await setup([]);
 
-      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
-      expect(stored).toHaveLength(1);
-      expect(stored[0].translations.en.title).toBe('Getting started');
-    });
+      const promise = service.create(input());
+      const req = httpMock.expectOne(BASE_URL);
+      req.flush({ error: 'ConflictError' }, { status: 409, statusText: 'Conflict' });
 
-    it('loads existing sections from localStorage on construction', () => {
-      const first = setup();
-      first.create(input({ slug: 'persisted' }));
-
-      const second = setup();
-      expect(second.sections()).toHaveLength(1);
-      expect(second.sections()[0].translations.en?.title).toBe('Getting started');
-    });
-
-    it('falls back to an empty list when localStorage contains invalid JSON', () => {
-      localStorage.setItem(STORAGE_KEY, '{not valid json');
-
-      const service = setup();
-
-      expect(service.sections()).toEqual([]);
-    });
-
-    it('filters out legacy entries that have no slug or no translations', () => {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify([
-          {
-            id: 'legacy-uuid',
-            title: 'Legacy',
-            imageUrl: '',
-            status: 'draft',
-            order: 0,
-            createdAt: '',
-            updatedAt: '',
-          },
-          {
-            slug: 'valid-entry',
-            imageUrl: '',
-            status: 'draft',
-            order: 1,
-            createdAt: '',
-            updatedAt: '',
-            translations: { en: { title: 'Valid', description: '' } },
-          },
-          {
-            slug: '',
-            imageUrl: '',
-            status: 'draft',
-            order: 2,
-            createdAt: '',
-            updatedAt: '',
-            translations: { en: { title: 'Empty slug', description: '' } },
-          },
-          {
-            slug: 'no-translations',
-            imageUrl: '',
-            status: 'draft',
-            order: 3,
-            createdAt: '',
-            updatedAt: '',
-            translations: {},
-          },
-        ]),
-      );
-
-      const service = setup();
-
-      expect(service.sections()).toHaveLength(1);
-      expect(service.sections()[0].slug).toBe('valid-entry');
-    });
-
-    it('does not throw when localStorage is unavailable (e.g. during SSR)', () => {
-      vi.stubGlobal('localStorage', undefined);
-
-      let service!: SectionService;
-      expect(() => (service = setup())).not.toThrow();
-      expect(service.sections()).toEqual([]);
-      expect(() => service.create(input({ slug: 'a' }))).not.toThrow();
-
-      vi.unstubAllGlobals();
+      await expect(promise).rejects.toBeTruthy();
     });
   });
 });

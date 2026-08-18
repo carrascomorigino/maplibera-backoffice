@@ -206,19 +206,32 @@ export class ResourceFormDrawer {
     }
   }
 
-  protected save(): void {
-    this.persist();
-    this.saved.emit();
+  protected async save(): Promise<void> {
+    try {
+      await this.persist();
+      this.saved.emit();
+    } catch {
+      this.notifyActionFailed();
+    }
   }
 
-  protected publish(): void {
-    const slug = this.persist();
-    this.resourceService.publish(slug);
-    this.saved.emit();
+  protected async publish(): Promise<void> {
+    try {
+      const resource = await this.persist();
+      await this.resourceService.publish(resource.id);
+      this.saved.emit();
+    } catch {
+      this.notifyActionFailed();
+    }
   }
 
   protected cancel(): void {
     this.cancelled.emit();
+  }
+
+  private notifyActionFailed(): void {
+    const form = this.language.t().resources.resourceForm;
+    this.snackBar.open(form.actionFailedNotice, form.actionFailedDismiss);
   }
 
   private requestSuggestion(
@@ -322,7 +335,7 @@ export class ResourceFormDrawer {
     }
   }
 
-  private persist(): string {
+  private async persist(): Promise<Resource> {
     const { title, slug, shortDescription, categoryFields } = this.form.getRawValue();
     const category = this.category();
     const sharedKeys = SHARED_FIELD_KEYS[category];
@@ -338,14 +351,13 @@ export class ResourceFormDrawer {
 
     const existing = this.resource();
     if (existing) {
-      this.resourceService.updateSharedFields(existing.slug, sharedFields);
-      this.resourceService.saveTranslation(
-        existing.slug,
+      await this.resourceService.updateSharedFields(existing.id, sharedFields);
+      return this.resourceService.saveTranslation(
+        existing.id,
         this.targetLanguage(),
         translation as unknown as ResourceTranslation,
         slug,
       );
-      return slug;
     }
 
     const createInput = {
@@ -355,6 +367,6 @@ export class ResourceFormDrawer {
       language: this.targetLanguage(),
       translation,
     } as unknown as ResourceCreateInput;
-    return this.resourceService.create(createInput).slug;
+    return this.resourceService.create(createInput);
   }
 }

@@ -1,19 +1,27 @@
 import { TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { of } from 'rxjs';
 import { OrganizationListItem } from './organization-list-item';
 import { OrganizationService } from '../../services/organization.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { Organization, OrganizationType } from '../../models/organization.model';
+import { FakeOrganizationService, makeOrganization } from '../../testing/fake-organization-service';
 
 describe('OrganizationListItem', () => {
-  let service: OrganizationService;
+  let service: FakeOrganizationService;
   let language: LanguageService;
+  let snackBarOpen: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    localStorage.clear();
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(OrganizationService);
+    service = new FakeOrganizationService();
+    snackBarOpen = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: OrganizationService, useValue: service },
+        { provide: MatSnackBar, useValue: { open: snackBarOpen } },
+      ],
+    });
     language = TestBed.inject(LanguageService);
   });
 
@@ -32,18 +40,17 @@ describe('OrganizationListItem', () => {
     logoUrl?: string;
     contactLinks?: Organization['contactLinks'];
   } = {}): Organization {
-    return service.create({
+    return makeOrganization({
       type: overrides.type ?? 'local-group',
       slug: 'friends-of-the-river',
-      sharedFields: {
-        logoUrl: overrides.logoUrl ?? 'https://example.com/logo.png',
-        scopeType: overrides.scopeType ?? 'global',
-        countryCode: overrides.countryCode,
-        city: overrides.city,
-        contactLinks: overrides.contactLinks ?? { website: 'https://example.com' },
+      logoUrl: overrides.logoUrl ?? 'https://example.com/logo.png',
+      scopeType: overrides.scopeType ?? 'global',
+      countryCode: overrides.countryCode,
+      city: overrides.city,
+      contactLinks: overrides.contactLinks ?? { website: 'https://example.com' },
+      translations: {
+        en: { name: 'Friends of the River', description: 'A local river conservation group' },
       },
-      language: 'en',
-      translation: { name: 'Friends of the River', description: 'A local river conservation group' },
     });
   }
 
@@ -122,15 +129,30 @@ describe('OrganizationListItem', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="contact-link-volunteer-form"]')).toBeNull();
   });
 
-  it('toggles publish/pause via the service', () => {
+  it('toggles publish/pause via the service', async () => {
     const org = orgWith();
     const fixture = createFixture(org);
 
     (fixture.nativeElement.querySelector(
       `[data-testid="status-action-${org.slug}"]`,
     ) as HTMLButtonElement).click();
+    await Promise.resolve();
 
-    expect(service.organizations()[0].status).toBe('published');
+    expect(service.publish).toHaveBeenCalledWith(org.id);
+  });
+
+  it('shows an error notice when the status action fails', async () => {
+    service.publish.mockRejectedValueOnce(new Error('network error'));
+    const org = orgWith();
+    const fixture = createFixture(org);
+
+    (fixture.nativeElement.querySelector(
+      `[data-testid="status-action-${org.slug}"]`,
+    ) as HTMLButtonElement).click();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(snackBarOpen).toHaveBeenCalled();
   });
 
   it('emits editRequested when the edit button is clicked', () => {
@@ -148,19 +170,15 @@ describe('OrganizationListItem', () => {
     });
   });
 
-  it('removes a translation via the confirm dialog', () => {
-    const created = orgWith();
-    service.saveTranslation(created.slug, 'es', {
-      name: 'Amigos del Río',
-      description: 'Un grupo local de conservación del río',
-    });
-    const org = service.organizations()[0];
+  it('removes a translation via the confirm dialog', async () => {
+    const org = orgWith({});
     const fixture = createFixture(org);
     const dialog = TestBed.inject(MatDialog);
     vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<MatDialog['open']>);
 
     fixture.componentInstance['onLanguageRemoved']('es');
+    await Promise.resolve();
 
-    expect(service.organizations()[0].translations.es).toBeUndefined();
+    expect(service.removeTranslation).toHaveBeenCalledWith(org.id, 'es');
   });
 });

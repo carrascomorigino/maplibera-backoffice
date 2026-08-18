@@ -1,19 +1,27 @@
 import { TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { of } from 'rxjs';
 import { NewsCard } from './news-card';
 import { NewsItemService } from '../../services/news-item.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { NewsItem } from '../../models/news-item.model';
+import { FakeNewsItemService, makeNewsItem } from '../../testing/fake-news-item-service';
 
 describe('NewsCard', () => {
-  let service: NewsItemService;
+  let service: FakeNewsItemService;
   let language: LanguageService;
+  let snackBarOpen: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    localStorage.clear();
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(NewsItemService);
+    service = new FakeNewsItemService();
+    snackBarOpen = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: NewsItemService, useValue: service },
+        { provide: MatSnackBar, useValue: { open: snackBarOpen } },
+      ],
+    });
     language = TestBed.inject(LanguageService);
   });
 
@@ -25,31 +33,23 @@ describe('NewsCard', () => {
   }
 
   function newsItem(): NewsItem {
-    return service.create({
+    return makeNewsItem({
       category: 'news',
       slug: 'new-visitor-center',
-      sharedFields: {
-        imageUrl: 'https://example.com/banner.jpg',
-        publishedAt: '2026-08-01',
-        sourceLinks: [],
-      },
-      language: 'en',
-      translation: { title: 'New visitor center', subtitle: 'Now open', description: 'Details' },
+      imageUrl: 'https://example.com/banner.jpg',
+      publishedAt: '2026-08-01',
+      translations: { en: { title: 'New visitor center', subtitle: 'Now open', description: 'Details' } },
     });
   }
 
   function eventItem(): NewsItem {
-    return service.create({
+    return makeNewsItem({
       category: 'event',
       slug: 'summer-festival',
-      sharedFields: {
-        imageUrl: 'https://example.com/festival.jpg',
-        publishedAt: '2026-07-01',
-        eventDate: '2026-08-15',
-        sourceLinks: [],
-      },
-      language: 'en',
-      translation: { title: 'Summer festival', subtitle: 'Join us', description: 'Details' },
+      imageUrl: 'https://example.com/festival.jpg',
+      publishedAt: '2026-07-01',
+      eventDate: '2026-08-15',
+      translations: { en: { title: 'Summer festival', subtitle: 'Join us', description: 'Details' } },
     });
   }
 
@@ -98,15 +98,30 @@ describe('NewsCard', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="drag-handle"]')).toBeNull();
   });
 
-  it('toggles publish/pause via the service', () => {
+  it('toggles publish/pause via the service', async () => {
     const item = newsItem();
     const fixture = createFixture(item);
 
     (fixture.nativeElement.querySelector(
       `[data-testid="status-action-${item.slug}"]`,
     ) as HTMLButtonElement).click();
+    await Promise.resolve();
 
-    expect(service.items()[0].status).toBe('published');
+    expect(service.publish).toHaveBeenCalledWith(item.id);
+  });
+
+  it('shows an error notice when the status action fails', async () => {
+    service.publish.mockRejectedValueOnce(new Error('network error'));
+    const item = newsItem();
+    const fixture = createFixture(item);
+
+    (fixture.nativeElement.querySelector(
+      `[data-testid="status-action-${item.slug}"]`,
+    ) as HTMLButtonElement).click();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(snackBarOpen).toHaveBeenCalled();
   });
 
   it('emits editRequested when the edit button is clicked', () => {
@@ -124,20 +139,15 @@ describe('NewsCard', () => {
     });
   });
 
-  it('removes a translation via the confirm dialog, same as resources', () => {
-    const created = newsItem();
-    service.saveTranslation(created.slug, 'es', {
-      title: 'Nuevo centro de visitantes',
-      subtitle: 'Ya abrió',
-      description: 'Detalles',
-    });
-    const item = service.items()[0];
+  it('removes a translation via the confirm dialog, same as resources', async () => {
+    const item = newsItem();
     const fixture = createFixture(item);
     const dialog = TestBed.inject(MatDialog);
     vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<MatDialog['open']>);
 
     fixture.componentInstance['onLanguageRemoved']('es');
+    await Promise.resolve();
 
-    expect(service.items()[0].translations.es).toBeUndefined();
+    expect(service.removeTranslation).toHaveBeenCalledWith(item.id, 'es');
   });
 });

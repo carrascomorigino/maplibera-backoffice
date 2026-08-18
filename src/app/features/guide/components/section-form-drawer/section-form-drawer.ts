@@ -251,15 +251,28 @@ export class SectionFormDrawer {
     }
   }
 
-  protected save(): void {
-    this.persist();
-    this.saved.emit();
+  protected async save(): Promise<void> {
+    try {
+      await this.persist();
+      this.saved.emit();
+    } catch {
+      this.notifyActionFailed();
+    }
   }
 
-  protected publish(): void {
-    const slug = this.persist();
-    this.sectionService.publish(slug);
-    this.saved.emit();
+  protected async publish(): Promise<void> {
+    try {
+      const section = await this.persist();
+      await this.sectionService.publish(section.id);
+      this.saved.emit();
+    } catch {
+      this.notifyActionFailed();
+    }
+  }
+
+  private notifyActionFailed(): void {
+    const sectionForm = this.language.t().guide.sectionForm;
+    this.snackBar.open(sectionForm.actionFailedNotice, sectionForm.actionFailedDismiss);
   }
 
   protected cancel(): void {
@@ -320,7 +333,7 @@ export class SectionFormDrawer {
       });
   }
 
-  private persist(): string {
+  private async persist(): Promise<Section> {
     const { title, slug, description, imageUrl, question, countryScope, countries } =
       this.form.getRawValue();
     const questionValue = question ?? undefined;
@@ -329,14 +342,13 @@ export class SectionFormDrawer {
     const availableCountries = countryScope === 'specific' ? countries : undefined;
 
     if (existing) {
-      this.sectionService.saveTranslation(existing.slug, {
+      return this.sectionService.saveTranslation(existing.id, {
         slug,
         imageUrl,
         language: this.targetLanguage(),
         translation,
         availableCountries,
       });
-      return slug;
     }
 
     return this.sectionService.create({
@@ -345,6 +357,6 @@ export class SectionFormDrawer {
       language: this.targetLanguage(),
       translation,
       availableCountries,
-    }).slug;
+    });
   }
 }

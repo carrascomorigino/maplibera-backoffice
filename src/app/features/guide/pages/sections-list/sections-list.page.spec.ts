@@ -1,27 +1,30 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { SectionsListPage } from './sections-list.page';
 import { SectionService } from '../../services/section.service';
 import { Section } from '../../models/section.model';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
+import { FakeSectionService, makeSection } from '../../testing/fake-section-service';
 
 describe('SectionsListPage', () => {
-  let service: SectionService;
+  let service: FakeSectionService;
   let language: LanguageService;
 
   beforeEach(() => {
-    localStorage.clear();
+    service = new FakeSectionService();
     TestBed.configureTestingModule({
       providers: [
+        { provide: SectionService, useValue: service },
         {
           provide: TranslationSuggestionService,
           useValue: { suggest: vi.fn(() => new Promise(() => {})) },
         },
+        { provide: MatSnackBar, useValue: { open: vi.fn() } },
       ],
     });
-    service = TestBed.inject(SectionService);
     language = TestBed.inject(LanguageService);
     language.setLanguage('en');
   });
@@ -32,12 +35,11 @@ describe('SectionsListPage', () => {
     return fixture;
   }
 
-  function createSection(slug: string, title = slug) {
-    return service.create({
+  function seedSection(slug: string, title = slug, overrides: Partial<Section> = {}): Section {
+    return makeSection({
       slug,
-      imageUrl: '',
-      language: 'en',
-      translation: { title, description: '' },
+      translations: { en: { title, description: '' } },
+      ...overrides,
     });
   }
 
@@ -50,10 +52,9 @@ describe('SectionsListPage', () => {
   });
 
   it('renders sections from the service sorted by order', () => {
-    createSection('first', 'First');
-    const second = createSection('second', 'Second');
-    const first = service.sections().find((s) => s.slug === 'first')!;
-    service.reorder([second.slug, first.slug]);
+    const first = seedSection('first', 'First', { order: 1 });
+    const second = seedSection('second', 'Second', { order: 0 });
+    service.seed([first, second]);
 
     const fixture = createFixture();
 
@@ -70,8 +71,7 @@ describe('SectionsListPage', () => {
   });
 
   it('binds the rendered drop list data to the current sections so real drops carry data', () => {
-    createSection('a', 'A');
-    createSection('b', 'B');
+    service.seed([seedSection('a', 'A', { order: 0 }), seedSection('b', 'B', { order: 1 })]);
     const fixture = createFixture();
 
     const dropList = fixture.debugElement.query(By.directive(CdkDropList)).injector.get(CdkDropList);
@@ -79,10 +79,11 @@ describe('SectionsListPage', () => {
     expect(dropList.data).toEqual(service.sections());
   });
 
-  it('reorders sections through the service when a drop occurs', () => {
-    const a = createSection('a', 'A');
-    const b = createSection('b', 'B');
-    const c = createSection('c', 'C');
+  it('reorders sections through the service when a drop occurs', async () => {
+    const a = seedSection('a', 'A', { order: 0 });
+    const b = seedSection('b', 'B', { order: 1 });
+    const c = seedSection('c', 'C', { order: 2 });
+    service.seed([a, b, c]);
     const fixture = createFixture();
     const component = fixture.componentInstance;
 
@@ -92,6 +93,8 @@ describe('SectionsListPage', () => {
       currentIndex: 2,
       container: { data: sections },
     } as CdkDragDrop<Section[]>);
+    await Promise.resolve();
+    await Promise.resolve();
 
     expect(service.sections().map((s) => s.slug)).toEqual([b.slug, c.slug, a.slug]);
   });
@@ -110,7 +113,7 @@ describe('SectionsListPage', () => {
   });
 
   it('opens the drawer in edit mode with the selected section and language when Edit is clicked', () => {
-    createSection('editable', 'Editable');
+    service.seed([seedSection('editable', 'Editable')]);
     const fixture = createFixture();
 
     const editButton = fixture.nativeElement.querySelector(
@@ -124,21 +127,14 @@ describe('SectionsListPage', () => {
   });
 
   it('passes the stale source language through to the drawer when editing a language flagged as needing an update', () => {
-    const created = createSection('multi', 'Getting started');
-    service.saveTranslation(created.slug, {
-      slug: created.slug,
-      imageUrl: '',
-      language: 'es',
-      translation: { title: 'Empezando', description: '' },
+    const section = seedSection('multi', 'Getting started v2', {
+      translations: {
+        en: { title: 'Getting started v2', description: '' },
+        es: { title: 'Empezando', description: '' },
+      },
+      staleLanguages: { es: 'en' },
     });
-    service.saveTranslation(created.slug, {
-      slug: created.slug,
-      imageUrl: '',
-      language: 'en',
-      translation: { title: 'Getting started v2', description: '' },
-    });
-    const section = service.sections()[0];
-    expect(section.staleLanguages).toEqual({ es: 'en' });
+    service.seed([section]);
     const fixture = createFixture();
     const component = fixture.componentInstance;
 
@@ -149,7 +145,7 @@ describe('SectionsListPage', () => {
   });
 
   it('does not carry a stale source language when editing an up-to-date translation', () => {
-    createSection('editable', 'Editable');
+    service.seed([seedSection('editable', 'Editable')]);
     const fixture = createFixture();
 
     const editButton = fixture.nativeElement.querySelector(
@@ -184,13 +180,14 @@ describe('SectionsListPage', () => {
   });
 
   it("reverts a row's language selector when a translate flow is cancelled", () => {
-    const created = createSection('multi', 'Getting started');
-    service.saveTranslation(created.slug, {
-      slug: created.slug,
-      imageUrl: '',
-      language: 'fr',
-      translation: { title: 'Pour commencer', description: '' },
-    });
+    service.seed([
+      seedSection('multi', 'Getting started', {
+        translations: {
+          en: { title: 'Getting started', description: '' },
+          fr: { title: 'Pour commencer', description: '' },
+        },
+      }),
+    ]);
     const fixture = createFixture();
 
     (fixture.nativeElement.querySelector('[data-testid="language-tag-es"]') as HTMLElement).click();

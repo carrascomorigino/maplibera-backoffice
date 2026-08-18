@@ -5,26 +5,33 @@ import { ResourceFormDrawer } from './resource-form-drawer';
 import { ResourceService } from '../../services/resource.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
-import { RecipeResource } from '../../models/resource.model';
+import { RecipeResource, Resource } from '../../models/resource.model';
+import { FakeResourceService, makeResource } from '../../testing/fake-resource-service';
+
+async function settle(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
+}
 
 describe('ResourceFormDrawer', () => {
-  let service: ResourceService;
+  let service: FakeResourceService;
   let language: LanguageService;
   let suggestionService: { suggest: ReturnType<typeof vi.fn> };
   let snackBarOpen: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    localStorage.clear();
+    service = new FakeResourceService();
     suggestionService = { suggest: vi.fn() };
     snackBarOpen = vi.fn();
     TestBed.configureTestingModule({
       providers: [
         provideNoopAnimations(),
+        { provide: ResourceService, useValue: service },
         { provide: TranslationSuggestionService, useValue: suggestionService },
         { provide: MatSnackBar, useValue: { open: snackBarOpen } },
       ],
     });
-    service = TestBed.inject(ResourceService);
     language = TestBed.inject(LanguageService);
   });
 
@@ -64,7 +71,7 @@ describe('ResourceFormDrawer', () => {
     expect(buttons(fixture).save.disabled).toBe(false);
   });
 
-  it('creates a draft resource of the locked category on Save', () => {
+  it('creates a draft resource of the locked category on Save', async () => {
     const fixture = createFixture('nutrition');
     const component = fixture.componentInstance;
     let saved = false;
@@ -74,6 +81,7 @@ describe('ResourceFormDrawer', () => {
     component.form.controls.shortDescription.setValue('Good fats');
     fixture.detectChanges();
     buttons(fixture).save.click();
+    await settle();
 
     expect(service.resources()).toHaveLength(1);
     expect(service.resources()[0].category).toBe('nutrition');
@@ -82,7 +90,7 @@ describe('ResourceFormDrawer', () => {
     expect(saved).toBe(true);
   });
 
-  it('creates and publishes on Publish for a new resource', () => {
+  it('creates and publishes on Publish for a new resource', async () => {
     const fixture = createFixture('nutrition');
     const component = fixture.componentInstance;
 
@@ -90,18 +98,34 @@ describe('ResourceFormDrawer', () => {
     component.form.controls.shortDescription.setValue('Good fats');
     fixture.detectChanges();
     buttons(fixture).publish?.click();
+    await settle();
 
     expect(service.resources()[0].status).toBe('published');
   });
 
+  it('shows an error notice when Save fails', async () => {
+    service.create.mockRejectedValueOnce(new Error('network error'));
+    const fixture = createFixture('nutrition');
+    const component = fixture.componentInstance;
+
+    component.form.controls.title.setValue('Omega 3');
+    component.form.controls.shortDescription.setValue('Good fats');
+    fixture.detectChanges();
+    buttons(fixture).save.click();
+    await settle();
+
+    expect(snackBarOpen).toHaveBeenCalled();
+  });
+
   it('hides the Publish button when editing an existing resource', () => {
-    const created = service.create({
+    const created = makeResource({
       category: 'nutrition',
       slug: 'omega-3',
-      sharedFields: { sourceLinks: [], pdfUrls: [] },
-      language: 'en',
-      translation: { title: 'Omega 3', shortDescription: 'Good fats', explanatoryText: '' },
-    });
+      sourceLinks: [],
+      pdfUrls: [],
+      translations: { en: { title: 'Omega 3', shortDescription: 'Good fats', explanatoryText: '' } },
+    } as Partial<Resource>);
+    service.seed([created]);
     const fixture = TestBed.createComponent(ResourceFormDrawer);
     fixture.componentRef.setInput('resource', created);
     fixture.componentRef.setInput('category', 'nutrition');
@@ -111,14 +135,15 @@ describe('ResourceFormDrawer', () => {
     expect(buttons(fixture).publish).toBeNull();
   });
 
-  it('splits shared vs. translated fields correctly for a recipe on save', () => {
-    const created = service.create({
+  it('splits shared vs. translated fields correctly for a recipe on save', async () => {
+    const created = makeResource({
       category: 'recipes',
       slug: 'soup',
-      sharedFields: { preparationMinutes: 10, photoUrls: [] },
-      language: 'en',
-      translation: { title: 'Soup', shortDescription: 'Warm', ingredients: ['Water'], steps: ['Boil'] },
-    });
+      preparationMinutes: 10,
+      photoUrls: [],
+      translations: { en: { title: 'Soup', shortDescription: 'Warm', ingredients: ['Water'], steps: ['Boil'] } },
+    } as unknown as Partial<Resource>);
+    service.seed([created]);
     const fixture = TestBed.createComponent(ResourceFormDrawer);
     fixture.componentRef.setInput('resource', created);
     fixture.componentRef.setInput('category', 'recipes');
@@ -134,6 +159,7 @@ describe('ResourceFormDrawer', () => {
     });
     fixture.detectChanges();
     buttons(fixture).save.click();
+    await settle();
 
     const updated = service.resources()[0] as RecipeResource;
     expect(updated.preparationMinutes).toBe(20);
@@ -153,13 +179,14 @@ describe('ResourceFormDrawer', () => {
     });
 
     it('blocks submission with a duplicate slug across any category', () => {
-      service.create({
-        category: 'apps',
-        slug: 'existing-resource',
-        sharedFields: { iconUrl: '' },
-        language: 'en',
-        translation: { title: 'An app', shortDescription: 'Useful' },
-      });
+      service.seed([
+        makeResource({
+          category: 'apps',
+          slug: 'existing-resource',
+          iconUrl: '',
+          translations: { en: { title: 'An app', shortDescription: 'Useful' } },
+        } as unknown as Partial<Resource>),
+      ]);
       const fixture = createFixture('nutrition');
       const component = fixture.componentInstance;
 
@@ -174,6 +201,20 @@ describe('ResourceFormDrawer', () => {
   });
 
   describe('AI-suggested translation', () => {
+    function nutritionResource() {
+      const resource = makeResource({
+        category: 'nutrition',
+        slug: 'omega-3',
+        sourceLinks: [],
+        pdfUrls: [],
+        translations: {
+          en: { title: 'Omega 3', shortDescription: 'Good fats', explanatoryText: 'Details' },
+        },
+      } as Partial<Resource>);
+      service.seed([resource]);
+      return resource;
+    }
+
     it('requests a suggestion when adding a new language and pre-fills on success', async () => {
       let resolveSuggest!: (value: Record<string, unknown>) => void;
       suggestionService.suggest.mockReturnValue(
@@ -181,13 +222,7 @@ describe('ResourceFormDrawer', () => {
           resolveSuggest = resolve;
         }),
       );
-      const existing = service.create({
-        category: 'nutrition',
-        slug: 'omega-3',
-        sharedFields: { sourceLinks: [], pdfUrls: [] },
-        language: 'en',
-        translation: { title: 'Omega 3', shortDescription: 'Good fats', explanatoryText: 'Details' },
-      });
+      const existing = nutritionResource();
       const fixture = TestBed.createComponent(ResourceFormDrawer);
       fixture.componentRef.setInput('resource', existing);
       fixture.componentRef.setInput('category', 'nutrition');
@@ -209,9 +244,7 @@ describe('ResourceFormDrawer', () => {
         shortDescription: 'Buenas grasas',
         explanatoryText: 'Detalles',
       });
-      await Promise.resolve();
-      await Promise.resolve();
-      await Promise.resolve();
+      await settle();
       fixture.detectChanges();
 
       expect(fixture.componentInstance.loading()).toBe(false);
@@ -219,13 +252,7 @@ describe('ResourceFormDrawer', () => {
     });
 
     it('does not request a suggestion when editing an already-translated language', () => {
-      const existing = service.create({
-        category: 'nutrition',
-        slug: 'omega-3',
-        sharedFields: { sourceLinks: [], pdfUrls: [] },
-        language: 'en',
-        translation: { title: 'Omega 3', shortDescription: 'Good fats', explanatoryText: 'Details' },
-      });
+      const existing = nutritionResource();
       const fixture = TestBed.createComponent(ResourceFormDrawer);
       fixture.componentRef.setInput('resource', existing);
       fixture.componentRef.setInput('category', 'nutrition');

@@ -1,12 +1,10 @@
-import { Injectable, computed, signal } from '@angular/core';
-import { Section, SectionTranslation } from '../models/section.model';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { Section, SectionStatus, SectionTranslation } from '../models/section.model';
 import { ContentLanguage } from '../models/content-language.model';
 
-const STORAGE_KEY = 'guide-sections';
-
-function translationsEqual(a: SectionTranslation, b: SectionTranslation): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
-}
+const BASE_URL = '/backend/sections';
 
 export interface SectionTranslationInput {
   slug: string;
@@ -18,149 +16,65 @@ export interface SectionTranslationInput {
 
 @Injectable({ providedIn: 'root' })
 export class SectionService {
-  private readonly state = signal<Section[]>(this.loadFromStorage());
+  private readonly http = inject(HttpClient);
 
-  readonly sections = computed(() =>
-    [...this.state()].sort((a, b) => a.order - b.order),
-  );
+  private readonly state = signal<Section[]>([]);
 
-  create(input: SectionTranslationInput): Section {
-    const now = new Date().toISOString();
-    const section: Section = {
-      slug: input.slug,
-      imageUrl: input.imageUrl,
-      translations: { [input.language]: input.translation },
-      status: 'draft',
-      order: this.state().length,
-      createdAt: now,
-      updatedAt: now,
-      availableCountries: input.availableCountries,
-    };
+  readonly sections = computed(() => [...this.state()].sort((a, b) => a.order - b.order));
 
+  constructor() {
+    void this.refresh();
+  }
+
+  async refresh(): Promise<void> {
+    const sections = await firstValueFrom(this.http.get<Section[]>(BASE_URL));
+    this.state.set(sections);
+  }
+
+  async create(input: SectionTranslationInput): Promise<Section> {
+    const section = await firstValueFrom(this.http.post<Section>(BASE_URL, input));
     this.state.update((sections) => [...sections, section]);
-    this.persist();
     return section;
   }
 
-  saveTranslation(currentSlug: string, input: SectionTranslationInput): void {
-    this.state.update((sections) =>
-      sections.map((section) => {
-        if (section.slug !== currentSlug) {
-          return section;
-        }
+  async saveTranslation(id: string, input: SectionTranslationInput): Promise<Section> {
+    const updated = await firstValueFrom(this.http.put<Section>(`${BASE_URL}/${id}`, input));
+    this.replace(updated);
+    return updated;
+  }
 
-        const previousTranslation = section.translations[input.language];
-        const contentChanged =
-          !previousTranslation || !translationsEqual(previousTranslation, input.translation);
-        const translations = { ...section.translations, [input.language]: input.translation };
-        const staleLanguages = { ...section.staleLanguages };
-        delete staleLanguages[input.language];
-        if (previousTranslation && contentChanged) {
-          for (const lang of Object.keys(translations) as ContentLanguage[]) {
-            if (lang !== input.language) {
-              staleLanguages[lang] = input.language;
-            }
-          }
-        }
-
-        return {
-          ...section,
-          slug: input.slug,
-          imageUrl: input.imageUrl,
-          translations,
-          staleLanguages,
-          availableCountries: input.availableCountries,
-          updatedAt: new Date().toISOString(),
-        };
-      }),
+  async removeTranslation(id: string, language: ContentLanguage): Promise<Section> {
+    const updated = await firstValueFrom(
+      this.http.delete<Section>(`${BASE_URL}/${id}/translations/${language}`),
     );
-    this.persist();
+    this.replace(updated);
+    return updated;
   }
 
-  removeTranslation(slug: string, language: ContentLanguage): void {
+  async publish(id: string): Promise<Section> {
+    return this.setStatus(id, 'published');
+  }
+
+  async pause(id: string): Promise<Section> {
+    return this.setStatus(id, 'paused');
+  }
+
+  async reorder(orderedIds: string[]): Promise<void> {
+    await firstValueFrom(this.http.post(`${BASE_URL}/reorder`, { orderedIds }));
+    const orderById = new Map(orderedIds.map((id, index) => [id, index]));
     this.state.update((sections) =>
-      sections.map((section) => {
-        if (section.slug !== slug || Object.keys(section.translations).length <= 1) {
-          return section;
-        }
-
-        const translations = { ...section.translations };
-        delete translations[language];
-
-        const staleLanguages = { ...section.staleLanguages };
-        delete staleLanguages[language];
-        for (const lang of Object.keys(staleLanguages) as ContentLanguage[]) {
-          if (staleLanguages[lang] === language) {
-            delete staleLanguages[lang];
-          }
-        }
-
-        return { ...section, translations, staleLanguages, updatedAt: new Date().toISOString() };
-      }),
+      sections.map((section) => ({ ...section, order: orderById.get(section.id) ?? section.order })),
     );
-    this.persist();
   }
 
-  publish(slug: string): void {
-    this.setStatus(slug, 'published');
+  private async setStatus(id: string, status: SectionStatus): Promise<Section> {
+    const action = status === 'published' ? 'publish' : 'pause';
+    const updated = await firstValueFrom(this.http.post<Section>(`${BASE_URL}/${id}/${action}`, {}));
+    this.replace(updated);
+    return updated;
   }
 
-  pause(slug: string): void {
-    this.setStatus(slug, 'paused');
-  }
-
-  reorder(orderedSlugs: string[]): void {
-    const orderBySlug = new Map(orderedSlugs.map((slug, index) => [slug, index]));
-    this.state.update((sections) =>
-      sections.map((section) => ({
-        ...section,
-        order: orderBySlug.get(section.slug) ?? section.order,
-      })),
-    );
-    this.persist();
-  }
-
-  private setStatus(slug: string, status: Section['status']): void {
-    this.state.update((sections) =>
-      sections.map((section) =>
-        section.slug === slug
-          ? { ...section, status, updatedAt: new Date().toISOString() }
-          : section,
-      ),
-    );
-    this.persist();
-  }
-
-  private persist(): void {
-    if (typeof localStorage === 'undefined') {
-      return;
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state()));
-  }
-
-  private loadFromStorage(): Section[] {
-    if (typeof localStorage === 'undefined') {
-      return [];
-    }
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return [];
-    }
-    try {
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed)) {
-        return [];
-      }
-      return parsed.filter(
-        (section): section is Section =>
-          typeof section?.slug === 'string' &&
-          section.slug.length > 0 &&
-          typeof section?.translations === 'object' &&
-          section.translations !== null &&
-          Object.keys(section.translations).length > 0,
-      );
-    } catch {
-      return [];
-    }
+  private replace(updated: Section): void {
+    this.state.update((sections) => sections.map((section) => (section.id === updated.id ? updated : section)));
   }
 }

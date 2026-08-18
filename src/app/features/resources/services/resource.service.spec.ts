@@ -1,253 +1,169 @@
-import { ResourceService } from './resource.service';
+import { TestBed } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { ResourceCreateInput, ResourceService } from './resource.service';
 import { Resource } from '../models/resource.model';
 
-const STORAGE_KEY = 'resources';
+const BASE_URL = '/backend/resources';
 
-function setup(): ResourceService {
-  return new ResourceService();
+function createInput(overrides: Partial<ResourceCreateInput> = {}): ResourceCreateInput {
+  return {
+    category: 'nutrition',
+    slug: 'protein',
+    sharedFields: { sourceLinks: [], pdfUrls: [] },
+    language: 'en',
+    translation: { title: 'Protein', shortDescription: 'short', explanatoryText: 'long' },
+    ...overrides,
+  } as ResourceCreateInput;
 }
 
-function nutritionResource(overrides: { slug?: string } = {}) {
+function resource(overrides: Partial<Resource> = {}): Resource {
   return {
-    category: 'nutrition' as const,
-    slug: overrides.slug ?? 'omega-3',
-    sharedFields: { sourceLinks: [], pdfUrls: [] },
-    language: 'en' as const,
-    translation: { title: 'Omega 3', shortDescription: 'Good fats', explanatoryText: 'Details' },
-  };
+    id: 'r1',
+    slug: 'protein',
+    category: 'nutrition',
+    status: 'draft',
+    order: 0,
+    sourceLinks: [],
+    pdfUrls: [],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    translations: { en: { title: 'Protein', shortDescription: 'short', explanatoryText: 'long' } },
+    ...overrides,
+  } as Resource;
 }
 
 describe('ResourceService', () => {
-  beforeEach(() => {
-    localStorage.clear();
+  let service: ResourceService;
+  let httpMock: HttpTestingController;
+
+  async function setup(initial: Resource[] = []): Promise<void> {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    service = TestBed.inject(ResourceService);
+    httpMock = TestBed.inject(HttpTestingController);
+
+    const req = httpMock.expectOne(BASE_URL);
+    expect(req.request.method).toBe('GET');
+    req.flush(initial);
+    await Promise.resolve();
+  }
+
+  afterEach(() => {
+    httpMock.verify();
   });
 
-  describe('create', () => {
-    it('creates a resource with draft status and a single translation', () => {
-      const service = setup();
+  it('fetches resources from the backend on construction', async () => {
+    await setup([resource()]);
 
-      const resource = service.create(nutritionResource());
-
-      expect(resource.category).toBe('nutrition');
-      expect(resource.status).toBe('draft');
-      expect(resource.order).toBe(0);
-      expect(Object.keys(resource.translations)).toEqual(['en']);
-      expect(service.resources()).toEqual([resource]);
-    });
-
-    it('scopes the initial order to the category, not the global list', () => {
-      const service = setup();
-      service.create(nutritionResource({ slug: 'first-nutrition' }));
-      service.create({
-        category: 'recipes',
-        slug: 'first-recipe',
-        sharedFields: { preparationMinutes: 10, photoUrls: [] },
-        language: 'en',
-        translation: { title: 'Soup', shortDescription: 'Warm', ingredients: [], steps: [] },
-      });
-
-      const secondNutrition = service.create(nutritionResource({ slug: 'second-nutrition' }));
-      const secondRecipe = service.create({
-        category: 'recipes',
-        slug: 'second-recipe',
-        sharedFields: { preparationMinutes: 5, photoUrls: [] },
-        language: 'en',
-        translation: { title: 'Salad', shortDescription: 'Cold', ingredients: [], steps: [] },
-      });
-
-      expect(secondNutrition.order).toBe(1);
-      expect(secondRecipe.order).toBe(1);
-    });
+    expect(service.resources()).toEqual([resource()]);
   });
 
-  describe('saveTranslation / removeTranslation / staleLanguages', () => {
-    it('adds a new language without dropping existing translations', () => {
-      const service = setup();
-      const created = service.create(nutritionResource());
+  it('groups resources by category in RESOURCE_CATEGORIES order', async () => {
+    await setup([
+      resource({ id: 'a', category: 'apps' }),
+      resource({ id: 'n', category: 'nutrition' }),
+    ]);
 
-      service.saveTranslation(created.slug, 'es', {
-        title: 'Omega 3 es',
-        shortDescription: 'Buenas grasas',
-        explanatoryText: 'Detalles',
-      });
-
-      const updated = service.resources()[0];
-      expect(Object.keys(updated.translations).sort()).toEqual(['en', 'es']);
-    });
-
-    it('marks other languages stale when an existing translation is edited', () => {
-      const service = setup();
-      const created = service.create(nutritionResource());
-      service.saveTranslation(created.slug, 'es', {
-        title: 'Omega 3 es',
-        shortDescription: 'Buenas grasas',
-        explanatoryText: 'Detalles',
-      });
-
-      service.saveTranslation(created.slug, 'en', {
-        title: 'Omega 3 v2',
-        shortDescription: 'Good fats',
-        explanatoryText: 'Details',
-      });
-
-      expect(service.resources()[0].staleLanguages).toEqual({ es: 'en' });
-    });
-
-    it('removeTranslation deletes the language and clears related staleLanguages entries', () => {
-      const service = setup();
-      const created = service.create(nutritionResource());
-      service.saveTranslation(created.slug, 'es', {
-        title: 'Omega 3 es',
-        shortDescription: 'Buenas grasas',
-        explanatoryText: 'Detalles',
-      });
-      service.saveTranslation(created.slug, 'en', {
-        title: 'Omega 3 v2',
-        shortDescription: 'Good fats',
-        explanatoryText: 'Details',
-      });
-      expect(service.resources()[0].staleLanguages).toEqual({ es: 'en' });
-
-      service.removeTranslation(created.slug, 'es');
-
-      const resource = service.resources()[0];
-      expect(Object.keys(resource.translations)).toEqual(['en']);
-      expect(resource.staleLanguages).toEqual({});
-    });
-
-    it('renames the slug when a newSlug is passed', () => {
-      const service = setup();
-      const created = service.create(nutritionResource());
-
-      service.saveTranslation(
-        created.slug,
-        'en',
-        { title: 'Omega 3', shortDescription: 'Good fats', explanatoryText: 'Details' },
-        'omega-3-fatty-acids',
-      );
-
-      expect(service.resources().find((r) => r.slug === created.slug)).toBeUndefined();
-      expect(service.resources().find((r) => r.slug === 'omega-3-fatty-acids')).toBeTruthy();
-    });
-
-    it('removeTranslation is a no-op when it would remove the last translation', () => {
-      const service = setup();
-      const created = service.create(nutritionResource());
-
-      service.removeTranslation(created.slug, 'en');
-
-      expect(Object.keys(service.resources()[0].translations)).toEqual(['en']);
-    });
+    const byCategory = service.resourcesByCategory();
+    expect(byCategory.nutrition.map((r) => r.id)).toEqual(['n']);
+    expect(byCategory.apps.map((r) => r.id)).toEqual(['a']);
+    expect(byCategory.recipes).toEqual([]);
+    expect(byCategory.multimedia).toEqual([]);
   });
 
-  describe('updateSharedFields', () => {
-    it('updates category-specific shared fields without touching translations', () => {
-      const service = setup();
-      const created = service.create(nutritionResource());
+  it('POSTs the input on create and appends the returned resource', async () => {
+    await setup([]);
 
-      service.updateSharedFields(created.slug, {
-        sourceLinks: ['https://example.com/study'],
-        pdfUrls: [],
-      });
+    const promise = service.create(createInput());
+    const req = httpMock.expectOne(BASE_URL);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(createInput());
+    req.flush(resource());
 
-      const updated = service.resources()[0] as Resource & { sourceLinks: string[] };
-      expect(updated.sourceLinks).toEqual(['https://example.com/study']);
-      expect(updated.translations.en?.title).toBe('Omega 3');
-    });
+    await expect(promise).resolves.toEqual(resource());
+    expect(service.resources()).toEqual([resource()]);
   });
 
-  describe('reorder', () => {
-    it('only rewrites order for members of the given category', () => {
-      const service = setup();
-      const a = service.create(nutritionResource({ slug: 'a' }));
-      const b = service.create(nutritionResource({ slug: 'b' }));
-      const c = service.create(nutritionResource({ slug: 'c' }));
-      const recipe = service.create({
-        category: 'recipes',
-        slug: 'a-recipe',
-        sharedFields: { preparationMinutes: 10, photoUrls: [] },
-        language: 'en',
-        translation: { title: 'Soup', shortDescription: 'Warm', ingredients: [], steps: [] },
-      });
-
-      service.reorder('nutrition', [c.slug, a.slug, b.slug]);
-
-      const bySlug = new Map(service.resources().map((r) => [r.slug, r.order]));
-      expect(bySlug.get(c.slug)).toBe(0);
-      expect(bySlug.get(a.slug)).toBe(1);
-      expect(bySlug.get(b.slug)).toBe(2);
-      expect(bySlug.get(recipe.slug)).toBe(0);
+  it('PUTs to /:id/translations on saveTranslation', async () => {
+    await setup([resource()]);
+    const updated = resource({
+      translations: { en: { title: 'Updated', shortDescription: 'short', explanatoryText: 'long' } },
     });
+
+    const promise = service.saveTranslation('r1', 'en', updated.translations.en!, 'protein');
+    const req = httpMock.expectOne(`${BASE_URL}/r1/translations`);
+    expect(req.request.method).toBe('PUT');
+    req.flush(updated);
+
+    await expect(promise).resolves.toEqual(updated);
   });
 
-  describe('publish / pause', () => {
-    it('publish sets status to published, pause sets it to paused', () => {
-      const service = setup();
-      const created = service.create(nutritionResource());
+  it('DELETEs /:id/translations/:language on removeTranslation', async () => {
+    await setup([resource()]);
+    const updated = resource({ translations: {} });
 
-      service.publish(created.slug);
-      expect(service.resources()[0].status).toBe('published');
+    const promise = service.removeTranslation('r1', 'en');
+    const req = httpMock.expectOne(`${BASE_URL}/r1/translations/en`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(updated);
 
-      service.pause(created.slug);
-      expect(service.resources()[0].status).toBe('paused');
-    });
+    await expect(promise).resolves.toEqual(updated);
   });
 
-  describe('resourcesByCategory', () => {
-    it('groups resources by category', () => {
-      const service = setup();
-      service.create(nutritionResource());
-      service.create({
-        category: 'apps',
-        slug: 'an-app',
-        sharedFields: { iconUrl: '' },
-        language: 'en',
-        translation: { title: 'An app', shortDescription: 'Useful' },
-      });
+  it('PATCHes /:id/shared-fields on updateSharedFields', async () => {
+    await setup([resource()]);
+    const sharedFields = { sourceLinks: ['https://example.com'], pdfUrls: [] };
+    const updated = resource(sharedFields);
 
-      const grouped = service.resourcesByCategory();
+    const promise = service.updateSharedFields('r1', sharedFields);
+    const req = httpMock.expectOne(`${BASE_URL}/r1/shared-fields`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ sharedFields });
+    req.flush(updated);
 
-      expect(grouped.nutrition).toHaveLength(1);
-      expect(grouped.apps).toHaveLength(1);
-      expect(grouped.recipes).toHaveLength(0);
-      expect(grouped.multimedia).toHaveLength(0);
-    });
+    await expect(promise).resolves.toEqual(updated);
   });
 
-  describe('persistence', () => {
-    it('persists created resources to localStorage under its own key', () => {
-      const service = setup();
-      service.create(nutritionResource());
+  it('publish/pause POST to /:id/publish and /:id/pause', async () => {
+    await setup([resource()]);
 
-      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
-      expect(stored).toHaveLength(1);
-    });
+    const publishPromise = service.publish('r1');
+    httpMock.expectOne(`${BASE_URL}/r1/publish`).flush(resource({ status: 'published' }));
+    await expect(publishPromise).resolves.toMatchObject({ status: 'published' });
 
-    it('loads existing resources from localStorage on construction', () => {
-      const first = setup();
-      first.create(nutritionResource());
+    const pausePromise = service.pause('r1');
+    httpMock.expectOne(`${BASE_URL}/r1/pause`).flush(resource({ status: 'paused' }));
+    await expect(pausePromise).resolves.toMatchObject({ status: 'paused' });
+  });
 
-      const second = setup();
-      expect(second.resources()).toHaveLength(1);
-    });
+  it('reorder POSTs category + ordered ids and rewrites local order within that category only', async () => {
+    await setup([
+      resource({ id: 'n1', category: 'nutrition', order: 0 }),
+      resource({ id: 'n2', category: 'nutrition', order: 1 }),
+      resource({ id: 'a1', category: 'apps', order: 0 }),
+    ]);
 
-    it('falls back to an empty list when localStorage contains invalid JSON', () => {
-      localStorage.setItem(STORAGE_KEY, '{not valid json');
+    const promise = service.reorder('nutrition', ['n2', 'n1']);
+    const req = httpMock.expectOne(`${BASE_URL}/reorder`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ category: 'nutrition', orderedIds: ['n2', 'n1'] });
+    req.flush(null);
+    await promise;
 
-      const service = setup();
+    const byId = new Map(service.resources().map((r) => [r.id, r.order]));
+    expect(byId.get('n2')).toBe(0);
+    expect(byId.get('n1')).toBe(1);
+    expect(byId.get('a1')).toBe(0);
+  });
 
-      expect(service.resources()).toEqual([]);
-    });
+  it('rejects when the backend responds with an error', async () => {
+    await setup([]);
 
-    it('does not throw when localStorage is unavailable (e.g. during SSR)', () => {
-      vi.stubGlobal('localStorage', undefined);
+    const promise = service.create(createInput());
+    httpMock.expectOne(BASE_URL).flush({ error: 'ConflictError' }, { status: 409, statusText: 'Conflict' });
 
-      let service!: ResourceService;
-      expect(() => (service = setup())).not.toThrow();
-      expect(service.resources()).toEqual([]);
-      expect(() => service.create(nutritionResource())).not.toThrow();
-
-      vi.unstubAllGlobals();
-    });
+    await expect(promise).rejects.toBeTruthy();
   });
 });
