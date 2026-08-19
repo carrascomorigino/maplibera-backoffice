@@ -65,6 +65,19 @@
         >
           {{ language.t().nav.organizationsLink }}
         </a>
+        <a
+          routerLink="/professionals"
+          routerLinkActive
+          #professionalsActive="routerLinkActive"
+          [class.text-brand-700]="professionalsActive.isActive"
+          [class.text-ink-600]="!professionalsActive.isActive"
+          [class.font-semibold]="professionalsActive.isActive"
+          [class.font-medium]="!professionalsActive.isActive"
+          [class.shadow-nav-active]="professionalsActive.isActive"
+          class="rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-brand-50 hover:text-brand-700"
+        >
+          {{ language.t().nav.professionalsLink }}
+        </a>
       </div>
     </div>
     <app-language-toggle />

@@ -1,0 +1,25 @@
+<div [formGroup]="form" class="flex flex-col gap-4">
+  <mat-form-field class="min-w-0">
+    <mat-label>{{ language.t().professionals.specialtyFields.nutritionist.licenseNumberLabel }}</mat-label>
+    <input
+      matInput
+      data-testid="nutritionist-license-number"
+      formControlName="licenseNumber"
+      (blur)="onBlur()"
+    />
+  </mat-form-field>
+
+  <div>
+    <label class="mb-1 block text-sm font-medium text-ink-700">
+      {{ language.t().professionals.specialtyFields.nutritionist.dietarySpecialtiesLabel }}
+    </label>
+    <app-string-list-editor
+      formControlName="dietarySpecialties"
+      [addButtonLabel]="
+        language.t().stringListEditor.addRowButton(
+          language.t().professionals.specialtyFields.nutritionist.dietarySpecialtiesLabel
+        )
+      "
+    />
+  </div>
+</div>

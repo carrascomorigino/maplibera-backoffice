@@ -7,6 +7,7 @@ export interface Translations {
     resourcesLink: string;
     newsLink: string;
     organizationsLink: string;
+    professionalsLink: string;
   };
   languageTags: {
     untranslatedAria: (languageName: string) => string;
@@ -289,6 +290,96 @@ export interface Translations {
       previewLoadingText: string;
       actionFailedNotice: string;
       actionFailedDismiss: string;
+    };
+  };
+  professionals: {
+    professionalsList: {
+      heading: string;
+      addNutritionistButton: string;
+      addDoctorButton: string;
+      addDentistButton: string;
+      addCoachButton: string;
+      filterGroupAriaLabel: string;
+      filterAllLabel: string;
+      filterNutritionistLabel: string;
+      filterDoctorLabel: string;
+      filterDentistLabel: string;
+      filterCoachLabel: string;
+      specialtyHeadingNutritionist: string;
+      specialtyHeadingDoctor: string;
+      specialtyHeadingDentist: string;
+      specialtyHeadingCoach: string;
+      emptySpecialtyState: string;
+      editButton: string;
+      publishAction: string;
+      pauseAction: string;
+      specialtyBadgeNutritionist: string;
+      specialtyBadgeDoctor: string;
+      specialtyBadgeDentist: string;
+      specialtyBadgeCoach: string;
+      scopeGlobalLabel: string;
+      reorderAriaLabel: (slug: string) => string;
+      photoAlt: (name: string) => string;
+      contactLinkWebsiteAria: string;
+      contactLinkInstagramAria: string;
+      contactLinkTelegramAria: string;
+      contactLinkWhatsappAria: string;
+      contactLinkBookingAria: string;
+    };
+    professionalForm: {
+      editHeading: string;
+      newHeading: string;
+      nameLabel: string;
+      slugLabel: string;
+      slugPatternError: string;
+      duplicateSlugError: string;
+      credentialsTitleLabel: string;
+      bioLabel: string;
+      photoUrlLabel: string;
+      photoAlt: (name: string) => string;
+      scopeLabel: string;
+      scopeGlobalOption: string;
+      scopeCountryOption: string;
+      scopeCityOption: string;
+      countryLabel: string;
+      countryRequiredError: string;
+      cityLabel: string;
+      cityRequiredError: string;
+      websiteLabel: string;
+      instagramLabel: string;
+      telegramLabel: string;
+      whatsappLabel: string;
+      bookingUrlLabel: string;
+      saveButton: string;
+      publishButton: string;
+      cancelButton: string;
+      workingLanguageLabel: (languageName: string) => string;
+      suggestionLoadingText: string;
+      suggestionFailedNotice: string;
+      suggestionFailedDismiss: string;
+      previewButton: string;
+      acceptTranslationButton: string;
+      previewLoadingText: string;
+      actionFailedNotice: string;
+      actionFailedDismiss: string;
+    };
+    specialtyFields: {
+      nutritionist: {
+        licenseNumberLabel: string;
+        dietarySpecialtiesLabel: string;
+      };
+      doctor: {
+        medicalLicenseNumberLabel: string;
+        medicalSpecialtyLabel: string;
+      };
+      dentist: {
+        licenseNumberLabel: string;
+        acceptsChildrenLabel: string;
+      };
+      coach: {
+        certificationsLabel: string;
+        coachingAreasLabel: string;
+      };
     };
   };
 }

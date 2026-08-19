@@ -1,0 +1,249 @@
+<form
+  [formGroup]="form"
+  class="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden sm:w-[26rem]"
+>
+  <div class="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden p-6">
+    <h2 class="text-lg font-semibold tracking-tight text-ink-900">
+      {{
+        professional()
+          ? language.t().professionals.professionalForm.editHeading
+          : language.t().professionals.professionalForm.newHeading
+      }}
+    </h2>
+
+    <span data-testid="working-language-indicator" class="w-fit rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700">
+      {{ language.t().professionals.professionalForm.workingLanguageLabel(contentLanguageLabels[targetLanguage()]) }}
+    </span>
+
+    @if (loading()) {
+      <p data-testid="suggestion-loading" class="text-sm text-ink-500">
+        {{ language.t().professionals.professionalForm.suggestionLoadingText }}
+      </p>
+    }
+
+    @if (staleSourceLanguage() && staleSuggestionLoading()) {
+      <p data-testid="stale-preview-loading" class="text-sm text-ink-500">
+        {{ language.t().professionals.professionalForm.previewLoadingText }}
+      </p>
+    }
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().professionals.professionalForm.nameLabel }}</mat-label>
+      <input matInput formControlName="name" [maxlength]="nameMaxLength" />
+      <mat-hint align="end">{{
+        language.t().fieldLimits.charactersRemaining(nameMaxLength - form.controls.name.value.length)
+      }}</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().professionals.professionalForm.slugLabel }}</mat-label>
+      <input matInput formControlName="slug" />
+      @if (form.controls.slug.hasError('pattern')) {
+        <mat-error>{{ language.t().professionals.professionalForm.slugPatternError }}</mat-error>
+      } @else if (form.controls.slug.hasError('duplicateSlug')) {
+        <mat-error>{{ language.t().professionals.professionalForm.duplicateSlugError }}</mat-error>
+      }
+    </mat-form-field>
+
+    @if (staleSourceLanguage() && suggestionDiffers()) {
+      <div class="flex flex-col gap-1">
+        @if (!previewRevealed()) {
+          <button
+            mat-stroked-button
+            type="button"
+            data-testid="preview-button"
+            (click)="previewStaleSuggestion()"
+          >
+            {{ language.t().professionals.professionalForm.previewButton }}
+          </button>
+        }
+        @if (previewRevealed()) {
+          <div
+            data-testid="suggestion-preview-panel"
+            class="flex items-center justify-between gap-2 rounded-lg border border-gold-200 bg-gold-50 p-2 text-sm"
+          >
+            <span>{{ staleSuggestion()?.['name'] }}</span>
+            <button
+              mat-stroked-button
+              type="button"
+              data-testid="accept-suggestion-button"
+              (click)="acceptSuggestion()"
+            >
+              {{ language.t().professionals.professionalForm.acceptTranslationButton }}
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().professionals.professionalForm.credentialsTitleLabel }}</mat-label>
+      <input matInput formControlName="credentialsTitle" [maxlength]="credentialsTitleMaxLength" />
+    </mat-form-field>
+
+    <div class="min-w-0">
+      <label data-testid="bio-label" class="mb-1 block text-sm font-medium text-ink-700">
+        {{ language.t().professionals.professionalForm.bioLabel }}
+      </label>
+      <app-markdown-editor formControlName="bio" [maxLength]="bioMaxLength" />
+    </div>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().professionals.professionalForm.photoUrlLabel }}</mat-label>
+      <input matInput formControlName="photoUrl" />
+    </mat-form-field>
+
+    @if (form.controls.photoUrl.valid && form.controls.photoUrl.value) {
+      <img
+        data-testid="photo-preview"
+        [ngSrc]="form.controls.photoUrl.value"
+        [alt]="language.t().professionals.professionalForm.photoAlt(form.controls.name.value)"
+        width="128"
+        height="128"
+        class="h-32 w-32 rounded-lg object-cover"
+      />
+    }
+
+    <fieldset class="flex min-w-0 flex-col gap-2">
+      <legend class="text-sm font-medium text-ink-700">{{ language.t().professionals.professionalForm.scopeLabel }}</legend>
+      <label class="flex items-center gap-2">
+        <input
+          type="radio"
+          name="scopeType"
+          data-testid="scope-global"
+          [checked]="form.controls.scopeType.value === 'global'"
+          (change)="form.controls.scopeType.setValue('global')"
+        />
+        {{ language.t().professionals.professionalForm.scopeGlobalOption }}
+      </label>
+      <label class="flex items-center gap-2">
+        <input
+          type="radio"
+          name="scopeType"
+          data-testid="scope-country"
+          [checked]="form.controls.scopeType.value === 'country'"
+          (change)="form.controls.scopeType.setValue('country')"
+        />
+        {{ language.t().professionals.professionalForm.scopeCountryOption }}
+      </label>
+      <label class="flex items-center gap-2">
+        <input
+          type="radio"
+          name="scopeType"
+          data-testid="scope-city"
+          [checked]="form.controls.scopeType.value === 'city'"
+          (change)="form.controls.scopeType.setValue('city')"
+        />
+        {{ language.t().professionals.professionalForm.scopeCityOption }}
+      </label>
+
+      @if (form.controls.scopeType.value === 'country') {
+        <div class="flex min-w-0 flex-col gap-1">
+          <label class="text-sm font-medium text-ink-700" for="country-select">{{
+            language.t().professionals.professionalForm.countryLabel
+          }}</label>
+          <select id="country-select" data-testid="country-select" formControlName="countryCode" class="rounded-lg border border-ink-300 bg-surface-sunken p-2 text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200">
+            <option [value]="null"></option>
+            @for (option of countryOptions; track option.code) {
+              <option [value]="option.code">{{ option.label }}</option>
+            }
+          </select>
+          @if (form.controls.countryCode.hasError('countryCodeRequired')) {
+            <mat-error>{{ language.t().professionals.professionalForm.countryRequiredError }}</mat-error>
+          }
+        </div>
+      }
+
+      @if (form.controls.scopeType.value === 'city') {
+        <mat-form-field class="min-w-0">
+          <mat-label>{{ language.t().professionals.professionalForm.cityLabel }}</mat-label>
+          <input matInput formControlName="city" data-testid="city-input" />
+          @if (form.controls.city.hasError('cityRequired')) {
+            <mat-error>{{ language.t().professionals.professionalForm.cityRequiredError }}</mat-error>
+          }
+        </mat-form-field>
+      }
+    </fieldset>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().professionals.professionalForm.websiteLabel }}</mat-label>
+      <input matInput formControlName="website" />
+      @if (form.controls.website.hasError('pattern')) {
+        <mat-error>{{ language.t().stringListEditor.invalidUrlError }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().professionals.professionalForm.instagramLabel }}</mat-label>
+      <input matInput formControlName="instagram" />
+      @if (form.controls.instagram.hasError('pattern')) {
+        <mat-error>{{ language.t().stringListEditor.invalidUrlError }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().professionals.professionalForm.telegramLabel }}</mat-label>
+      <input matInput formControlName="telegram" />
+      @if (form.controls.telegram.hasError('pattern')) {
+        <mat-error>{{ language.t().stringListEditor.invalidUrlError }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().professionals.professionalForm.whatsappLabel }}</mat-label>
+      <input matInput formControlName="whatsapp" />
+      @if (form.controls.whatsapp.hasError('pattern')) {
+        <mat-error>{{ language.t().stringListEditor.invalidUrlError }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().professionals.professionalForm.bookingUrlLabel }}</mat-label>
+      <input matInput formControlName="bookingUrl" />
+      @if (form.controls.bookingUrl.hasError('pattern')) {
+        <mat-error>{{ language.t().stringListEditor.invalidUrlError }}</mat-error>
+      }
+    </mat-form-field>
+
+    @switch (specialty()) {
+      @case ('nutritionist') {
+        <app-nutritionist-fields-form formControlName="specialtyFields" />
+      }
+      @case ('doctor') {
+        <app-doctor-fields-form formControlName="specialtyFields" />
+      }
+      @case ('dentist') {
+        <app-dentist-fields-form formControlName="specialtyFields" />
+      }
+      @case ('coach') {
+        <app-coach-fields-form formControlName="specialtyFields" />
+      }
+    }
+  </div>
+
+  <div class="flex gap-2 border-t border-ink-100 bg-surface-muted p-6">
+    <button
+      mat-flat-button
+      type="button"
+      data-testid="save-button"
+      [disabled]="form.invalid"
+      (click)="save()"
+    >
+      {{ language.t().professionals.professionalForm.saveButton }}
+    </button>
+    @if (!professional()) {
+      <button
+        mat-flat-button
+        type="button"
+        data-testid="publish-button"
+        [disabled]="form.invalid"
+        (click)="publish()"
+      >
+        {{ language.t().professionals.professionalForm.publishButton }}
+      </button>
+    }
+    <button mat-stroked-button type="button" data-testid="cancel-button" (click)="cancel()">
+      {{ language.t().professionals.professionalForm.cancelButton }}
+    </button>
+  </div>
+</form>

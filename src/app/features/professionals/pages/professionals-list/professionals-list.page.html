@@ -1,0 +1,90 @@
+<mat-drawer-container class="h-full">
+  <mat-drawer #drawer mode="over" position="end" [opened]="isDrawerOpen()" (closedStart)="onCancelled()">
+    @if (isDrawerOpen()) {
+      <app-professional-form-drawer
+        [professional]="drawerProfessional()"
+        [specialty]="drawerSpecialty()!"
+        [targetLanguage]="drawerTargetLanguage()"
+        [sourceLanguage]="drawerSourceLanguage()"
+        [staleSourceLanguage]="drawerStaleSourceLanguage()"
+        (saved)="onSaved()"
+        (cancelled)="onCancelled()"
+      />
+    }
+  </mat-drawer>
+
+  <mat-drawer-content class="p-6 md:p-8">
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <h1 class="text-2xl font-semibold tracking-tight text-ink-900">
+        {{ language.t().professionals.professionalsList.heading }}
+      </h1>
+
+      <mat-button-toggle-group
+        [value]="activeFilter()"
+        (change)="activeFilter.set($event.value)"
+        [attr.aria-label]="language.t().professionals.professionalsList.filterGroupAriaLabel"
+      >
+        <mat-button-toggle value="all" data-testid="filter-all">
+          {{ language.t().professionals.professionalsList.filterAllLabel }}
+        </mat-button-toggle>
+        @for (specialty of specialties; track specialty) {
+          <mat-button-toggle [value]="specialty" [attr.data-testid]="'filter-' + specialty">
+            {{ filterLabel(specialty) }}
+          </mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+
+      <div class="flex flex-wrap gap-2">
+        @for (specialty of specialties; track specialty) {
+          <button
+            mat-flat-button
+            type="button"
+            [attr.data-testid]="'add-' + specialty + '-button'"
+            (click)="openCreate(specialty)"
+          >
+            {{ addButtonLabel(specialty) }}
+          </button>
+        }
+      </div>
+    </div>
+
+    @for (specialty of visibleSpecialties(); track specialty) {
+      <section [attr.data-testid]="'specialty-section-' + specialty" class="mb-10">
+        <h2 class="mb-3 text-base font-semibold tracking-tight text-ink-800">
+          {{ specialtyHeading(specialty) }}
+        </h2>
+
+        @if (professionalsBySpecialty()[specialty].length === 0) {
+          <p
+            [attr.data-testid]="'empty-specialty-' + specialty"
+            class="rounded-xl border border-dashed border-ink-200 bg-surface-muted p-8 text-center text-sm text-ink-500"
+          >
+            {{ language.t().professionals.professionalsList.emptySpecialtyState }}
+          </p>
+        } @else {
+          <div
+            cdkDropList
+            [cdkDropListData]="professionalsBySpecialty()[specialty]"
+            class="grid gap-4"
+            style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))"
+            (cdkDropListDropped)="onDrop(specialty, $event)"
+          >
+            @for (professional of professionalsBySpecialty()[specialty]; track professional.slug) {
+              <div
+                cdkDrag
+                tabindex="0"
+                [attr.aria-label]="language.t().professionals.professionalsList.reorderAriaLabel(professional.slug)"
+              >
+                <app-professional-card
+                  [professional]="professional"
+                  (editRequested)="openEdit($event)"
+                  (translateRequested)="openTranslate($event)"
+                />
+              </div>
+            }
+          </div>
+        }
+      </section>
+    }
+  </mat-drawer-content>
+</mat-drawer-container>
