@@ -14,7 +14,8 @@ import { ContentLanguage } from '../../guide/models/content-language.model';
 const BASE_URL = '/backend/organizations';
 
 export interface OrganizationSharedFields {
-  logoUrl: string;
+  logoUrl?: string;
+  logoData?: string;
   scopeType: OrganizationScopeType;
   countryCode?: string;
   city?: string;

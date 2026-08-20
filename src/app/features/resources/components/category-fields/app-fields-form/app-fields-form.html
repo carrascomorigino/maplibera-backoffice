@@ -9,8 +9,8 @@
     <input matInput formControlName="playStoreUrl" (blur)="onBlur()" />
   </mat-form-field>
 
-  <mat-form-field class="min-w-0">
-    <mat-label>{{ language.t().resources.categoryFields.apps.iconUrlLabel }}</mat-label>
-    <input matInput formControlName="iconUrl" (blur)="onBlur()" />
-  </mat-form-field>
+  <app-image-input
+    formControlName="iconUrl"
+    [label]="language.t().resources.categoryFields.apps.iconUrlLabel"
+  />
 </div>

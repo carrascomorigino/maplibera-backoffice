@@ -122,15 +122,14 @@
               </button>
             </div>
 
-            <mat-form-field class="min-w-0">
-              <mat-label>{{ language.t().guide.questionEditor.imageUrlLabel }}</mat-label>
-              <input matInput formControlName="imageUrl" [attr.data-testid]="'answer-image-' + i" />
-              @if (row.controls.imageUrl.hasError('imageRequired')) {
-                <mat-error>{{ language.t().guide.questionEditor.imageRequiredError }}</mat-error>
-              } @else if (row.controls.imageUrl.hasError('pattern')) {
-                <mat-error>{{ language.t().guide.questionEditor.invalidUrlError }}</mat-error>
-              }
-            </mat-form-field>
+            <app-image-input
+              formControlName="imageUrl"
+              [label]="language.t().guide.questionEditor.imageUrlLabel"
+              [attr.data-testid]="'answer-image-' + i"
+            />
+            @if (row.controls.imageUrl.hasError('imageRequired')) {
+              <p class="text-sm text-red-700">{{ language.t().guide.questionEditor.imageRequiredError }}</p>
+            }
           </div>
         }
 

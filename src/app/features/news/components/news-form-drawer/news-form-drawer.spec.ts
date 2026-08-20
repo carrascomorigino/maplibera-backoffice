@@ -59,7 +59,7 @@ describe('NewsFormDrawer', () => {
     component.form.controls.title.setValue('New visitor center');
     component.form.controls.subtitle.setValue('Now open');
     component.form.controls.description.setValue('Details');
-    component.form.controls.imageUrl.setValue('https://example.com/banner.jpg');
+    component.form.controls.imageUrl.setValue({ kind: 'url', url: 'https://example.com/banner.jpg' });
   }
 
   function existingItem() {
@@ -209,7 +209,7 @@ describe('NewsFormDrawer', () => {
     fixture.detectChanges();
     const component = fixture.componentInstance;
 
-    component.form.controls.imageUrl.setValue('https://example.com/new.jpg');
+    component.form.controls.imageUrl.setValue({ kind: 'url', url: 'https://example.com/new.jpg' });
     component.form.controls.publishedAt.setValue('2026-09-01');
     component.form.controls.sourceLinks.setValue(['https://example.com/source']);
     component.form.controls.title.setValue('Updated title');

@@ -153,7 +153,7 @@ describe('ResourceFormDrawer', () => {
 
     component.form.controls.categoryFields.setValue({
       preparationMinutes: 20,
-      photoUrls: ['https://example.com/soup.png'],
+      photoUrls: [{ kind: 'url', url: 'https://example.com/soup.png' }],
       ingredients: ['Water', 'Salt'],
       steps: ['Boil', 'Season'],
     });
@@ -166,6 +166,108 @@ describe('ResourceFormDrawer', () => {
     expect(updated.photoUrls).toEqual(['https://example.com/soup.png']);
     expect(updated.translations.en?.ingredients).toEqual(['Water', 'Salt']);
     expect(updated.translations.en?.steps).toEqual(['Boil', 'Season']);
+  });
+
+  it('splits a single image field (posterUrl) correctly for multimedia on save', async () => {
+    const created = makeResource({
+      category: 'multimedia',
+      slug: 'documentary',
+      mediaType: 'documentary',
+      externalUrl: 'https://example.com/watch',
+      posterUrl: '',
+      translations: { en: { title: 'Doc', shortDescription: 'A documentary' } },
+    } as unknown as Partial<Resource>);
+    service.seed([created]);
+    const fixture = TestBed.createComponent(ResourceFormDrawer);
+    fixture.componentRef.setInput('resource', created);
+    fixture.componentRef.setInput('category', 'multimedia');
+    fixture.componentRef.setInput('targetLanguage', 'en');
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+
+    component.form.controls.categoryFields.setValue({
+      mediaType: 'documentary',
+      externalUrl: 'https://example.com/watch',
+      posterUrl: { kind: 'url', url: 'https://example.com/poster.png' },
+    });
+    fixture.detectChanges();
+    buttons(fixture).save.click();
+    await settle();
+
+    const updated = service.resources()[0] as unknown as Record<string, unknown>;
+    expect(updated['posterUrl']).toBe('https://example.com/poster.png');
+  });
+
+  it('splits a single image field (iconUrl) correctly for apps on save', async () => {
+    const created = makeResource({
+      category: 'apps',
+      slug: 'my-app',
+      iconUrl: '',
+      translations: { en: { title: 'My app', shortDescription: 'Useful' } },
+    } as unknown as Partial<Resource>);
+    service.seed([created]);
+    const fixture = TestBed.createComponent(ResourceFormDrawer);
+    fixture.componentRef.setInput('resource', created);
+    fixture.componentRef.setInput('category', 'apps');
+    fixture.componentRef.setInput('targetLanguage', 'en');
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+
+    component.form.controls.categoryFields.setValue({
+      appStoreUrl: '',
+      playStoreUrl: '',
+      iconUrl: { kind: 'url', url: 'https://example.com/icon.png' },
+    });
+    fixture.detectChanges();
+    buttons(fixture).save.click();
+    await settle();
+
+    const updated = service.resources()[0] as unknown as Record<string, unknown>;
+    expect(updated['iconUrl']).toBe('https://example.com/icon.png');
+  });
+
+  it('converts existing url-shaped image fields into ImageValue for editing', () => {
+    const created = makeResource({
+      category: 'multimedia',
+      slug: 'documentary',
+      mediaType: 'documentary',
+      externalUrl: 'https://example.com/watch',
+      posterUrl: 'https://example.com/poster.png',
+      translations: { en: { title: 'Doc', shortDescription: 'A documentary' } },
+    } as unknown as Partial<Resource>);
+    service.seed([created]);
+    const fixture = TestBed.createComponent(ResourceFormDrawer);
+    fixture.componentRef.setInput('resource', created);
+    fixture.componentRef.setInput('category', 'multimedia');
+    fixture.componentRef.setInput('targetLanguage', 'en');
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+
+    expect(component.form.controls.categoryFields.value['posterUrl']).toEqual({
+      kind: 'url',
+      url: 'https://example.com/poster.png',
+    });
+  });
+
+  it('converts existing photoUrls into ImageValue rows for editing a recipe', () => {
+    const created = makeResource({
+      category: 'recipes',
+      slug: 'soup',
+      preparationMinutes: 10,
+      photoUrls: ['https://example.com/soup.png'],
+      translations: { en: { title: 'Soup', shortDescription: 'Warm', ingredients: [], steps: [] } },
+    } as unknown as Partial<Resource>);
+    service.seed([created]);
+    const fixture = TestBed.createComponent(ResourceFormDrawer);
+    fixture.componentRef.setInput('resource', created);
+    fixture.componentRef.setInput('category', 'recipes');
+    fixture.componentRef.setInput('targetLanguage', 'en');
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+
+    expect(component.form.controls.categoryFields.value['photoUrls']).toEqual([
+      { kind: 'url', url: 'https://example.com/soup.png' },
+    ]);
   });
 
   describe('slug', () => {

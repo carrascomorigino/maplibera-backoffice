@@ -37,7 +37,7 @@ export class FakeSectionService {
   create = vi.fn(async (input: SectionTranslationInput): Promise<Section> => {
     const section = makeSection({
       slug: input.slug,
-      imageUrl: input.imageUrl,
+      imageUrl: input.imageUrl ?? '',
       order: this._sections().length,
       translations: { [input.language]: input.translation },
       availableCountries: input.availableCountries,
@@ -54,7 +54,7 @@ export class FakeSectionService {
     const updated: Section = {
       ...current,
       slug: input.slug,
-      imageUrl: input.imageUrl,
+      imageUrl: input.imageUrl ?? '',
       translations: { ...current.translations, [input.language]: input.translation },
       availableCountries: input.availableCountries,
       updatedAt: new Date().toISOString(),

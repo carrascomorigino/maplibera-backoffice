@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TestBed } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { RecipeFieldsForm, RecipeFieldsValue } from './recipe-fields-form';
 
 @Component({
@@ -17,7 +18,10 @@ class HostComponent {
 
 describe('RecipeFieldsForm', () => {
   function createFixture() {
-    TestBed.configureTestingModule({ imports: [HostComponent] });
+    TestBed.configureTestingModule({
+      imports: [HostComponent],
+      providers: [provideNoopAnimations()],
+    });
     const fixture = TestBed.createComponent(HostComponent);
     fixture.detectChanges();
     return fixture;
@@ -56,5 +60,23 @@ describe('RecipeFieldsForm', () => {
 
     const rows = fixture.nativeElement.querySelectorAll('[data-testid="string-list-row-input"]');
     expect(rows.length).toBe(4);
+  });
+
+  it('round-trips photo image values via writeValue', () => {
+    const fixture = createFixture();
+
+    fixture.componentInstance.control.setValue({
+      preparationMinutes: 15,
+      photoUrls: [{ kind: 'url', url: 'https://example.com/soup.png' }],
+      ingredients: [],
+      steps: [],
+    });
+    fixture.detectChanges();
+
+    const urlFields = fixture.nativeElement.querySelectorAll(
+      '[data-testid="image-input-url-field"]',
+    );
+    expect(urlFields.length).toBe(1);
+    expect((urlFields[0] as HTMLInputElement).value).toBe('https://example.com/soup.png');
   });
 });

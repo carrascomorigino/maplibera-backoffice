@@ -15,18 +15,20 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MultimediaType } from '../../../models/resource.model';
+import { ImageInput } from '../../../../../shared/components/image-input/image-input';
+import { ImageValue } from '../../../../../shared/models/image-value.model';
 import { URL_PATTERN } from '../../../../../shared/utils/patterns';
 import { LanguageService } from '../../../../../core/i18n/language.service';
 
 export interface MultimediaFieldsValue {
   mediaType: MultimediaType;
   externalUrl: string;
-  posterUrl: string;
+  posterUrl: ImageValue | undefined;
 }
 
 @Component({
   selector: 'app-multimedia-fields-form',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, ImageInput],
   templateUrl: './multimedia-fields-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
@@ -46,7 +48,7 @@ export class MultimediaFieldsForm implements ControlValueAccessor, Validator {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(URL_PATTERN)],
     }),
-    posterUrl: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
+    posterUrl: new FormControl<ImageValue | undefined>(undefined, { nonNullable: true }),
   });
 
   private onChange: (value: MultimediaFieldsValue) => void = () => {};
@@ -63,7 +65,7 @@ export class MultimediaFieldsForm implements ControlValueAccessor, Validator {
       {
         mediaType: value?.mediaType ?? 'documentary',
         externalUrl: value?.externalUrl ?? '',
-        posterUrl: value?.posterUrl ?? '',
+        posterUrl: value?.posterUrl,
       },
       { emitEvent: false },
     );

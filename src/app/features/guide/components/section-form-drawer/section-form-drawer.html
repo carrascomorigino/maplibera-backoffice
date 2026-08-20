@@ -112,19 +112,7 @@
       </div>
     }
 
-    <mat-form-field class="min-w-0">
-      <mat-label>{{ language.t().guide.sectionForm.imageUrlLabel }}</mat-label>
-      <input matInput formControlName="imageUrl" />
-    </mat-form-field>
-
-    @if (form.controls.imageUrl.valid && form.controls.imageUrl.value) {
-      <img
-        data-testid="image-preview"
-        [src]="form.controls.imageUrl.value"
-        alt=""
-        class="h-32 w-32 rounded-lg object-cover"
-      />
-    }
+    <app-image-input formControlName="imageUrl" [label]="language.t().guide.sectionForm.imageUrlLabel" />
 
     <fieldset class="flex min-w-0 flex-col gap-2">
       <legend class="text-sm font-medium text-ink-700">{{

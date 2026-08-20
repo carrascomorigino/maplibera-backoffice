@@ -14,11 +14,12 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { StringListEditor } from '../../../../../shared/components/string-list-editor/string-list-editor';
+import { ImageValue } from '../../../../../shared/models/image-value.model';
 import { LanguageService } from '../../../../../core/i18n/language.service';
 
 export interface RecipeFieldsValue {
   preparationMinutes: number;
-  photoUrls: string[];
+  photoUrls: (ImageValue | undefined)[];
   ingredients: string[];
   steps: string[];
 }
@@ -41,7 +42,7 @@ export class RecipeFieldsForm implements ControlValueAccessor, Validator {
       nonNullable: true,
       validators: [Validators.required, Validators.min(1)],
     }),
-    photoUrls: new FormControl<string[]>([], { nonNullable: true }),
+    photoUrls: new FormControl<(ImageValue | undefined)[]>([], { nonNullable: true }),
     ingredients: new FormControl<string[]>([], { nonNullable: true }),
     steps: new FormControl<string[]>([], { nonNullable: true }),
   });

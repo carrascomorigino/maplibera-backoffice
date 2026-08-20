@@ -15,6 +15,8 @@ import { MultimediaFieldsForm } from '../category-fields/multimedia-fields-form/
 import { AppFieldsForm } from '../category-fields/app-fields-form/app-fields-form';
 import { slugify } from '../../../../shared/utils/slugify';
 import { SLUG_PATTERN } from '../../../../shared/utils/patterns';
+import { resolveImagePayload } from '../../../../shared/utils/image-payload';
+import { ImageValue } from '../../../../shared/models/image-value.model';
 import { LanguageService } from '../../../../core/i18n/language.service';
 
 const SHARED_FIELD_KEYS: Record<ResourceCategory, readonly string[]> = {
@@ -34,8 +36,21 @@ const TRANSLATED_FIELD_KEYS: Record<ResourceCategory, readonly string[]> = {
 const DEFAULT_CATEGORY_FIELDS: Record<ResourceCategory, Record<string, unknown>> = {
   nutrition: { sourceLinks: [], pdfUrls: [], explanatoryText: '' },
   recipes: { preparationMinutes: 0, photoUrls: [], ingredients: [], steps: [] },
-  multimedia: { mediaType: 'documentary', externalUrl: '', posterUrl: '' },
-  apps: { appStoreUrl: '', playStoreUrl: '', iconUrl: '' },
+  multimedia: { mediaType: 'documentary', externalUrl: '', posterUrl: undefined },
+  apps: { appStoreUrl: '', playStoreUrl: '', iconUrl: undefined },
+};
+
+/** Category-scoped keys whose `categoryFields` value is a single `ImageValue`, mapped to the
+ * sibling `*Data` shared-field key that carries the base64 payload for uploads. */
+const SINGLE_IMAGE_FIELDS: Partial<Record<ResourceCategory, Record<string, string>>> = {
+  multimedia: { posterUrl: 'posterData' },
+  apps: { iconUrl: 'iconData' },
+};
+
+/** Category-scoped keys whose `categoryFields` value is an `ImageValue[]`, mapped to the
+ * sibling `*Data` shared-field key that carries the base64 payloads for uploads. */
+const LIST_IMAGE_FIELDS: Partial<Record<ResourceCategory, Record<string, string>>> = {
+  recipes: { photoUrls: 'photoData' },
 };
 
 @Component({
@@ -124,10 +139,21 @@ export class ResourceFormDrawer {
       this.staleSuggestionLoading.set(false);
       this.previewRevealed.set(false);
 
+      const singleImageKeys = SINGLE_IMAGE_FIELDS[category] ?? {};
+      const listImageKeys = LIST_IMAGE_FIELDS[category] ?? {};
       const sharedValues: Record<string, unknown> = {};
       if (resource) {
+        const rawResource = resource as unknown as Record<string, unknown>;
         for (const key of SHARED_FIELD_KEYS[category]) {
-          sharedValues[key] = (resource as unknown as Record<string, unknown>)[key];
+          if (key in singleImageKeys) {
+            sharedValues[key] = this.toImageValue(rawResource[key]);
+          } else if (key in listImageKeys) {
+            sharedValues[key] = ((rawResource[key] as string[] | undefined) ?? []).map((url) =>
+              this.toImageValue(url),
+            );
+          } else {
+            sharedValues[key] = rawResource[key];
+          }
         }
       }
       const translatedValues: Record<string, unknown> = {};
@@ -335,17 +361,37 @@ export class ResourceFormDrawer {
     }
   }
 
+  private toImageValue(url: unknown): ImageValue | undefined {
+    return typeof url === 'string' && url ? { kind: 'url', url } : undefined;
+  }
+
   private async persist(): Promise<Resource> {
     const { title, slug, shortDescription, categoryFields } = this.form.getRawValue();
     const category = this.category();
     const sharedKeys = SHARED_FIELD_KEYS[category];
+    const singleImageMap = SINGLE_IMAGE_FIELDS[category] ?? {};
+    const listImageMap = LIST_IMAGE_FIELDS[category] ?? {};
     const sharedFields: Record<string, unknown> = {};
     const translation: Record<string, unknown> = { title, shortDescription };
+
     for (const [key, value] of Object.entries(categoryFields)) {
-      if (sharedKeys.includes(key)) {
-        sharedFields[key] = value;
-      } else {
+      if (!sharedKeys.includes(key)) {
         translation[key] = value;
+        continue;
+      }
+      if (key in singleImageMap) {
+        const payload = await resolveImagePayload(value as ImageValue | undefined);
+        sharedFields[key] = payload?.url;
+        sharedFields[singleImageMap[key]] = payload?.data;
+      } else if (key in listImageMap) {
+        const items = (value as (ImageValue | undefined)[] | undefined) ?? [];
+        const payloads = await Promise.all(items.map((item) => resolveImagePayload(item)));
+        sharedFields[key] = payloads.map((payload) => payload?.url).filter((url): url is string => Boolean(url));
+        sharedFields[listImageMap[key]] = payloads
+          .map((payload) => payload?.data)
+          .filter((data): data is string => Boolean(data));
+      } else {
+        sharedFields[key] = value;
       }
     }
 

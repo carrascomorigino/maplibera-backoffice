@@ -28,21 +28,31 @@ export type ResourceCreateInput =
   | {
       category: 'recipes';
       slug: string;
-      sharedFields: { preparationMinutes: number; photoUrls: string[] };
+      sharedFields: { preparationMinutes: number; photoUrls: string[]; photoData?: string[] };
       language: ContentLanguage;
       translation: RecipeTranslation;
     }
   | {
       category: 'multimedia';
       slug: string;
-      sharedFields: { mediaType: MultimediaType; externalUrl: string; posterUrl: string };
+      sharedFields: {
+        mediaType: MultimediaType;
+        externalUrl: string;
+        posterUrl?: string;
+        posterData?: string;
+      };
       language: ContentLanguage;
       translation: MultimediaTranslation;
     }
   | {
       category: 'apps';
       slug: string;
-      sharedFields: { appStoreUrl?: string; playStoreUrl?: string; iconUrl: string };
+      sharedFields: {
+        appStoreUrl?: string;
+        playStoreUrl?: string;
+        iconUrl?: string;
+        iconData?: string;
+      };
       language: ContentLanguage;
       translation: AppTranslation;
     };

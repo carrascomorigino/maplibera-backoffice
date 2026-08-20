@@ -13,18 +13,20 @@ import {
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { ImageInput } from '../../../../../shared/components/image-input/image-input';
+import { ImageValue } from '../../../../../shared/models/image-value.model';
 import { URL_PATTERN } from '../../../../../shared/utils/patterns';
 import { LanguageService } from '../../../../../core/i18n/language.service';
 
 export interface AppFieldsValue {
   appStoreUrl: string;
   playStoreUrl: string;
-  iconUrl: string;
+  iconUrl: ImageValue | undefined;
 }
 
 @Component({
   selector: 'app-app-fields-form',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, ImageInput],
   templateUrl: './app-fields-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
@@ -38,7 +40,7 @@ export class AppFieldsForm implements ControlValueAccessor, Validator {
   readonly form = new FormGroup({
     appStoreUrl: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
     playStoreUrl: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
-    iconUrl: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
+    iconUrl: new FormControl<ImageValue | undefined>(undefined, { nonNullable: true }),
   });
 
   private onChange: (value: AppFieldsValue) => void = () => {};
@@ -55,7 +57,7 @@ export class AppFieldsForm implements ControlValueAccessor, Validator {
       {
         appStoreUrl: value?.appStoreUrl ?? '',
         playStoreUrl: value?.playStoreUrl ?? '',
-        iconUrl: value?.iconUrl ?? '',
+        iconUrl: value?.iconUrl,
       },
       { emitEvent: false },
     );

@@ -54,7 +54,7 @@ describe('OrganizationFormDrawer', () => {
   function fillRequiredFields(component: OrganizationFormDrawer) {
     component.form.controls.name.setValue('Friends of the River');
     component.form.controls.description.setValue('A local river conservation group');
-    component.form.controls.logoUrl.setValue('https://example.com/logo.png');
+    component.form.controls.logoUrl.setValue({ kind: 'url', url: 'https://example.com/logo.png' });
   }
 
   function existingOrganization() {
@@ -231,7 +231,7 @@ describe('OrganizationFormDrawer', () => {
     fixture.detectChanges();
     const component = fixture.componentInstance;
 
-    component.form.controls.logoUrl.setValue('https://example.com/new-logo.png');
+    component.form.controls.logoUrl.setValue({ kind: 'url', url: 'https://example.com/new-logo.png' });
     component.form.controls.scopeType.setValue('country');
     component.form.controls.countryCode.setValue('AR');
     component.form.controls.website.setValue('https://example.org');

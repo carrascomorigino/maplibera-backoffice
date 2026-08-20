@@ -107,19 +107,7 @@
       <app-markdown-editor formControlName="description" />
     </div>
 
-    <mat-form-field class="min-w-0">
-      <mat-label>{{ language.t().news.newsForm.imageUrlLabel }}</mat-label>
-      <input matInput formControlName="imageUrl" />
-    </mat-form-field>
-
-    @if (form.controls.imageUrl.valid && form.controls.imageUrl.value) {
-      <img
-        data-testid="image-preview"
-        [src]="form.controls.imageUrl.value"
-        alt=""
-        class="h-32 w-32 rounded-lg object-cover"
-      />
-    }
+    <app-image-input formControlName="imageUrl" [label]="language.t().news.newsForm.imageUrlLabel" />
 
     <mat-form-field class="min-w-0">
       <mat-label>{{ language.t().news.newsForm.publishedAtLabel }}</mat-label>
