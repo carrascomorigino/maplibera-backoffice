@@ -32,6 +32,15 @@ export interface Translations {
     removeRowAria: string;
     invalidUrlError: string;
   };
+  imageInput: {
+    urlModeLabel: string;
+    uploadModeLabel: string;
+    uploadButtonLabel: string;
+    changeButtonLabel: string;
+    invalidUrlError: string;
+    invalidFileTypeError: string;
+    fileTooLargeError: (maxSizeMb: number) => string;
+  };
   fieldLimits: {
     charactersRemaining: (count: number) => string;
   };

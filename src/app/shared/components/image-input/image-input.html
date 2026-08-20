@@ -1,0 +1,77 @@
+<div class="flex flex-col gap-2">
+  <mat-button-toggle-group
+    [value]="mode()"
+    [attr.aria-label]="label()"
+    (change)="setMode($event)"
+  >
+    <mat-button-toggle
+      value="url"
+      data-testid="image-input-mode-url"
+      [attr.aria-pressed]="mode() === 'url'"
+    >
+      {{ language.t().imageInput.urlModeLabel }}
+    </mat-button-toggle>
+    <mat-button-toggle
+      value="upload"
+      data-testid="image-input-mode-upload"
+      [attr.aria-pressed]="mode() === 'upload'"
+    >
+      {{ language.t().imageInput.uploadModeLabel }}
+    </mat-button-toggle>
+  </mat-button-toggle-group>
+
+  @if (mode() === 'url') {
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ label() }}</mat-label>
+      <input
+        matInput
+        data-testid="image-input-url-field"
+        [formControl]="urlControl"
+        (blur)="onBlur()"
+      />
+    </mat-form-field>
+    @if (urlControl.value.trim() && !isValidUrl()) {
+      <p class="text-sm text-red-700" data-testid="image-input-url-error">
+        {{ language.t().imageInput.invalidUrlError }}
+      </p>
+    }
+  } @else {
+    <div class="flex flex-col gap-2">
+      <button
+        mat-stroked-button
+        type="button"
+        class="w-fit"
+        data-testid="image-input-upload-button"
+        (click)="triggerFilePicker()"
+      >
+        {{
+          hasUploadValue()
+            ? language.t().imageInput.changeButtonLabel
+            : language.t().imageInput.uploadButtonLabel
+        }}
+      </button>
+      <input
+        #fileInput
+        type="file"
+        hidden
+        [accept]="acceptedMimeTypes"
+        data-testid="image-input-file"
+        (change)="onFileSelected($event)"
+      />
+      @if (fileError() === 'invalidType') {
+        <p class="text-sm text-red-700" data-testid="image-input-type-error">
+          {{ language.t().imageInput.invalidFileTypeError }}
+        </p>
+      }
+      @if (fileError() === 'tooLarge') {
+        <p class="text-sm text-red-700" data-testid="image-input-size-error">
+          {{ language.t().imageInput.fileTooLargeError(maxSizeMb) }}
+        </p>
+      }
+    </div>
+  }
+
+  @if (previewSrc(); as src) {
+    <img data-testid="image-preview" [src]="src" alt="" class="h-32 w-32 rounded-lg object-cover" />
+  }
+</div>

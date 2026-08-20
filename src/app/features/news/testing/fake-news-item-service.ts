@@ -37,11 +37,15 @@ export class FakeNewsItemService {
   }
 
   create = vi.fn(async (input: NewsItemCreateInput): Promise<NewsItem> => {
+    const { imageUrl, publishedAt, eventDate, sourceLinks } = input.sharedFields;
     const item = makeNewsItem({
       slug: input.slug,
       category: input.category,
       translations: { [input.language]: input.translation },
-      ...input.sharedFields,
+      ...(imageUrl ? { imageUrl } : {}),
+      publishedAt,
+      eventDate,
+      sourceLinks,
     });
     this._items.update((items) => [...items, item]);
     return item;
@@ -86,7 +90,15 @@ export class FakeNewsItemService {
     if (!current) {
       throw new Error(`Unknown news item id: ${id}`);
     }
-    const updated: NewsItem = { ...current, ...sharedFields, updatedAt: new Date().toISOString() };
+    const { imageUrl, publishedAt, eventDate, sourceLinks } = sharedFields;
+    const updated: NewsItem = {
+      ...current,
+      imageUrl: imageUrl ?? current.imageUrl,
+      publishedAt,
+      eventDate,
+      sourceLinks,
+      updatedAt: new Date().toISOString(),
+    };
     this.replace(updated);
     return updated;
   });

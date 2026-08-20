@@ -8,6 +8,7 @@ export interface QuestionAnswer {
   text: string;
   isCorrect: boolean;
   imageUrl?: string;
+  imageData?: string;
 }
 
 export interface Question {

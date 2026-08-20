@@ -7,7 +7,8 @@ import { ContentLanguage } from '../../guide/models/content-language.model';
 const BASE_URL = '/backend/news';
 
 export interface NewsItemSharedFields {
-  imageUrl: string;
+  imageUrl?: string;
+  imageData?: string;
   publishedAt: string;
   eventDate?: string;
   sourceLinks: string[];

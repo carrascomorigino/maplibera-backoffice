@@ -19,8 +19,8 @@
     <input matInput formControlName="externalUrl" (blur)="onBlur()" />
   </mat-form-field>
 
-  <mat-form-field class="min-w-0">
-    <mat-label>{{ language.t().resources.categoryFields.multimedia.posterUrlLabel }}</mat-label>
-    <input matInput formControlName="posterUrl" (blur)="onBlur()" />
-  </mat-form-field>
+  <app-image-input
+    formControlName="posterUrl"
+    [label]="language.t().resources.categoryFields.multimedia.posterUrlLabel"
+  />
 </div>

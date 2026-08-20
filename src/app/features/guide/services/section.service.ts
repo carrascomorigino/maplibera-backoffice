@@ -8,7 +8,8 @@ const BASE_URL = '/backend/sections';
 
 export interface SectionTranslationInput {
   slug: string;
-  imageUrl: string;
+  imageUrl?: string;
+  imageData?: string;
   language: ContentLanguage;
   translation: SectionTranslation;
   availableCountries?: string[];

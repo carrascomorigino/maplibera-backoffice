@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TestBed } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { AppFieldsForm, AppFieldsValue } from './app-fields-form';
 
 @Component({
@@ -10,14 +11,17 @@ import { AppFieldsForm, AppFieldsValue } from './app-fields-form';
 })
 class HostComponent {
   control = new FormControl<AppFieldsValue>(
-    { appStoreUrl: '', playStoreUrl: '', iconUrl: '' },
+    { appStoreUrl: '', playStoreUrl: '', iconUrl: undefined },
     { nonNullable: true },
   );
 }
 
 describe('AppFieldsForm', () => {
   function createFixture() {
-    TestBed.configureTestingModule({ imports: [HostComponent] });
+    TestBed.configureTestingModule({
+      imports: [HostComponent],
+      providers: [provideNoopAnimations()],
+    });
     const fixture = TestBed.createComponent(HostComponent);
     fixture.detectChanges();
     return fixture;
@@ -35,7 +39,7 @@ describe('AppFieldsForm', () => {
     fixture.componentInstance.control.setValue({
       appStoreUrl: 'not-a-url',
       playStoreUrl: '',
-      iconUrl: '',
+      iconUrl: undefined,
     });
     fixture.detectChanges();
 
@@ -48,10 +52,26 @@ describe('AppFieldsForm', () => {
     fixture.componentInstance.control.setValue({
       appStoreUrl: 'https://apps.apple.com/app/id123',
       playStoreUrl: '',
-      iconUrl: '',
+      iconUrl: undefined,
     });
     fixture.detectChanges();
 
     expect(fixture.componentInstance.control.valid).toBe(true);
+  });
+
+  it('round-trips an icon image value via writeValue', () => {
+    const fixture = createFixture();
+
+    fixture.componentInstance.control.setValue({
+      appStoreUrl: '',
+      playStoreUrl: '',
+      iconUrl: { kind: 'url', url: 'https://example.com/icon.png' },
+    });
+    fixture.detectChanges();
+
+    const urlField = fixture.nativeElement.querySelector(
+      '[data-testid="image-input-url-field"]',
+    ) as HTMLInputElement;
+    expect(urlField.value).toBe('https://example.com/icon.png');
   });
 });

@@ -16,7 +16,8 @@
     </label>
     <app-string-list-editor
       formControlName="photoUrls"
-      [urlMode]="true"
+      [imageMode]="true"
+      [imageRowLabel]="language.t().resources.categoryFields.recipes.photoUrlsLabel"
       [addButtonLabel]="
         language.t().stringListEditor.addRowButton(
           language.t().resources.categoryFields.recipes.photoUrlsLabel

@@ -33,6 +33,15 @@ export const es: Translations = {
     removeRowAria: 'Quitar',
     invalidUrlError: 'Ingresá una URL válida',
   },
+  imageInput: {
+    urlModeLabel: 'URL',
+    uploadModeLabel: 'Subir imagen',
+    uploadButtonLabel: 'Seleccionar imagen',
+    changeButtonLabel: 'Cambiar imagen',
+    invalidUrlError: 'La URL no es válida',
+    invalidFileTypeError: 'Formato no soportado. Usá JPG, PNG o WEBP.',
+    fileTooLargeError: (maxSizeMb) => `El archivo supera el límite de ${maxSizeMb}MB.`,
+  },
   fieldLimits: {
     charactersRemaining: (count) =>
       count === 1 ? '1 carácter restante' : `${count} caracteres restantes`,

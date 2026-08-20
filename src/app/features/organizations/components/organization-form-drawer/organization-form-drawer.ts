@@ -16,14 +16,24 @@ import { OrganizationSharedFields, OrganizationService } from '../../services/or
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { StaleTranslationSuggestionCache } from '../../../../shared/services/stale-translation-suggestion-cache.service';
 import { MarkdownEditor } from '../../../../shared/components/markdown-editor/markdown-editor';
+import { ImageInput } from '../../../../shared/components/image-input/image-input';
 import { slugify } from '../../../../shared/utils/slugify';
 import { URL_PATTERN, SLUG_PATTERN } from '../../../../shared/utils/patterns';
+import { resolveImagePayload } from '../../../../shared/utils/image-payload';
+import { ImageValue } from '../../../../shared/models/image-value.model';
 import { DESCRIPTION_MAX_LENGTH, NAME_MAX_LENGTH } from '../../utils/field-limits';
 import { LanguageService } from '../../../../core/i18n/language.service';
 
 @Component({
   selector: 'app-organization-form-drawer',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MarkdownEditor],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MarkdownEditor,
+    ImageInput,
+  ],
   templateUrl: './organization-form-drawer.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -85,10 +95,7 @@ export class OrganizationFormDrawer {
       validators: [Validators.required, Validators.pattern(SLUG_PATTERN), this.duplicateSlugValidator],
     }),
     description: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    logoUrl: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.pattern(URL_PATTERN)],
-    }),
+    logoUrl: new FormControl<ImageValue | undefined>(undefined, { validators: Validators.required }),
     scopeType: new FormControl<OrganizationScopeType>('global', { nonNullable: true }),
     countryCode: new FormControl<string | null>(null, { validators: this.countryCodeRequiredValidator }),
     city: new FormControl<string | null>(null, { validators: this.cityRequiredValidator }),
@@ -138,7 +145,7 @@ export class OrganizationFormDrawer {
           name: existing?.name ?? '',
           slug: organization?.slug ?? '',
           description: existing?.description ?? '',
-          logoUrl: organization?.logoUrl ?? '',
+          logoUrl: organization?.logoUrl ? { kind: 'url', url: organization.logoUrl } : undefined,
           scopeType: organization?.scopeType ?? 'global',
           countryCode: organization?.countryCode ?? null,
           city: organization?.city ?? null,
@@ -313,8 +320,10 @@ export class OrganizationFormDrawer {
     } = this.form.getRawValue();
 
     const translation: OrganizationTranslation = { name, description };
+    const logoPayload = await resolveImagePayload(logoUrl ?? undefined);
     const sharedFields: OrganizationSharedFields = {
-      logoUrl,
+      logoUrl: logoPayload?.url,
+      logoData: logoPayload?.data,
       scopeType,
       countryCode: scopeType === 'country' ? (countryCode ?? undefined) : undefined,
       city: scopeType === 'city' ? (city ?? undefined) : undefined,

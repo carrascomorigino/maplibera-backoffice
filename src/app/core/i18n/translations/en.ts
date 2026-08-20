@@ -33,6 +33,15 @@ export const en: Translations = {
     removeRowAria: 'Remove',
     invalidUrlError: 'Enter a valid URL',
   },
+  imageInput: {
+    urlModeLabel: 'URL',
+    uploadModeLabel: 'Upload image',
+    uploadButtonLabel: 'Choose image',
+    changeButtonLabel: 'Change image',
+    invalidUrlError: 'Enter a valid URL',
+    invalidFileTypeError: 'Unsupported format. Use JPG, PNG or WEBP.',
+    fileTooLargeError: (maxSizeMb) => `The file exceeds the ${maxSizeMb}MB limit.`,
+  },
   fieldLimits: {
     charactersRemaining: (count) =>
       count === 1 ? '1 character remaining' : `${count} characters remaining`,

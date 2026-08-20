@@ -11,8 +11,11 @@ import { TranslationSuggestionService } from '../../../../shared/services/transl
 import { StaleTranslationSuggestionCache } from '../../../../shared/services/stale-translation-suggestion-cache.service';
 import { MarkdownEditor } from '../../../../shared/components/markdown-editor/markdown-editor';
 import { StringListEditor } from '../../../../shared/components/string-list-editor/string-list-editor';
+import { ImageInput } from '../../../../shared/components/image-input/image-input';
+import { ImageValue } from '../../../../shared/models/image-value.model';
+import { resolveImagePayload } from '../../../../shared/utils/image-payload';
 import { slugify } from '../../../../shared/utils/slugify';
-import { URL_PATTERN, SLUG_PATTERN } from '../../../../shared/utils/patterns';
+import { SLUG_PATTERN } from '../../../../shared/utils/patterns';
 import { LanguageService } from '../../../../core/i18n/language.service';
 
 function todayIso(): string {
@@ -21,7 +24,15 @@ function todayIso(): string {
 
 @Component({
   selector: 'app-news-form-drawer',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MarkdownEditor, StringListEditor],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MarkdownEditor,
+    StringListEditor,
+    ImageInput,
+  ],
   templateUrl: './news-form-drawer.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -76,9 +87,9 @@ export class NewsFormDrawer {
     }),
     subtitle: new FormControl('', { nonNullable: true, validators: Validators.required }),
     description: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    imageUrl: new FormControl('', {
+    imageUrl: new FormControl<ImageValue | undefined>(undefined, {
       nonNullable: true,
-      validators: [Validators.required, Validators.pattern(URL_PATTERN)],
+      validators: Validators.required,
     }),
     publishedAt: new FormControl('', { nonNullable: true, validators: Validators.required }),
     eventDate: new FormControl<string | null>(null, { validators: this.eventDateRequiredValidator }),
@@ -121,7 +132,7 @@ export class NewsFormDrawer {
           slug: item?.slug ?? '',
           subtitle: existing?.subtitle ?? '',
           description: existing?.description ?? '',
-          imageUrl: item?.imageUrl ?? '',
+          imageUrl: item?.imageUrl ? { kind: 'url', url: item.imageUrl } : undefined,
           publishedAt: item?.publishedAt ?? todayIso(),
           eventDate: item?.eventDate ?? null,
           sourceLinks: item?.sourceLinks ?? [],
@@ -281,8 +292,10 @@ export class NewsFormDrawer {
     const { category, title, slug, subtitle, description, imageUrl, publishedAt, eventDate, sourceLinks } =
       this.form.getRawValue();
     const translation: NewsTranslation = { title, subtitle, description };
+    const imagePayload = await resolveImagePayload(imageUrl);
     const sharedFields = {
-      imageUrl,
+      imageUrl: imagePayload?.url,
+      imageData: imagePayload?.data,
       publishedAt,
       eventDate: eventDate ?? undefined,
       sourceLinks,

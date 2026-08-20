@@ -5,6 +5,7 @@ import { SectionFormDrawer } from './section-form-drawer';
 import { SectionService } from '../../services/section.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { Question, QuestionType } from '../../models/section.model';
+import { QuestionDraft } from '../question-editor/question-editor';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { TITLE_MAX_LENGTH } from '../../utils/field-limits';
 import { FakeSectionService, makeSection } from '../../testing/fake-section-service';
@@ -199,13 +200,13 @@ describe('SectionFormDrawer', () => {
 
     component.form.controls.title.setValue('A title');
     component.form.controls.description.setValue('A description');
-    component.form.controls.imageUrl.setValue('not-a-url');
+    component.form.controls.imageUrl.setValue({ kind: 'url', url: 'not-a-url' });
     fixture.detectChanges();
 
     expect(buttons(fixture).save.disabled).toBe(true);
     expect(fixture.nativeElement.querySelector('[data-testid="image-preview"]')).toBeNull();
 
-    component.form.controls.imageUrl.setValue('https://example.com/image.png');
+    component.form.controls.imageUrl.setValue({ kind: 'url', url: 'https://example.com/image.png' });
     fixture.detectChanges();
 
     expect(buttons(fixture).save.disabled).toBe(false);
@@ -336,7 +337,7 @@ describe('SectionFormDrawer', () => {
     it('persists a filled-in valid question on Save', async () => {
       const fixture = createFixture('en');
       const component = fixture.componentInstance;
-      const question: Question = {
+      const question: QuestionDraft = {
         text: 'Is this correct?',
         type: 'yes-no',
         yesNoCorrectAnswer: 'yes',
