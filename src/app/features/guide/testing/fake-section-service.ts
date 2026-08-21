@@ -75,6 +75,10 @@ export class FakeSectionService {
     return updated;
   });
 
+  delete = vi.fn(async (id: string): Promise<void> => {
+    this._sections.update((sections) => sections.filter((s) => s.id !== id));
+  });
+
   publish = vi.fn((id: string): Promise<Section> => this.setStatus(id, 'published'));
   pause = vi.fn((id: string): Promise<Section> => this.setStatus(id, 'paused'));
 

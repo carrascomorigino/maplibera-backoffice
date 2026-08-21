@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { CdkDragHandle } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -31,7 +32,7 @@ export interface ResetSelectionRequest {
 
 @Component({
   selector: 'app-section-list-item',
-  imports: [CdkDragHandle, MatButtonModule, MatIconModule, LanguageTags],
+  imports: [CdkDragHandle, MatButtonModule, MatCheckboxModule, MatIconModule, LanguageTags],
   templateUrl: './section-list-item.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
@@ -49,9 +50,11 @@ export class SectionListItem {
 
   readonly section = input.required<Section>();
   readonly resetRequest = input<ResetSelectionRequest | undefined>(undefined);
+  readonly selected = input<boolean>(false);
 
   readonly editRequested = output<EditRequestedEvent>();
   readonly translateRequested = output<TranslateRequestedEvent>();
+  readonly selectionToggled = output<void>();
 
   private readonly _selectedLanguage = signal<ContentLanguage | undefined>(undefined);
 

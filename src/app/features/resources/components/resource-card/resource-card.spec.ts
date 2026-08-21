@@ -133,4 +133,17 @@ describe('ResourceCard', () => {
 
     expect(service.removeTranslation).toHaveBeenCalledWith(resource.id, 'es');
   });
+
+  it('emits selectionToggled when the checkbox is toggled', () => {
+    const resource = nutritionResource();
+    const fixture = createFixture(resource);
+    const selectionToggled = vi.fn();
+    fixture.componentInstance.selectionToggled.subscribe(selectionToggled);
+
+    (
+      fixture.nativeElement.querySelector('[data-testid="select-checkbox"] input') as HTMLInputElement
+    ).click();
+
+    expect(selectionToggled).toHaveBeenCalled();
+  });
 });

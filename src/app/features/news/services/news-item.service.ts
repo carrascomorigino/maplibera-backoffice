@@ -79,6 +79,11 @@ export class NewsItemService {
     return updated;
   }
 
+  async delete(id: string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`${BASE_URL}/${id}`));
+    this.state.update((items) => items.filter((item) => item.id !== id));
+  }
+
   async publish(id: string): Promise<NewsItem> {
     return this.setStatus(id, 'published');
   }

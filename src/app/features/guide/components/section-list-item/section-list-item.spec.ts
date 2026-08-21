@@ -347,6 +347,31 @@ describe('SectionListItem', () => {
     });
   });
 
+  describe('selection', () => {
+    it('reflects the selected input on the checkbox', () => {
+      const section = twoLanguageSection();
+      const fixture = createFixture(section);
+      fixture.componentRef.setInput('selected', true);
+      fixture.detectChanges();
+
+      const checkbox = fixture.nativeElement.querySelector('[data-testid="select-checkbox"] input');
+      expect((checkbox as HTMLInputElement).checked).toBe(true);
+    });
+
+    it('emits selectionToggled when the checkbox is toggled', () => {
+      const section = twoLanguageSection();
+      const fixture = createFixture(section);
+      const selectionToggled = vi.fn();
+      fixture.componentInstance.selectionToggled.subscribe(selectionToggled);
+
+      (
+        fixture.nativeElement.querySelector('[data-testid="select-checkbox"] input') as HTMLInputElement
+      ).click();
+
+      expect(selectionToggled).toHaveBeenCalled();
+    });
+  });
+
   describe('thumbnail and slug', () => {
     it('shows a placeholder icon and no image when the section has none', () => {
       const section = twoLanguageSection();

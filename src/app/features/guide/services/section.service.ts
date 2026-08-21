@@ -60,6 +60,11 @@ export class SectionService {
     return this.setStatus(id, 'paused');
   }
 
+  async delete(id: string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`${BASE_URL}/${id}`));
+    this.state.update((sections) => sections.filter((section) => section.id !== id));
+  }
+
   async reorder(orderedIds: string[]): Promise<void> {
     await firstValueFrom(this.http.post(`${BASE_URL}/reorder`, { orderedIds }));
     const orderById = new Map(orderedIds.map((id, index) => [id, index]));

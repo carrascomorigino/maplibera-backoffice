@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatDrawer, MatDrawerContainer, MatDrawerContent } from '@angular/material/sidenav';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Section } from '../../models/section.model';
@@ -14,6 +15,8 @@ import {
   TranslateRequestedEvent,
 } from '../../components/section-list-item/section-list-item';
 import { LanguageService } from '../../../../core/i18n/language.service';
+import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/confirm-dialog';
+import { SelectionToolbar } from '../../../../shared/components/selection-toolbar/selection-toolbar';
 
 type DrawerContext =
   | { mode: 'create' }
@@ -36,6 +39,7 @@ type DrawerContext =
     MatDrawerContent,
     SectionFormDrawer,
     SectionListItem,
+    SelectionToolbar,
   ],
   templateUrl: './sections-list.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,12 +47,16 @@ type DrawerContext =
 export class SectionsListPage {
   private readonly sectionService = inject(SectionService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
   protected readonly language = inject(LanguageService);
 
   protected readonly sections = this.sectionService.sections;
   protected readonly drawerContext = signal<DrawerContext | undefined>(undefined);
   protected readonly isDrawerOpen = computed(() => this.drawerContext() !== undefined);
   protected readonly cancelledSelection = signal<ResetSelectionRequest | undefined>(undefined);
+
+  protected readonly selectedIds = signal<ReadonlySet<string>>(new Set());
+  protected readonly selectedCount = computed(() => this.selectedIds().size);
 
   protected readonly drawerSection = computed<Section | undefined>(() => {
     const ctx = this.drawerContext();
@@ -114,5 +122,53 @@ export class SectionsListPage {
       const labels = this.language.t().guide.sectionForm;
       this.snackBar.open(labels.actionFailedNotice, labels.actionFailedDismiss);
     });
+  }
+
+  protected isSelected(id: string): boolean {
+    return this.selectedIds().has(id);
+  }
+
+  protected toggleSelection(id: string): void {
+    this.selectedIds.update((ids) => {
+      const next = new Set(ids);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  protected clearSelection(): void {
+    this.selectedIds.set(new Set());
+  }
+
+  protected requestBulkDelete(): void {
+    const labels = this.language.t().bulkSelection;
+    const dialogRef = this.dialog.open(ConfirmDialog, {
+      data: {
+        title: labels.deleteConfirmTitle,
+        message: labels.deleteConfirmMessage(this.selectedCount()),
+        confirmLabel: labels.deleteConfirmConfirmButton,
+        cancelLabel: labels.deleteConfirmCancelButton,
+      },
+    });
+    dialogRef.afterClosed().subscribe((confirmed) => {
+      if (confirmed) {
+        void this.performBulkDelete();
+      }
+    });
+  }
+
+  private async performBulkDelete(): Promise<void> {
+    const ids = [...this.selectedIds()];
+    try {
+      await Promise.all(ids.map((id) => this.sectionService.delete(id)));
+      this.clearSelection();
+    } catch {
+      const labels = this.language.t().bulkSelection;
+      this.snackBar.open(labels.actionFailedNotice, labels.actionFailedDismiss);
+    }
   }
 }

@@ -1,7 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { of } from 'rxjs';
 import { OrganizationsListPage } from './organizations-list.page';
 import { OrganizationService } from '../../services/organization.service';
 import { Organization, OrganizationType } from '../../models/organization.model';
@@ -146,5 +148,36 @@ describe('OrganizationsListPage', () => {
     expect(fixture.nativeElement.querySelector('h1')?.textContent?.trim()).toBe(
       language.t().organizations.organizationsList.heading,
     );
+  });
+
+  describe('bulk selection', () => {
+    it('deletes the selected organizations via the service after confirming', async () => {
+      const a = orgFixture('local-group', 'a', 0);
+      service.seed([a]);
+      const fixture = createFixture();
+      const dialog = TestBed.inject(MatDialog);
+      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<MatDialog['open']>);
+
+      fixture.componentInstance['toggleSelection'](a.id);
+      fixture.componentInstance['requestBulkDelete']();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(service.delete).toHaveBeenCalledWith(a.id);
+      expect(fixture.componentInstance['selectedCount']()).toBe(0);
+    });
+
+    it('does not delete when the confirm dialog is cancelled', () => {
+      const a = orgFixture('local-group', 'a', 0);
+      service.seed([a]);
+      const fixture = createFixture();
+      const dialog = TestBed.inject(MatDialog);
+      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(false) } as ReturnType<MatDialog['open']>);
+
+      fixture.componentInstance['toggleSelection'](a.id);
+      fixture.componentInstance['requestBulkDelete']();
+
+      expect(service.delete).not.toHaveBeenCalled();
+    });
   });
 });

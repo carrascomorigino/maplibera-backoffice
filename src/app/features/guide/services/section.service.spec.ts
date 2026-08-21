@@ -103,6 +103,20 @@ describe('SectionService', () => {
     });
   });
 
+  describe('delete', () => {
+    it('DELETEs /:id and removes the section from the list', async () => {
+      await setup([section({ id: 'a' }), section({ id: 'b' })]);
+
+      const promise = service.delete('a');
+      const req = httpMock.expectOne(`${BASE_URL}/a`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null);
+
+      await promise;
+      expect(service.sections().map((s) => s.id)).toEqual(['b']);
+    });
+  });
+
   describe('publish / pause', () => {
     it('publish POSTs to /:id/publish and updates status locally', async () => {
       await setup([section()]);
