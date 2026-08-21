@@ -38,6 +38,15 @@
       </button>
     </div>
 
+    @if (selectedCount() > 0) {
+      <app-selection-toolbar
+        class="mb-4 block"
+        [selectedCount]="selectedCount()"
+        (deleteRequested)="requestBulkDelete()"
+        (clearRequested)="clearSelection()"
+      />
+    }
+
     @if (visibleOrganizations().length === 0) {
       <p
         data-testid="empty-state"
@@ -61,8 +70,10 @@
           >
             <app-organization-list-item
               [organization]="org"
+              [selected]="isSelected(org.id)"
               (editRequested)="openEdit($event)"
               (translateRequested)="openTranslate($event)"
+              (selectionToggled)="toggleSelection(org.id)"
             />
           </li>
         }

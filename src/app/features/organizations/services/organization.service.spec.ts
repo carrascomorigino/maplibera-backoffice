@@ -113,6 +113,18 @@ describe('OrganizationService', () => {
     await expect(promise).resolves.toEqual(updated);
   });
 
+  it('DELETEs /:id on delete and removes the org from the list', async () => {
+    await setup([org({ id: 'a' }), org({ id: 'b' })]);
+
+    const promise = service.delete('a');
+    const req = httpMock.expectOne(`${BASE_URL}/a`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+
+    await promise;
+    expect(service.organizations().map((o) => o.id)).toEqual(['b']);
+  });
+
   it('publish/pause POST to /:id/publish and /:id/pause', async () => {
     await setup([org()]);
 

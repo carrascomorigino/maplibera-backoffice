@@ -103,6 +103,10 @@ export class FakeNewsItemService {
     return updated;
   });
 
+  delete = vi.fn(async (id: string): Promise<void> => {
+    this._items.update((items) => items.filter((i) => i.id !== id));
+  });
+
   publish = vi.fn((id: string): Promise<NewsItem> => this.setStatus(id, 'published'));
   pause = vi.fn((id: string): Promise<NewsItem> => this.setStatus(id, 'paused'));
 

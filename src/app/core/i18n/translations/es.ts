@@ -46,6 +46,21 @@ export const es: Translations = {
     charactersRemaining: (count) =>
       count === 1 ? '1 carácter restante' : `${count} caracteres restantes`,
   },
+  bulkSelection: {
+    itemCheckboxAria: (itemLabel) => `Seleccionar ${itemLabel}`,
+    selectedCountLabel: (count) => (count === 1 ? '1 seleccionado' : `${count} seleccionados`),
+    deleteSelectedButton: 'Eliminar seleccionados',
+    clearSelectionButton: 'Quitar selección',
+    deleteConfirmTitle: 'Eliminar elementos seleccionados',
+    deleteConfirmMessage: (count) =>
+      count === 1
+        ? '¿Eliminar el elemento seleccionado? Esta acción no se puede deshacer.'
+        : `¿Eliminar los ${count} elementos seleccionados? Esta acción no se puede deshacer.`,
+    deleteConfirmConfirmButton: 'Eliminar',
+    deleteConfirmCancelButton: 'Cancelar',
+    actionFailedNotice: 'Algo salió mal. Intentá de nuevo.',
+    actionFailedDismiss: 'Cerrar',
+  },
   guide: {
     sectionsList: {
       heading: 'Guía',

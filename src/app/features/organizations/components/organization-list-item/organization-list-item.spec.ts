@@ -181,4 +181,17 @@ describe('OrganizationListItem', () => {
 
     expect(service.removeTranslation).toHaveBeenCalledWith(org.id, 'es');
   });
+
+  it('emits selectionToggled when the checkbox is toggled', () => {
+    const org = orgWith({});
+    const fixture = createFixture(org);
+    const selectionToggled = vi.fn();
+    fixture.componentInstance.selectionToggled.subscribe(selectionToggled);
+
+    (
+      fixture.nativeElement.querySelector('[data-testid="select-checkbox"] input') as HTMLInputElement
+    ).click();
+
+    expect(selectionToggled).toHaveBeenCalled();
+  });
 });

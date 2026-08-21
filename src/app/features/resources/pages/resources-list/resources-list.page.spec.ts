@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { of } from 'rxjs';
 import { ResourcesListPage } from './resources-list.page';
 import { ResourceService } from '../../services/resource.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
@@ -124,5 +126,36 @@ describe('ResourcesListPage', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-resource-form-drawer')).toBeNull();
+  });
+
+  describe('bulk selection', () => {
+    it('deletes the selected resources via the service after confirming', async () => {
+      const a = resourceFixture('nutrition', 'a');
+      service.seed([a]);
+      const fixture = createFixture();
+      const dialog = TestBed.inject(MatDialog);
+      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<MatDialog['open']>);
+
+      fixture.componentInstance['toggleSelection'](a.id);
+      fixture.componentInstance['requestBulkDelete']();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(service.delete).toHaveBeenCalledWith(a.id);
+      expect(fixture.componentInstance['selectedCount']()).toBe(0);
+    });
+
+    it('does not delete when the confirm dialog is cancelled', () => {
+      const a = resourceFixture('nutrition', 'a');
+      service.seed([a]);
+      const fixture = createFixture();
+      const dialog = TestBed.inject(MatDialog);
+      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(false) } as ReturnType<MatDialog['open']>);
+
+      fixture.componentInstance['toggleSelection'](a.id);
+      fixture.componentInstance['requestBulkDelete']();
+
+      expect(service.delete).not.toHaveBeenCalled();
+    });
   });
 });

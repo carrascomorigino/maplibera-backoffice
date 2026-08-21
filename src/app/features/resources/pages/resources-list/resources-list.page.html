@@ -48,6 +48,15 @@
       </div>
     </div>
 
+    @if (selectedCount() > 0) {
+      <app-selection-toolbar
+        class="mb-6 block"
+        [selectedCount]="selectedCount()"
+        (deleteRequested)="requestBulkDelete()"
+        (clearRequested)="clearSelection()"
+      />
+    }
+
     @for (category of visibleCategories(); track category) {
       <section [attr.data-testid]="'category-section-' + category" class="mb-10">
         <h2 class="mb-3 text-base font-semibold tracking-tight text-ink-800">
@@ -77,8 +86,10 @@
               >
                 <app-resource-card
                   [resource]="resource"
+                  [selected]="isSelected(resource.id)"
                   (editRequested)="openEdit($event)"
                   (translateRequested)="openTranslate($event)"
+                  (selectionToggled)="toggleSelection(resource.id)"
                 />
               </div>
             }

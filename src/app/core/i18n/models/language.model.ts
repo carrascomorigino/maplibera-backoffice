@@ -44,6 +44,18 @@ export interface Translations {
   fieldLimits: {
     charactersRemaining: (count: number) => string;
   };
+  bulkSelection: {
+    itemCheckboxAria: (itemLabel: string) => string;
+    selectedCountLabel: (count: number) => string;
+    deleteSelectedButton: string;
+    clearSelectionButton: string;
+    deleteConfirmTitle: string;
+    deleteConfirmMessage: (count: number) => string;
+    deleteConfirmConfirmButton: string;
+    deleteConfirmCancelButton: string;
+    actionFailedNotice: string;
+    actionFailedDismiss: string;
+  };
   guide: {
     sectionsList: {
       heading: string;

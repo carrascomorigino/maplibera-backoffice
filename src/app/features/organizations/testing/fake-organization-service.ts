@@ -90,6 +90,10 @@ export class FakeOrganizationService {
     },
   );
 
+  delete = vi.fn(async (id: string): Promise<void> => {
+    this._orgs.update((orgs) => orgs.filter((o) => o.id !== id));
+  });
+
   publish = vi.fn((id: string): Promise<Organization> => this.setStatus(id, 'published'));
   pause = vi.fn((id: string): Promise<Organization> => this.setStatus(id, 'paused'));
 

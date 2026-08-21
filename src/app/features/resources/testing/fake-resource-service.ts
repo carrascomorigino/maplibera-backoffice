@@ -119,6 +119,10 @@ export class FakeResourceService {
     );
   });
 
+  delete = vi.fn(async (id: string): Promise<void> => {
+    this._resources.update((resources) => resources.filter((r) => r.id !== id));
+  });
+
   publish = vi.fn((id: string): Promise<Resource> => this.setStatus(id, 'published'));
   pause = vi.fn((id: string): Promise<Resource> => this.setStatus(id, 'paused'));
 

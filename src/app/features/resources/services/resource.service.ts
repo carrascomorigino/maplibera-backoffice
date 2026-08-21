@@ -142,6 +142,11 @@ export class ResourceService {
     );
   }
 
+  async delete(id: string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`${BASE_URL}/${id}`));
+    this.state.update((resources) => resources.filter((resource) => resource.id !== id));
+  }
+
   async publish(id: string): Promise<Resource> {
     return this.setStatus(id, 'published');
   }

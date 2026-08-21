@@ -126,6 +126,18 @@ describe('ResourceService', () => {
     await expect(promise).resolves.toEqual(updated);
   });
 
+  it('DELETEs /:id on delete and removes the resource from the list', async () => {
+    await setup([resource({ id: 'a' }), resource({ id: 'b' })]);
+
+    const promise = service.delete('a');
+    const req = httpMock.expectOne(`${BASE_URL}/a`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+
+    await promise;
+    expect(service.resources().map((r) => r.id)).toEqual(['b']);
+  });
+
   it('publish/pause POST to /:id/publish and /:id/pause', async () => {
     await setup([resource()]);
 

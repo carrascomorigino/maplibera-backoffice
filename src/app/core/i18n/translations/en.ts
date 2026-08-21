@@ -46,6 +46,21 @@ export const en: Translations = {
     charactersRemaining: (count) =>
       count === 1 ? '1 character remaining' : `${count} characters remaining`,
   },
+  bulkSelection: {
+    itemCheckboxAria: (itemLabel) => `Select ${itemLabel}`,
+    selectedCountLabel: (count) => (count === 1 ? '1 selected' : `${count} selected`),
+    deleteSelectedButton: 'Delete selected',
+    clearSelectionButton: 'Clear selection',
+    deleteConfirmTitle: 'Delete selected items',
+    deleteConfirmMessage: (count) =>
+      count === 1
+        ? 'Delete the selected item? This cannot be undone.'
+        : `Delete the ${count} selected items? This cannot be undone.`,
+    deleteConfirmConfirmButton: 'Delete',
+    deleteConfirmCancelButton: 'Cancel',
+    actionFailedNotice: 'Something went wrong. Please try again.',
+    actionFailedDismiss: 'Dismiss',
+  },
   guide: {
     sectionsList: {
       heading: 'Guide',

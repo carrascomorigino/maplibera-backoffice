@@ -150,4 +150,17 @@ describe('NewsCard', () => {
 
     expect(service.removeTranslation).toHaveBeenCalledWith(item.id, 'es');
   });
+
+  it('emits selectionToggled when the checkbox is toggled', () => {
+    const item = newsItem();
+    const fixture = createFixture(item);
+    const selectionToggled = vi.fn();
+    fixture.componentInstance.selectionToggled.subscribe(selectionToggled);
+
+    (
+      fixture.nativeElement.querySelector('[data-testid="select-checkbox"] input') as HTMLInputElement
+    ).click();
+
+    expect(selectionToggled).toHaveBeenCalled();
+  });
 });
