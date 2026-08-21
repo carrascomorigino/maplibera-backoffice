@@ -67,19 +67,7 @@ export class ResourceCard {
     () => this.contentLanguages.filter((lang) => this.resource().translations[lang]) as ContentLanguage[],
   );
 
-  readonly thumbnailUrl = computed<string | undefined>(() => {
-    const resource = this.resource();
-    switch (resource.category) {
-      case 'recipes':
-        return resource.photoUrls[0];
-      case 'multimedia':
-        return resource.posterUrl || undefined;
-      case 'apps':
-        return resource.iconUrl || undefined;
-      case 'nutrition':
-        return undefined;
-    }
-  });
+  readonly thumbnailUrl = computed<string | undefined>(() => this.resource().images[0]?.url);
 
   protected onLanguageSelected(newLanguage: ContentLanguage): void {
     this._selectedLanguage.set(newLanguage);

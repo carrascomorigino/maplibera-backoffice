@@ -14,8 +14,8 @@
   <mat-icon>drag_indicator</mat-icon>
 </span>
 
-@if (section().imageUrl) {
-  <img [src]="section().imageUrl" alt="" class="h-12 w-12 rounded-lg object-cover" />
+@if (section().images[0]; as coverImage) {
+  <img [src]="coverImage.url" alt="" class="h-12 w-12 rounded-lg object-cover" />
 } @else {
   <div
     data-testid="thumbnail-placeholder"

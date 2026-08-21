@@ -17,6 +17,7 @@ import {
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/confirm-dialog';
 import { SelectionToolbar } from '../../../../shared/components/selection-toolbar/selection-toolbar';
+import { categoryLabel } from '../../utils/category-labels';
 
 type DrawerContext =
   | { mode: 'create'; category: ResourceCategory }
@@ -136,17 +137,7 @@ export class ResourcesListPage {
   }
 
   protected categoryHeading(category: ResourceCategory): string {
-    const labels = this.language.t().resources.resourcesList;
-    switch (category) {
-      case 'nutrition':
-        return labels.categoryHeadingNutrition;
-      case 'recipes':
-        return labels.categoryHeadingRecipes;
-      case 'multimedia':
-        return labels.categoryHeadingMultimedia;
-      case 'apps':
-        return labels.categoryHeadingApps;
-    }
+    return categoryLabel(this.language.t().resources.resourcesList, category);
   }
 
   protected addButtonLabel(category: ResourceCategory): string {

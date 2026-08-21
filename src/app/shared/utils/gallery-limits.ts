@@ -1,0 +1,2 @@
+export const GALLERY_IMAGE_DESCRIPTION_MAX_LENGTH = 150;
+export const MAX_GALLERY_IMAGES = 3;

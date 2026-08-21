@@ -27,11 +27,18 @@
         matInput
         data-testid="image-input-url-field"
         [formControl]="urlControl"
+        [attr.aria-describedby]="
+          urlControl.value.trim() && !isValidUrl() ? 'image-input-url-error-' + instanceId : null
+        "
         (blur)="onBlur()"
       />
     </mat-form-field>
     @if (urlControl.value.trim() && !isValidUrl()) {
-      <p class="text-sm text-red-700" data-testid="image-input-url-error">
+      <p
+        class="text-sm text-red-700"
+        [id]="'image-input-url-error-' + instanceId"
+        data-testid="image-input-url-error"
+      >
         {{ language.t().imageInput.invalidUrlError }}
       </p>
     }
@@ -42,6 +49,7 @@
         type="button"
         class="w-fit"
         data-testid="image-input-upload-button"
+        [attr.aria-describedby]="fileError() ? 'image-input-file-error-' + instanceId : null"
         (click)="triggerFilePicker()"
       >
         {{
@@ -59,12 +67,20 @@
         (change)="onFileSelected($event)"
       />
       @if (fileError() === 'invalidType') {
-        <p class="text-sm text-red-700" data-testid="image-input-type-error">
+        <p
+          class="text-sm text-red-700"
+          [id]="'image-input-file-error-' + instanceId"
+          data-testid="image-input-type-error"
+        >
           {{ language.t().imageInput.invalidFileTypeError }}
         </p>
       }
       @if (fileError() === 'tooLarge') {
-        <p class="text-sm text-red-700" data-testid="image-input-size-error">
+        <p
+          class="text-sm text-red-700"
+          [id]="'image-input-file-error-' + instanceId"
+          data-testid="image-input-size-error"
+        >
           {{ language.t().imageInput.fileTooLargeError(maxSizeMb) }}
         </p>
       }

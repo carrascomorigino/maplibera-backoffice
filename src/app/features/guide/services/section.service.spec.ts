@@ -9,7 +9,7 @@ const BASE_URL = '/backend/sections';
 function input(overrides: Partial<SectionTranslationInput> = {}): SectionTranslationInput {
   return {
     slug: 'getting-started',
-    imageUrl: '',
+    images: [],
     language: 'en',
     translation: { title: 'Getting started', description: 'Intro section' },
     ...overrides,
@@ -20,7 +20,7 @@ function section(overrides: Partial<Section> = {}): Section {
   return {
     id: 's1',
     slug: 'getting-started',
-    imageUrl: '',
+    images: [],
     status: 'draft',
     order: 0,
     createdAt: '2026-01-01T00:00:00.000Z',

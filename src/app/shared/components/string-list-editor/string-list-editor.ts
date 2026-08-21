@@ -55,6 +55,7 @@ export class StringListEditor implements ControlValueAccessor, Validator, AfterV
   readonly urlMode = input(false);
   readonly imageMode = input(false);
   readonly imageRowLabel = input('');
+  readonly rowMaxLength = input<number | undefined>(undefined);
 
   readonly rows = new FormArray<FormControl<RowValue>>([]);
 
@@ -134,6 +135,10 @@ export class StringListEditor implements ControlValueAccessor, Validator, AfterV
   removeRow(index: number): void {
     this.rows.removeAt(index);
     this.cdr.markForCheck();
+  }
+
+  protected rowLength(row: FormControl<RowValue>): number {
+    return typeof row.value === 'string' ? row.value.length : 0;
   }
 
   private buildControl(value: RowValue): FormControl<RowValue> {

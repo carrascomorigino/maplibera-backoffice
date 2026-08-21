@@ -1,0 +1,3 @@
+export const TITLE_MAX_LENGTH = 100;
+export const SUBTITLE_MAX_LENGTH = 150;
+export const DESCRIPTION_MAX_LENGTH = 2000;

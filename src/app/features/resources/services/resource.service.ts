@@ -17,18 +17,33 @@ import { ContentLanguage } from '../../guide/models/content-language.model';
 
 const BASE_URL = '/backend/resources';
 
+export interface ResourceImageInput {
+  url?: string;
+  data?: string;
+  description?: string;
+}
+
 export type ResourceCreateInput =
   | {
       category: 'nutrition';
       slug: string;
-      sharedFields: { sourceLinks: string[]; pdfUrls: string[] };
+      sharedFields: {
+        sourceLinks: string[];
+        pdfUrls: string[];
+        images?: ResourceImageInput[];
+        videoUrl?: string;
+      };
       language: ContentLanguage;
       translation: NutritionTranslation;
     }
   | {
       category: 'recipes';
       slug: string;
-      sharedFields: { preparationMinutes: number; photoUrls: string[]; photoData?: string[] };
+      sharedFields: {
+        preparationMinutes: number;
+        images?: ResourceImageInput[];
+        videoUrl?: string;
+      };
       language: ContentLanguage;
       translation: RecipeTranslation;
     }
@@ -38,8 +53,7 @@ export type ResourceCreateInput =
       sharedFields: {
         mediaType: MultimediaType;
         externalUrl: string;
-        posterUrl?: string;
-        posterData?: string;
+        images?: ResourceImageInput[];
       };
       language: ContentLanguage;
       translation: MultimediaTranslation;
@@ -50,8 +64,8 @@ export type ResourceCreateInput =
       sharedFields: {
         appStoreUrl?: string;
         playStoreUrl?: string;
-        iconUrl?: string;
-        iconData?: string;
+        images?: ResourceImageInput[];
+        videoUrl?: string;
       };
       language: ContentLanguage;
       translation: AppTranslation;

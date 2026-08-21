@@ -11,7 +11,7 @@ import { MultimediaFieldsForm, MultimediaFieldsValue } from './multimedia-fields
 })
 class HostComponent {
   control = new FormControl<MultimediaFieldsValue>(
-    { mediaType: 'documentary', externalUrl: '', posterUrl: undefined },
+    { mediaType: 'documentary', externalUrl: '' },
     { nonNullable: true },
   );
 }
@@ -39,7 +39,6 @@ describe('MultimediaFieldsForm', () => {
     fixture.componentInstance.control.setValue({
       mediaType: 'podcast',
       externalUrl: 'https://open.spotify.com/show/123',
-      posterUrl: undefined,
     });
     fixture.detectChanges();
 
@@ -52,26 +51,9 @@ describe('MultimediaFieldsForm', () => {
     fixture.componentInstance.control.setValue({
       mediaType: 'book',
       externalUrl: 'not-a-url',
-      posterUrl: undefined,
     });
     fixture.detectChanges();
 
     expect(fixture.componentInstance.control.valid).toBe(false);
-  });
-
-  it('round-trips a poster image value via writeValue', () => {
-    const fixture = createFixture();
-
-    fixture.componentInstance.control.setValue({
-      mediaType: 'documentary',
-      externalUrl: 'https://example.com/doc',
-      posterUrl: { kind: 'url', url: 'https://example.com/poster.png' },
-    });
-    fixture.detectChanges();
-
-    const urlField = fixture.nativeElement.querySelector(
-      '[data-testid="image-input-url-field"]',
-    ) as HTMLInputElement;
-    expect(urlField.value).toBe('https://example.com/poster.png');
   });
 });

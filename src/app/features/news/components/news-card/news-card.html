@@ -26,7 +26,9 @@
   </span>
 </div>
 
-<img [src]="item().imageUrl" alt="" class="h-32 w-full rounded-lg object-cover" />
+@if (item().images[0]?.url; as thumbnailUrl) {
+  <img [src]="thumbnailUrl" alt="" class="h-32 w-full rounded-lg object-cover" />
+}
 
 <p data-testid="news-title" class="font-medium text-ink-900">{{ translation()?.title }}</p>
 <p class="line-clamp-2 text-sm text-ink-500">{{ translation()?.subtitle }}</p>

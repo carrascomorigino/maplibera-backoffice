@@ -16,16 +16,22 @@ interface ResourceBase {
   staleLanguages?: Partial<Record<ContentLanguage, ContentLanguage>>;
 }
 
+export interface ResourceImage {
+  url: string;
+  description?: string;
+}
+
 export interface NutritionTranslation {
   title: string;
   shortDescription: string;
-  explanatoryText: string;
 }
 
 export interface NutritionResource extends ResourceBase {
   category: 'nutrition';
   sourceLinks: string[];
   pdfUrls: string[];
+  images: ResourceImage[];
+  videoUrl?: string;
   translations: Partial<Record<ContentLanguage, NutritionTranslation>>;
 }
 
@@ -39,7 +45,8 @@ export interface RecipeTranslation {
 export interface RecipeResource extends ResourceBase {
   category: 'recipes';
   preparationMinutes: number;
-  photoUrls: string[];
+  images: ResourceImage[];
+  videoUrl?: string;
   translations: Partial<Record<ContentLanguage, RecipeTranslation>>;
 }
 
@@ -52,7 +59,7 @@ export interface MultimediaResource extends ResourceBase {
   category: 'multimedia';
   mediaType: MultimediaType;
   externalUrl: string;
-  posterUrl: string;
+  images: ResourceImage[];
   translations: Partial<Record<ContentLanguage, MultimediaTranslation>>;
 }
 
@@ -65,7 +72,8 @@ export interface AppResource extends ResourceBase {
   category: 'apps';
   appStoreUrl?: string;
   playStoreUrl?: string;
-  iconUrl: string;
+  images: ResourceImage[];
+  videoUrl?: string;
   translations: Partial<Record<ContentLanguage, AppTranslation>>;
 }
 

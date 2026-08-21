@@ -1,0 +1,3 @@
+export const TITLE_MAX_LENGTH = 100;
+export const SHORT_DESCRIPTION_MAX_LENGTH = 300;
+export const LIST_ITEM_MAX_LENGTH = 150;

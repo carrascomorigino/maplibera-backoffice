@@ -43,7 +43,7 @@ describe('OrganizationListItem', () => {
     return makeOrganization({
       type: overrides.type ?? 'local-group',
       slug: 'friends-of-the-river',
-      logoUrl: overrides.logoUrl ?? 'https://example.com/logo.png',
+      images: overrides.logoUrl === '' ? [] : [{ url: overrides.logoUrl ?? 'https://example.com/logo.png' }],
       scopeType: overrides.scopeType ?? 'global',
       countryCode: overrides.countryCode,
       city: overrides.city,

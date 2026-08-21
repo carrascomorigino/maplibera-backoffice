@@ -14,10 +14,16 @@
             matInput
             data-testid="string-list-row-input"
             [formControl]="row"
+            [maxlength]="rowMaxLength() ?? null"
             (blur)="onBlur()"
           />
           @if (urlMode() && row.hasError('pattern')) {
             <mat-error>{{ language.t().stringListEditor.invalidUrlError }}</mat-error>
+          }
+          @if (rowMaxLength(); as maxLength) {
+            <mat-hint align="end">{{
+              language.t().fieldLimits.charactersRemaining(maxLength - rowLength(row))
+            }}</mat-hint>
           }
         </mat-form-field>
       }

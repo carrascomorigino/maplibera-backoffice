@@ -11,11 +11,15 @@ import { TranslationSuggestionService } from '../../../../shared/services/transl
 import { StaleTranslationSuggestionCache } from '../../../../shared/services/stale-translation-suggestion-cache.service';
 import { MarkdownEditor } from '../../../../shared/components/markdown-editor/markdown-editor';
 import { StringListEditor } from '../../../../shared/components/string-list-editor/string-list-editor';
-import { ImageInput } from '../../../../shared/components/image-input/image-input';
+import { ImageGalleryInput } from '../../../../shared/components/image-gallery-input/image-gallery-input';
 import { ImageValue } from '../../../../shared/models/image-value.model';
+import { GalleryImageValue } from '../../../../shared/models/gallery-image-value.model';
 import { resolveImagePayload } from '../../../../shared/utils/image-payload';
+import { atLeastOneGalleryImage } from '../../../../shared/utils/gallery-validators';
 import { slugify } from '../../../../shared/utils/slugify';
-import { SLUG_PATTERN } from '../../../../shared/utils/patterns';
+import { SLUG_PATTERN, URL_PATTERN } from '../../../../shared/utils/patterns';
+import { GALLERY_IMAGE_DESCRIPTION_MAX_LENGTH } from '../../../../shared/utils/gallery-limits';
+import { TITLE_MAX_LENGTH, SUBTITLE_MAX_LENGTH, DESCRIPTION_MAX_LENGTH } from '../../utils/field-limits';
 import { LanguageService } from '../../../../core/i18n/language.service';
 
 function todayIso(): string {
@@ -31,7 +35,7 @@ function todayIso(): string {
     MatInputModule,
     MarkdownEditor,
     StringListEditor,
-    ImageInput,
+    ImageGalleryInput,
   ],
   templateUrl: './news-form-drawer.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,6 +47,10 @@ export class NewsFormDrawer {
   private readonly snackBar = inject(MatSnackBar);
   protected readonly language = inject(LanguageService);
   protected readonly contentLanguageLabels = CONTENT_LANGUAGE_LABELS;
+  protected readonly titleMaxLength = TITLE_MAX_LENGTH;
+  protected readonly subtitleMaxLength = SUBTITLE_MAX_LENGTH;
+  protected readonly descriptionMaxLength = DESCRIPTION_MAX_LENGTH;
+  protected readonly galleryDescriptionMaxLength = GALLERY_IMAGE_DESCRIPTION_MAX_LENGTH;
 
   readonly item = input<NewsItem | undefined>(undefined);
   readonly targetLanguage = input.required<ContentLanguage>();
@@ -80,16 +88,29 @@ export class NewsFormDrawer {
 
   readonly form = new FormGroup({
     category: new FormControl<NewsCategory>('news', { nonNullable: true }),
-    title: new FormControl('', { nonNullable: true, validators: Validators.required }),
+    title: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH)],
+    }),
     slug: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(SLUG_PATTERN), this.duplicateSlugValidator],
     }),
-    subtitle: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    description: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    imageUrl: new FormControl<ImageValue | undefined>(undefined, {
+    subtitle: new FormControl('', {
       nonNullable: true,
-      validators: Validators.required,
+      validators: [Validators.required, Validators.maxLength(SUBTITLE_MAX_LENGTH)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(DESCRIPTION_MAX_LENGTH)],
+    }),
+    images: new FormControl<GalleryImageValue[]>([], {
+      nonNullable: true,
+      validators: atLeastOneGalleryImage,
+    }),
+    videoUrl: new FormControl('', {
+      nonNullable: true,
+      validators: Validators.pattern(URL_PATTERN),
     }),
     publishedAt: new FormControl('', { nonNullable: true, validators: Validators.required }),
     eventDate: new FormControl<string | null>(null, { validators: this.eventDateRequiredValidator }),
@@ -132,7 +153,11 @@ export class NewsFormDrawer {
           slug: item?.slug ?? '',
           subtitle: existing?.subtitle ?? '',
           description: existing?.description ?? '',
-          imageUrl: item?.imageUrl ? { kind: 'url', url: item.imageUrl } : undefined,
+          images: (item?.images ?? []).map((image) => ({
+            image: { kind: 'url', url: image.url } as ImageValue,
+            description: image.description,
+          })),
+          videoUrl: item?.videoUrl ?? '',
           publishedAt: item?.publishedAt ?? todayIso(),
           eventDate: item?.eventDate ?? null,
           sourceLinks: item?.sourceLinks ?? [],
@@ -289,13 +314,30 @@ export class NewsFormDrawer {
   }
 
   private async persist(): Promise<NewsItem> {
-    const { category, title, slug, subtitle, description, imageUrl, publishedAt, eventDate, sourceLinks } =
-      this.form.getRawValue();
+    const {
+      category,
+      title,
+      slug,
+      subtitle,
+      description,
+      images,
+      videoUrl,
+      publishedAt,
+      eventDate,
+      sourceLinks,
+    } = this.form.getRawValue();
     const translation: NewsTranslation = { title, subtitle, description };
-    const imagePayload = await resolveImagePayload(imageUrl);
+    const imagesPayload = await Promise.all(
+      images
+        .filter((row): row is GalleryImageValue & { image: ImageValue } => row.image !== undefined)
+        .map(async (row) => ({
+          ...(await resolveImagePayload(row.image)),
+          description: row.description,
+        })),
+    );
     const sharedFields = {
-      imageUrl: imagePayload?.url,
-      imageData: imagePayload?.data,
+      images: imagesPayload,
+      videoUrl,
       publishedAt,
       eventDate: eventDate ?? undefined,
       sourceLinks,

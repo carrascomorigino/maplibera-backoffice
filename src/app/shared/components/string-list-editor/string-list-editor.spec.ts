@@ -3,6 +3,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TestBed } from '@angular/core/testing';
 import { StringListEditor } from './string-list-editor';
 import { ImageValue } from '../../models/image-value.model';
+import { LanguageService } from '../../../core/i18n/language.service';
 
 @Component({
   selector: 'app-host',
@@ -11,11 +12,13 @@ import { ImageValue } from '../../models/image-value.model';
     [formControl]="control"
     [addButtonLabel]="'Add item'"
     [urlMode]="urlMode"
+    [rowMaxLength]="rowMaxLength"
   />`,
 })
 class HostComponent {
   control = new FormControl<string[]>([], { nonNullable: true });
   urlMode = false;
+  rowMaxLength: number | undefined = undefined;
 }
 
 @Component({
@@ -26,26 +29,30 @@ class HostComponent {
     [addButtonLabel]="'Add photo'"
     [imageMode]="true"
     [imageRowLabel]="'Photo'"
+    [rowMaxLength]="rowMaxLength"
   />`,
 })
 class ImageHostComponent {
   control = new FormControl<ImageValue[]>([], { nonNullable: true });
+  rowMaxLength: number | undefined = undefined;
 }
 
 describe('StringListEditor', () => {
-  function createFixture(initial: string[] = [], urlMode = false) {
+  function createFixture(initial: string[] = [], urlMode = false, rowMaxLength?: number) {
     TestBed.configureTestingModule({ imports: [HostComponent] });
     const fixture = TestBed.createComponent(HostComponent);
     fixture.componentInstance.control.setValue(initial);
     fixture.componentInstance.urlMode = urlMode;
+    fixture.componentInstance.rowMaxLength = rowMaxLength;
     fixture.detectChanges();
     return fixture;
   }
 
-  function createImageFixture(initial: ImageValue[] = []) {
+  function createImageFixture(initial: ImageValue[] = [], rowMaxLength?: number) {
     TestBed.configureTestingModule({ imports: [ImageHostComponent] });
     const fixture = TestBed.createComponent(ImageHostComponent);
     fixture.componentInstance.control.setValue(initial);
+    fixture.componentInstance.rowMaxLength = rowMaxLength;
     fixture.detectChanges();
     return fixture;
   }
@@ -192,6 +199,31 @@ describe('StringListEditor', () => {
       const fixture = createImageFixture([{ kind: 'url', url: 'not-a-url' }]);
 
       expect(fixture.componentInstance.control.valid).toBe(false);
+    });
+  });
+
+  describe('row character limit', () => {
+    it('does not cap rows or show a hint when rowMaxLength is unset', () => {
+      const fixture = createFixture(['Flour']);
+
+      expect(rows(fixture)[0].hasAttribute('maxlength')).toBe(false);
+      expect(fixture.nativeElement.querySelector('mat-hint')).toBeNull();
+    });
+
+    it('caps the row input and shows how many characters remain when rowMaxLength is set', () => {
+      const fixture = createFixture(['Flour'], false, 20);
+      const language = TestBed.inject(LanguageService);
+
+      expect(rows(fixture)[0].maxLength).toBe(20);
+      expect(fixture.nativeElement.textContent).toContain(
+        language.t().fieldLimits.charactersRemaining(20 - 'Flour'.length),
+      );
+    });
+
+    it('does not apply rowMaxLength to image-mode rows', () => {
+      const fixture = createImageFixture([{ kind: 'url', url: 'https://example.com/a.jpg' }], 20);
+
+      expect(fixture.nativeElement.querySelector('mat-hint')).toBeNull();
     });
   });
 });

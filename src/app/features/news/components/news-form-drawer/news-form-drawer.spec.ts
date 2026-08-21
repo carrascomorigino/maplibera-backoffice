@@ -6,15 +6,18 @@ import { NewsItemService } from '../../services/news-item.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { FakeNewsItemService, makeNewsItem } from '../../testing/fake-news-item-service';
+import { TITLE_MAX_LENGTH, SUBTITLE_MAX_LENGTH, DESCRIPTION_MAX_LENGTH } from '../../utils/field-limits';
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+// A plain chain of microtask `await`s isn't deep enough here: resolving gallery images
+// goes through `resolveImagePayload` (itself async) inside a `Promise.all(...).map(...)`,
+// adding more microtask hops than the fixed-depth chain used elsewhere covers. Flushing at
+// a macrotask boundary drains the whole microtask queue regardless of depth.
 async function settle(): Promise<void> {
-  await Promise.resolve();
-  await Promise.resolve();
-  await Promise.resolve();
+  await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 describe('NewsFormDrawer', () => {
@@ -59,7 +62,9 @@ describe('NewsFormDrawer', () => {
     component.form.controls.title.setValue('New visitor center');
     component.form.controls.subtitle.setValue('Now open');
     component.form.controls.description.setValue('Details');
-    component.form.controls.imageUrl.setValue({ kind: 'url', url: 'https://example.com/banner.jpg' });
+    component.form.controls.images.setValue([
+      { image: { kind: 'url', url: 'https://example.com/banner.jpg' } },
+    ]);
   }
 
   function existingItem() {
@@ -93,7 +98,7 @@ describe('NewsFormDrawer', () => {
     expect(editFixture.componentInstance.form.controls.category.disabled).toBe(true);
   });
 
-  it('disables Save until title, subtitle, description and imageUrl are filled', () => {
+  it('disables Save until title, subtitle, description and at least one image are filled', () => {
     const fixture = createFixture();
     const component = fixture.componentInstance;
 
@@ -198,7 +203,7 @@ describe('NewsFormDrawer', () => {
   it('splits shared vs. translated fields correctly on save', async () => {
     const created = makeNewsItem({
       slug: 'existing',
-      imageUrl: 'https://example.com/old.jpg',
+      images: [{ url: 'https://example.com/old.jpg' }],
       publishedAt: '2026-01-01',
       translations: { en: { title: 'Existing', subtitle: 'Sub', description: 'Desc' } },
     });
@@ -209,7 +214,9 @@ describe('NewsFormDrawer', () => {
     fixture.detectChanges();
     const component = fixture.componentInstance;
 
-    component.form.controls.imageUrl.setValue({ kind: 'url', url: 'https://example.com/new.jpg' });
+    component.form.controls.images.setValue([
+      { image: { kind: 'url', url: 'https://example.com/new.jpg' } },
+    ]);
     component.form.controls.publishedAt.setValue('2026-09-01');
     component.form.controls.sourceLinks.setValue(['https://example.com/source']);
     component.form.controls.title.setValue('Updated title');
@@ -218,7 +225,7 @@ describe('NewsFormDrawer', () => {
     await settle();
 
     const updated = service.items()[0];
-    expect(updated.imageUrl).toBe('https://example.com/new.jpg');
+    expect(updated.images).toEqual([{ url: 'https://example.com/new.jpg', description: undefined }]);
     expect(updated.publishedAt).toBe('2026-09-01');
     expect(updated.sourceLinks).toEqual(['https://example.com/source']);
     expect(updated.translations.en?.title).toBe('Updated title');
@@ -245,6 +252,136 @@ describe('NewsFormDrawer', () => {
 
       expect(component.form.controls.slug.hasError('duplicateSlug')).toBe(true);
       expect(buttons(fixture).save.disabled).toBe(true);
+    });
+  });
+
+  describe('image gallery', () => {
+    it('requires at least one image and blocks submission until one is added', () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      component.form.controls.title.setValue('A title');
+      component.form.controls.subtitle.setValue('A subtitle');
+      component.form.controls.description.setValue('A description');
+      fixture.detectChanges();
+
+      expect(component.form.controls.images.hasError('galleryRequired')).toBe(true);
+      expect(buttons(fixture).save.disabled).toBe(true);
+      expect(fixture.nativeElement.querySelector('mat-error')?.textContent?.trim()).toBe(
+        language.t().news.newsForm.imagesRequiredError,
+      );
+
+      component.form.controls.images.setValue([
+        { image: { kind: 'url', url: 'https://example.com/banner.jpg' } },
+      ]);
+      fixture.detectChanges();
+
+      expect(component.form.controls.images.hasError('galleryRequired')).toBe(false);
+      expect(buttons(fixture).save.disabled).toBe(false);
+    });
+
+    it('caps the image gallery at the default 3 images', () => {
+      const fixture = createFixture();
+
+      for (let i = 0; i < 3; i++) {
+        (
+          fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement
+        ).click();
+        fixture.detectChanges();
+      }
+
+      expect(fixture.nativeElement.querySelectorAll('[data-testid="gallery-row"]')).toHaveLength(3);
+      expect(
+        (fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement)
+          .disabled,
+      ).toBe(true);
+    });
+  });
+
+  describe('video link', () => {
+    it('rejects a malformed URL and accepts a valid one', () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      fillRequiredFields(component);
+      component.form.controls.videoUrl.setValue('not a url');
+      fixture.detectChanges();
+
+      expect(component.form.controls.videoUrl.hasError('pattern')).toBe(true);
+      expect(buttons(fixture).save.disabled).toBe(true);
+
+      component.form.controls.videoUrl.setValue('https://example.com/video.mp4');
+      fixture.detectChanges();
+
+      expect(component.form.controls.videoUrl.hasError('pattern')).toBe(false);
+      expect(buttons(fixture).save.disabled).toBe(false);
+    });
+
+    it('round-trips through populate and persist', async () => {
+      const existing = makeNewsItem({
+        slug: 'with-video',
+        videoUrl: 'https://example.com/video.mp4',
+        publishedAt: todayIso(),
+        translations: { en: { title: 'With video', subtitle: 'Sub', description: 'Desc' } },
+      });
+      service.seed([existing]);
+      const fixture = TestBed.createComponent(NewsFormDrawer);
+      fixture.componentRef.setInput('item', existing);
+      fixture.componentRef.setInput('targetLanguage', 'en');
+      fixture.detectChanges();
+      const component = fixture.componentInstance;
+
+      expect(component.form.controls.videoUrl.value).toBe('https://example.com/video.mp4');
+
+      component.form.controls.title.setValue('With video updated');
+      fixture.detectChanges();
+      buttons(fixture).save.click();
+      await settle();
+
+      expect(service.items()[0].videoUrl).toBe('https://example.com/video.mp4');
+    });
+  });
+
+  describe('character limits', () => {
+    it('caps the title input and shows how many characters remain', () => {
+      const fixture = createFixture();
+      const titleInput = fixture.nativeElement.querySelector(
+        'input[formcontrolname="title"]',
+      ) as HTMLInputElement;
+      expect(titleInput.maxLength).toBe(TITLE_MAX_LENGTH);
+
+      fixture.componentInstance.form.controls.title.setValue('Hello');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain(
+        language.t().fieldLimits.charactersRemaining(TITLE_MAX_LENGTH - 5),
+      );
+    });
+
+    it('caps the subtitle input and shows how many characters remain', () => {
+      const fixture = createFixture();
+      const subtitleInput = fixture.nativeElement.querySelector(
+        'input[formcontrolname="subtitle"]',
+      ) as HTMLInputElement;
+      expect(subtitleInput.maxLength).toBe(SUBTITLE_MAX_LENGTH);
+
+      fixture.componentInstance.form.controls.subtitle.setValue('Hi there');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain(
+        language.t().fieldLimits.charactersRemaining(SUBTITLE_MAX_LENGTH - 8),
+      );
+    });
+
+    it('activates the markdown editor character counter for description', () => {
+      const fixture = createFixture();
+      fixture.detectChanges();
+
+      const counter = fixture.nativeElement.querySelector('[data-testid="markdown-char-counter"]');
+      expect(counter).not.toBeNull();
+      expect(counter?.textContent?.trim()).toBe(
+        language.t().fieldLimits.charactersRemaining(DESCRIPTION_MAX_LENGTH),
+      );
     });
   });
 
