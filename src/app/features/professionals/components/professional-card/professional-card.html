@@ -1,0 +1,85 @@
+<div class="flex items-start justify-between gap-2">
+  <span cdkDragHandle data-testid="drag-handle" aria-hidden="true" class="cursor-move text-ink-300 hover:text-ink-500">
+    <mat-icon>drag_indicator</mat-icon>
+  </span>
+  <span
+    data-testid="specialty-badge"
+    class="rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700"
+  >
+    {{ specialtyBadgeLabel() }}
+  </span>
+  <span
+    data-testid="status-badge"
+    class="rounded-full px-2 py-1 text-xs font-medium"
+    [class]="statusBadgeClass(professional().status)"
+  >
+    {{ professional().status }}
+  </span>
+</div>
+
+@if (professional().photoUrl) {
+  <img
+    data-testid="photo-image"
+    [ngSrc]="professional().photoUrl"
+    [alt]="language.t().professionals.professionalsList.photoAlt(translation()?.name ?? '')"
+    width="80"
+    height="80"
+    class="h-20 w-20 rounded-full object-cover"
+  />
+} @else {
+  <div
+    data-testid="photo-placeholder"
+    class="flex h-20 w-20 items-center justify-center rounded-full bg-surface-sunken text-ink-300"
+  >
+    <mat-icon>person</mat-icon>
+  </div>
+}
+
+<p data-testid="professional-name" class="font-medium text-ink-900">{{ translation()?.name }}</p>
+<p class="text-sm text-ink-500">{{ translation()?.credentialsTitle }}</p>
+<p class="line-clamp-2 text-sm text-ink-500">{{ translation()?.bio }}</p>
+
+<span data-testid="scope-badge" class="w-fit rounded-full bg-ink-50 px-2 py-1 text-xs text-ink-600">
+  {{ scopeLabel() }}
+</span>
+
+@if (contactLinkEntries().length > 0) {
+  <div class="flex flex-wrap gap-2">
+    @for (entry of contactLinkEntries(); track entry.key) {
+      <a
+        [attr.data-testid]="'contact-link-' + entry.key"
+        [href]="entry.url"
+        target="_blank"
+        rel="noopener noreferrer"
+        [attr.aria-label]="entry.ariaLabel"
+        class="flex h-8 w-8 items-center justify-center rounded-full bg-ink-50 text-ink-500 transition-colors hover:bg-brand-50 hover:text-brand-700"
+      >
+        <mat-icon>{{ entry.icon }}</mat-icon>
+      </a>
+    }
+  </div>
+}
+
+<app-language-tags
+  [languages]="contentLanguages"
+  [translatedLanguages]="availableLanguages()"
+  [staleLanguages]="professional().staleLanguages ?? {}"
+  [selectedLanguage]="selectedLanguage()"
+  (languageSelected)="onLanguageSelected($event)"
+  (translateRequested)="onTranslateRequested($event)"
+  (languageRemoved)="onLanguageRemoved($event)"
+/>
+
+<div class="mt-auto flex gap-2">
+  <button mat-stroked-button type="button" data-testid="edit-button" (click)="onEdit()">
+    {{ language.t().professionals.professionalsList.editButton }}
+  </button>
+  <button
+    mat-stroked-button
+    type="button"
+    [attr.data-testid]="'status-action-' + professional().slug"
+    (click)="onStatusAction()"
+  >
+    {{ statusActionLabel(professional().status) }}
+  </button>
+</div>

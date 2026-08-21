@@ -1,0 +1,29 @@
+<div [formGroup]="form" class="flex flex-col gap-4">
+  <div>
+    <label class="mb-1 block text-sm font-medium text-ink-700">
+      {{ language.t().professionals.specialtyFields.coach.certificationsLabel }}
+    </label>
+    <app-string-list-editor
+      formControlName="certifications"
+      [addButtonLabel]="
+        language.t().stringListEditor.addRowButton(
+          language.t().professionals.specialtyFields.coach.certificationsLabel
+        )
+      "
+    />
+  </div>
+
+  <div>
+    <label class="mb-1 block text-sm font-medium text-ink-700">
+      {{ language.t().professionals.specialtyFields.coach.coachingAreasLabel }}
+    </label>
+    <app-string-list-editor
+      formControlName="coachingAreas"
+      [addButtonLabel]="
+        language.t().stringListEditor.addRowButton(
+          language.t().professionals.specialtyFields.coach.coachingAreasLabel
+        )
+      "
+    />
+  </div>
+</div>
