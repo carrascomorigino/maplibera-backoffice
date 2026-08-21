@@ -17,10 +17,10 @@
   </span>
 </div>
 
-@if (professional().photoUrl) {
+@if (professional().images?.[0]?.url; as photoUrl) {
   <img
     data-testid="photo-image"
-    [ngSrc]="professional().photoUrl"
+    [ngSrc]="photoUrl"
     [alt]="language.t().professionals.professionalsList.photoAlt(translation()?.name ?? '')"
     width="80"
     height="80"

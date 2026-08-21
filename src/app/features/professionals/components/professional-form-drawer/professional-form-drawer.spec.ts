@@ -59,7 +59,6 @@ describe('ProfessionalFormDrawer', () => {
     component.form.controls.name.setValue('Jane Doe');
     component.form.controls.credentialsTitle.setValue('Registered Dietitian');
     component.form.controls.bio.setValue('Plant-based nutrition specialist');
-    component.form.controls.photoUrl.setValue('https://example.com/jane.png');
     component.form.controls.specialtyFields.setValue({
       licenseNumber: 'AB123',
       dietarySpecialties: [],
@@ -243,7 +242,9 @@ describe('ProfessionalFormDrawer', () => {
     fixture.detectChanges();
     const component = fixture.componentInstance;
 
-    component.form.controls.photoUrl.setValue('https://example.com/new-photo.png');
+    component.form.controls.images.setValue([
+      { image: { kind: 'url', url: 'https://example.com/new-photo.png' } },
+    ]);
     component.form.controls.scopeType.setValue('country');
     component.form.controls.countryCode.setValue('AR');
     component.form.controls.website.setValue('https://example.org');
@@ -257,7 +258,7 @@ describe('ProfessionalFormDrawer', () => {
     await settle();
 
     const updated = service.professionals()[0];
-    expect(updated.photoUrl).toBe('https://example.com/new-photo.png');
+    expect(updated.images?.[0]?.url).toBe('https://example.com/new-photo.png');
     expect(updated.scopeType).toBe('country');
     expect(updated.countryCode).toBe('AR');
     expect(updated.contactLinks.website).toBe('https://example.org');

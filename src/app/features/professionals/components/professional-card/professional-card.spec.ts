@@ -37,13 +37,13 @@ describe('ProfessionalCard', () => {
     scopeType?: 'global' | 'country' | 'city';
     countryCode?: string;
     city?: string;
-    photoUrl?: string;
+    images?: { url: string; description?: string }[];
     contactLinks?: Professional['contactLinks'];
   } = {}): Professional {
     return makeProfessional({
       specialty: overrides.specialty ?? 'nutritionist',
       slug: 'jane-doe',
-      photoUrl: overrides.photoUrl ?? 'https://example.com/jane.png',
+      images: overrides.images ?? [{ url: 'https://example.com/jane.png' }],
       scopeType: overrides.scopeType ?? 'global',
       countryCode: overrides.countryCode,
       city: overrides.city,
@@ -63,7 +63,7 @@ describe('ProfessionalCard', () => {
   });
 
   it('shows a placeholder when there is no photo', () => {
-    const fixture = createFixture(professionalWith({ photoUrl: '' }));
+    const fixture = createFixture(professionalWith({ images: [] }));
 
     expect(fixture.nativeElement.querySelector('[data-testid="photo-image"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('[data-testid="photo-placeholder"]')).not.toBeNull();

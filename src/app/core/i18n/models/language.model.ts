@@ -375,8 +375,10 @@ export interface Translations {
       duplicateSlugError: string;
       credentialsTitleLabel: string;
       bioLabel: string;
-      photoUrlLabel: string;
-      photoAlt: (name: string) => string;
+      imageRowLabel: string;
+      addImageButton: string;
+      imageDescriptionLabel: string;
+      videoUrlLabel: string;
       scopeLabel: string;
       scopeGlobalOption: string;
       scopeCountryOption: string;

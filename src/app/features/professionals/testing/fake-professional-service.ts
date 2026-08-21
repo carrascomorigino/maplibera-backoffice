@@ -17,7 +17,7 @@ export function makeProfessional(overrides: Partial<Professional> = {}): Profess
     specialty: 'nutritionist' as const,
     status: 'draft' as const,
     order: 0,
-    photoUrl: 'https://example.com/photo.png',
+    images: [{ url: 'https://example.com/photo.png' }],
     scopeType: 'global' as const,
     contactLinks: {},
     licenseNumber: 'AB123',
@@ -63,12 +63,17 @@ export class FakeProfessionalService {
 
   create = vi.fn(async (input: ProfessionalCreateInput): Promise<Professional> => {
     const order = this._professionals().filter((p) => p.specialty === input.specialty).length;
+    const { images, ...restSharedFields } = input.sharedFields;
     const professional = makeProfessional({
       slug: input.slug,
       specialty: input.specialty,
       order,
       translations: { [input.language]: input.translation },
-      ...input.sharedFields,
+      ...restSharedFields,
+      images: (images ?? []).map((image) => ({
+        url: image.url ?? image.data ?? '',
+        description: image.description,
+      })),
     } as Partial<Professional>);
     this._professionals.update((professionals) => [...professionals, professional]);
     return professional;
@@ -114,7 +119,19 @@ export class FakeProfessionalService {
       if (!current) {
         throw new Error(`Unknown professional id: ${id}`);
       }
-      const updated = { ...current, ...sharedFields, updatedAt: new Date().toISOString() } as Professional;
+      const { images, ...restSharedFields } = sharedFields as {
+        images?: { url?: string; data?: string; description?: string }[];
+        [key: string]: unknown;
+      };
+      const updated = {
+        ...current,
+        ...restSharedFields,
+        images: (images ?? []).map((image) => ({
+          url: image.url ?? image.data ?? '',
+          description: image.description,
+        })),
+        updatedAt: new Date().toISOString(),
+      } as Professional;
       this.replace(updated);
       return updated;
     },
