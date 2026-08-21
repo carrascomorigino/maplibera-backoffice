@@ -24,7 +24,8 @@ export interface Organization {
   type: OrganizationType;
   status: OrganizationStatus;
   order: number;
-  images: { url: string; description?: string }[];
+  /** Absent on documents saved before the multi-image gallery was introduced. */
+  images?: { url: string; description?: string }[];
   videoUrl?: string;
   scopeType: OrganizationScopeType;
   /** ISO 3166-1 alpha-2 code. Only meaningful when scopeType === 'country'. */

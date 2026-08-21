@@ -26,7 +26,7 @@
   </span>
 </div>
 
-@if (item().images[0]?.url; as thumbnailUrl) {
+@if (item().images?.[0]?.url; as thumbnailUrl) {
   <img [src]="thumbnailUrl" alt="" class="h-32 w-full rounded-lg object-cover" />
 }
 

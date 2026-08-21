@@ -15,7 +15,8 @@ export interface NewsItem {
   slug: string;
   category: NewsCategory;
   status: NewsStatus;
-  images: { url: string; description?: string }[];
+  /** Absent on documents saved before the multi-image gallery was introduced. */
+  images?: { url: string; description?: string }[];
   videoUrl?: string;
   publishedAt: string;
   eventDate?: string;

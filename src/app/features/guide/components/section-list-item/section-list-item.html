@@ -14,7 +14,7 @@
   <mat-icon>drag_indicator</mat-icon>
 </span>
 
-@if (section().images[0]; as coverImage) {
+@if (section().images?.[0]; as coverImage) {
   <img [src]="coverImage.url" alt="" class="h-12 w-12 rounded-lg object-cover" />
 } @else {
   <div

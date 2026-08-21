@@ -33,7 +33,8 @@ export interface Section {
   /** Stable backend identifier — unlike slug, this never changes on rename. */
   id: string;
   slug: string;
-  images: { url: string; description?: string }[];
+  /** Absent on documents saved before the multi-image gallery was introduced. */
+  images?: { url: string; description?: string }[];
   videoUrl?: string;
   status: SectionStatus;
   order: number;
