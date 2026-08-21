@@ -11,7 +11,7 @@ function createInput(overrides: Partial<ProfessionalCreateInput> = {}): Professi
     specialty: 'nutritionist',
     slug: 'jane-doe',
     sharedFields: {
-      photoUrl: 'https://example.com/jane.png',
+      images: [{ url: 'https://example.com/jane.png' }],
       scopeType: 'global',
       contactLinks: {},
       licenseNumber: 'AB123',
@@ -30,7 +30,7 @@ function professional(overrides: Partial<Professional> = {}): Professional {
     specialty: 'nutritionist',
     status: 'draft',
     order: 0,
-    photoUrl: 'https://example.com/jane.png',
+    images: [{ url: 'https://example.com/jane.png' }],
     scopeType: 'global',
     contactLinks: {},
     licenseNumber: 'AB123',

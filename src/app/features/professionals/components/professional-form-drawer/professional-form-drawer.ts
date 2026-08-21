@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
-import { NgOptimizedImage } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -21,8 +20,13 @@ import { NutritionistFieldsForm } from '../specialty-fields/nutritionist-fields-
 import { DoctorFieldsForm } from '../specialty-fields/doctor-fields-form/doctor-fields-form';
 import { DentistFieldsForm } from '../specialty-fields/dentist-fields-form/dentist-fields-form';
 import { CoachFieldsForm } from '../specialty-fields/coach-fields-form/coach-fields-form';
+import { ImageGalleryInput } from '../../../../shared/components/image-gallery-input/image-gallery-input';
+import { ImageValue } from '../../../../shared/models/image-value.model';
+import { GalleryImageValue } from '../../../../shared/models/gallery-image-value.model';
+import { resolveImagePayload } from '../../../../shared/utils/image-payload';
 import { slugify } from '../../../../shared/utils/slugify';
 import { URL_PATTERN, SLUG_PATTERN } from '../../../../shared/utils/patterns';
+import { GALLERY_IMAGE_DESCRIPTION_MAX_LENGTH } from '../../../../shared/utils/gallery-limits';
 import { BIO_MAX_LENGTH, CREDENTIALS_TITLE_MAX_LENGTH, NAME_MAX_LENGTH } from '../../utils/field-limits';
 import { LanguageService } from '../../../../core/i18n/language.service';
 
@@ -44,7 +48,6 @@ const DEFAULT_SPECIALTY_FIELDS: Record<ProfessionalSpecialty, Record<string, unk
   selector: 'app-professional-form-drawer',
   imports: [
     ReactiveFormsModule,
-    NgOptimizedImage,
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
@@ -53,6 +56,7 @@ const DEFAULT_SPECIALTY_FIELDS: Record<ProfessionalSpecialty, Record<string, unk
     DoctorFieldsForm,
     DentistFieldsForm,
     CoachFieldsForm,
+    ImageGalleryInput,
   ],
   templateUrl: './professional-form-drawer.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -67,6 +71,7 @@ export class ProfessionalFormDrawer {
   protected readonly nameMaxLength = NAME_MAX_LENGTH;
   protected readonly credentialsTitleMaxLength = CREDENTIALS_TITLE_MAX_LENGTH;
   protected readonly bioMaxLength = BIO_MAX_LENGTH;
+  protected readonly galleryDescriptionMaxLength = GALLERY_IMAGE_DESCRIPTION_MAX_LENGTH;
   protected readonly countryOptions = [...COUNTRY_CODES]
     .map((code) => ({ code, label: countryDisplayName(code, this.language.language()) }))
     .sort((a, b) => a.label.localeCompare(b.label));
@@ -117,9 +122,10 @@ export class ProfessionalFormDrawer {
     }),
     credentialsTitle: new FormControl('', { nonNullable: true, validators: Validators.required }),
     bio: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    photoUrl: new FormControl('', {
+    images: new FormControl<GalleryImageValue[]>([], { nonNullable: true }),
+    videoUrl: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.pattern(URL_PATTERN)],
+      validators: Validators.pattern(URL_PATTERN),
     }),
     scopeType: new FormControl<ProfessionalScopeType>('global', { nonNullable: true }),
     countryCode: new FormControl<string | null>(null, { validators: this.countryCodeRequiredValidator }),
@@ -179,7 +185,11 @@ export class ProfessionalFormDrawer {
           slug: professional?.slug ?? '',
           credentialsTitle: existing?.credentialsTitle ?? '',
           bio: existing?.bio ?? '',
-          photoUrl: professional?.photoUrl ?? '',
+          images: (professional?.images ?? []).map((image) => ({
+            image: { kind: 'url', url: image.url } as ImageValue,
+            description: image.description,
+          })),
+          videoUrl: professional?.videoUrl ?? '',
           scopeType: professional?.scopeType ?? 'global',
           countryCode: professional?.countryCode ?? null,
           city: professional?.city ?? null,
@@ -348,7 +358,8 @@ export class ProfessionalFormDrawer {
       slug,
       credentialsTitle,
       bio,
-      photoUrl,
+      images,
+      videoUrl,
       scopeType,
       countryCode,
       city,
@@ -361,9 +372,19 @@ export class ProfessionalFormDrawer {
     } = this.form.getRawValue();
     const specialty = this.specialty();
 
+    const imagesPayload = await Promise.all(
+      images
+        .filter((row): row is GalleryImageValue & { image: ImageValue } => row.image !== undefined)
+        .map(async (row) => ({
+          ...(await resolveImagePayload(row.image)),
+          description: row.description,
+        })),
+    );
+
     const translation: ProfessionalTranslation = { name, credentialsTitle, bio };
     const sharedFields: Record<string, unknown> = {
-      photoUrl,
+      images: imagesPayload,
+      videoUrl,
       scopeType,
       countryCode: scopeType === 'country' ? (countryCode ?? undefined) : undefined,
       city: scopeType === 'city' ? (city ?? undefined) : undefined,

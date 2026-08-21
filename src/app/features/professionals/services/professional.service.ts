@@ -15,7 +15,8 @@ import { ContentLanguage } from '../../guide/models/content-language.model';
 const BASE_URL = '/backend/professionals';
 
 interface ProfessionalSharedFieldsBase {
-  photoUrl: string;
+  images: { url?: string; data?: string; description?: string }[];
+  videoUrl?: string;
   scopeType: ProfessionalScopeType;
   countryCode?: string;
   city?: string;

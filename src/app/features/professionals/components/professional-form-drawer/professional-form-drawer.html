@@ -88,21 +88,21 @@
       <app-markdown-editor formControlName="bio" [maxLength]="bioMaxLength" />
     </div>
 
-    <mat-form-field class="min-w-0">
-      <mat-label>{{ language.t().professionals.professionalForm.photoUrlLabel }}</mat-label>
-      <input matInput formControlName="photoUrl" />
-    </mat-form-field>
+    <app-image-gallery-input
+      formControlName="images"
+      [imageRowLabel]="language.t().professionals.professionalForm.imageRowLabel"
+      [addButtonLabel]="language.t().professionals.professionalForm.addImageButton"
+      [descriptionLabel]="language.t().professionals.professionalForm.imageDescriptionLabel"
+      [descriptionMaxLength]="galleryDescriptionMaxLength"
+    />
 
-    @if (form.controls.photoUrl.valid && form.controls.photoUrl.value) {
-      <img
-        data-testid="photo-preview"
-        [ngSrc]="form.controls.photoUrl.value"
-        [alt]="language.t().professionals.professionalForm.photoAlt(form.controls.name.value)"
-        width="128"
-        height="128"
-        class="h-32 w-32 rounded-lg object-cover"
-      />
-    }
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().professionals.professionalForm.videoUrlLabel }}</mat-label>
+      <input matInput formControlName="videoUrl" />
+      @if (form.controls.videoUrl.hasError('pattern')) {
+        <mat-error>{{ language.t().stringListEditor.invalidUrlError }}</mat-error>
+      }
+    </mat-form-field>
 
     <fieldset class="flex min-w-0 flex-col gap-2">
       <legend class="text-sm font-medium text-ink-700">{{ language.t().professionals.professionalForm.scopeLabel }}</legend>

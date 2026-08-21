@@ -25,7 +25,9 @@ interface ProfessionalBase {
   specialty: ProfessionalSpecialty;
   status: ProfessionalStatus;
   order: number;
-  photoUrl: string;
+  /** Absent on documents saved before the multi-image gallery was introduced. */
+  images?: { url: string; description?: string }[];
+  videoUrl?: string;
   scopeType: ProfessionalScopeType;
   /** ISO 3166-1 alpha-2 code. Only meaningful when scopeType === 'country'. */
   countryCode?: string;
