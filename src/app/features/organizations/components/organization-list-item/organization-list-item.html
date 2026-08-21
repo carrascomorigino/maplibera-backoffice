@@ -22,7 +22,7 @@
   </span>
 </div>
 
-@if (organization().images[0]?.url; as logoUrl) {
+@if (organization().images?.[0]?.url; as logoUrl) {
   <img data-testid="logo-image" [src]="logoUrl" alt="" class="h-20 w-20 rounded-lg object-cover" />
 } @else {
   <div

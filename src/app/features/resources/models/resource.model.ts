@@ -30,7 +30,8 @@ export interface NutritionResource extends ResourceBase {
   category: 'nutrition';
   sourceLinks: string[];
   pdfUrls: string[];
-  images: ResourceImage[];
+  /** Absent on documents saved before the multi-image gallery was introduced. */
+  images?: ResourceImage[];
   videoUrl?: string;
   translations: Partial<Record<ContentLanguage, NutritionTranslation>>;
 }
@@ -45,7 +46,8 @@ export interface RecipeTranslation {
 export interface RecipeResource extends ResourceBase {
   category: 'recipes';
   preparationMinutes: number;
-  images: ResourceImage[];
+  /** Absent on documents saved before the multi-image gallery was introduced. */
+  images?: ResourceImage[];
   videoUrl?: string;
   translations: Partial<Record<ContentLanguage, RecipeTranslation>>;
 }
@@ -59,7 +61,8 @@ export interface MultimediaResource extends ResourceBase {
   category: 'multimedia';
   mediaType: MultimediaType;
   externalUrl: string;
-  images: ResourceImage[];
+  /** Absent on documents saved before the multi-image gallery was introduced. */
+  images?: ResourceImage[];
   translations: Partial<Record<ContentLanguage, MultimediaTranslation>>;
 }
 
@@ -72,7 +75,8 @@ export interface AppResource extends ResourceBase {
   category: 'apps';
   appStoreUrl?: string;
   playStoreUrl?: string;
-  images: ResourceImage[];
+  /** Absent on documents saved before the multi-image gallery was introduced. */
+  images?: ResourceImage[];
   videoUrl?: string;
   translations: Partial<Record<ContentLanguage, AppTranslation>>;
 }
