@@ -12,26 +12,11 @@
 
   <div>
     <label class="mb-1 block text-sm font-medium text-ink-700">
-      {{ language.t().resources.categoryFields.recipes.photoUrlsLabel }}
-    </label>
-    <app-string-list-editor
-      formControlName="photoUrls"
-      [imageMode]="true"
-      [imageRowLabel]="language.t().resources.categoryFields.recipes.photoUrlsLabel"
-      [addButtonLabel]="
-        language.t().stringListEditor.addRowButton(
-          language.t().resources.categoryFields.recipes.photoUrlsLabel
-        )
-      "
-    />
-  </div>
-
-  <div>
-    <label class="mb-1 block text-sm font-medium text-ink-700">
       {{ language.t().resources.categoryFields.recipes.ingredientsLabel }}
     </label>
     <app-string-list-editor
       formControlName="ingredients"
+      [rowMaxLength]="listItemMaxLength"
       [addButtonLabel]="
         language.t().stringListEditor.addRowButton(
           language.t().resources.categoryFields.recipes.ingredientsLabel
@@ -46,6 +31,7 @@
     </label>
     <app-string-list-editor
       formControlName="steps"
+      [rowMaxLength]="listItemMaxLength"
       [addButtonLabel]="
         language.t().stringListEditor.addRowButton(
           language.t().resources.categoryFields.recipes.stepsLabel

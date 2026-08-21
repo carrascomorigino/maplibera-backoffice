@@ -14,9 +14,10 @@ export function makeResource(overrides: Partial<Resource> = {}): Resource {
     order: 0,
     sourceLinks: [],
     pdfUrls: [],
+    images: [],
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
-    translations: { en: { title: 'Resource', shortDescription: '', explanatoryText: '' } },
+    translations: { en: { title: 'Resource', shortDescription: '' } },
   };
   return { ...base, ...overrides } as Resource;
 }

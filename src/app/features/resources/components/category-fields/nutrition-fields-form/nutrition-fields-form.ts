@@ -18,7 +18,6 @@ import { LanguageService } from '../../../../../core/i18n/language.service';
 export interface NutritionFieldsValue {
   sourceLinks: string[];
   pdfUrls: string[];
-  explanatoryText: string;
 }
 
 @Component({
@@ -37,7 +36,6 @@ export class NutritionFieldsForm implements ControlValueAccessor, Validator {
   readonly form = new FormGroup({
     sourceLinks: new FormControl<string[]>([], { nonNullable: true }),
     pdfUrls: new FormControl<string[]>([], { nonNullable: true }),
-    explanatoryText: new FormControl('', { nonNullable: true }),
   });
 
   private onChange: (value: NutritionFieldsValue) => void = () => {};
@@ -54,7 +52,6 @@ export class NutritionFieldsForm implements ControlValueAccessor, Validator {
       {
         sourceLinks: value?.sourceLinks ?? [],
         pdfUrls: value?.pdfUrls ?? [],
-        explanatoryText: value?.explanatoryText ?? '',
       },
       { emitEvent: false },
     );

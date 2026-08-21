@@ -10,7 +10,11 @@ function createInput(overrides: Partial<OrganizationCreateInput> = {}): Organiza
   return {
     type: 'ngo',
     slug: 'org-one',
-    sharedFields: { logoUrl: 'https://example.com/l.png', scopeType: 'global', contactLinks: {} },
+    sharedFields: {
+      images: [{ url: 'https://example.com/l.png' }],
+      scopeType: 'global',
+      contactLinks: {},
+    },
     language: 'en',
     translation: { name: 'Org One', description: 'Desc' },
     ...overrides,
@@ -24,7 +28,7 @@ function org(overrides: Partial<Organization> = {}): Organization {
     type: 'ngo',
     status: 'draft',
     order: 0,
-    logoUrl: 'https://example.com/l.png',
+    images: [{ url: 'https://example.com/l.png' }],
     scopeType: 'global',
     contactLinks: {},
     createdAt: '2026-01-01T00:00:00.000Z',
@@ -101,8 +105,12 @@ describe('OrganizationService', () => {
 
   it('PATCHes /:id/shared-fields on updateSharedFields', async () => {
     await setup([org()]);
-    const sharedFields = { logoUrl: 'https://example.com/new.png', scopeType: 'global' as const, contactLinks: {} };
-    const updated = org({ logoUrl: sharedFields.logoUrl });
+    const sharedFields = {
+      images: [{ url: 'https://example.com/new.png' }],
+      scopeType: 'global' as const,
+      contactLinks: {},
+    };
+    const updated = org({ images: sharedFields.images });
 
     const promise = service.updateSharedFields('o1', sharedFields);
     const req = httpMock.expectOne(`${BASE_URL}/o1/shared-fields`);

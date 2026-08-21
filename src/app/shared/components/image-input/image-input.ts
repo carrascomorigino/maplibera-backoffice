@@ -50,8 +50,12 @@ type FileError = 'invalidType' | 'tooLarge' | null;
   ],
 })
 export class ImageInput implements ControlValueAccessor, Validator {
+  private static nextId = 0;
+
   private readonly destroyRef = inject(DestroyRef);
   protected readonly language = inject(LanguageService);
+
+  protected readonly instanceId = ImageInput.nextId++;
 
   readonly label = input.required<string>();
 

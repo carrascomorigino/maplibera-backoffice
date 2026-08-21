@@ -18,11 +18,13 @@ import { StaleTranslationSuggestionCache } from '../../../../shared/services/sta
 import { MarkdownEditor } from '../../../../shared/components/markdown-editor/markdown-editor';
 import { QuestionEditor, QuestionDraft } from '../question-editor/question-editor';
 import { CountrySelect } from '../country-select/country-select';
-import { ImageInput } from '../../../../shared/components/image-input/image-input';
+import { ImageGalleryInput } from '../../../../shared/components/image-gallery-input/image-gallery-input';
 import { ImageValue } from '../../../../shared/models/image-value.model';
+import { GalleryImageValue } from '../../../../shared/models/gallery-image-value.model';
 import { resolveImagePayload } from '../../../../shared/utils/image-payload';
 import { slugify } from '../../../../shared/utils/slugify';
-import { SLUG_PATTERN } from '../../../../shared/utils/patterns';
+import { SLUG_PATTERN, URL_PATTERN } from '../../../../shared/utils/patterns';
+import { GALLERY_IMAGE_DESCRIPTION_MAX_LENGTH } from '../../../../shared/utils/gallery-limits';
 import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from '../../utils/field-limits';
 import { LanguageService } from '../../../../core/i18n/language.service';
 
@@ -38,7 +40,7 @@ type CountryScope = 'all' | 'specific';
     MarkdownEditor,
     QuestionEditor,
     CountrySelect,
-    ImageInput,
+    ImageGalleryInput,
   ],
   templateUrl: './section-form-drawer.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,6 +54,7 @@ export class SectionFormDrawer {
   protected readonly contentLanguageLabels = CONTENT_LANGUAGE_LABELS;
   protected readonly titleMaxLength = TITLE_MAX_LENGTH;
   protected readonly descriptionMaxLength = DESCRIPTION_MAX_LENGTH;
+  protected readonly galleryDescriptionMaxLength = GALLERY_IMAGE_DESCRIPTION_MAX_LENGTH;
 
   readonly section = input<Section | undefined>(undefined);
   readonly targetLanguage = input.required<ContentLanguage>();
@@ -101,7 +104,11 @@ export class SectionFormDrawer {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(DESCRIPTION_MAX_LENGTH)],
     }),
-    imageUrl: new FormControl<ImageValue | undefined>(undefined, { nonNullable: true }),
+    images: new FormControl<GalleryImageValue[]>([], { nonNullable: true }),
+    videoUrl: new FormControl('', {
+      nonNullable: true,
+      validators: Validators.pattern(URL_PATTERN),
+    }),
     question: new FormControl<QuestionDraft | undefined>(undefined),
     countryScope: new FormControl<CountryScope>('all', { nonNullable: true }),
     countries: new FormControl<string[]>([], {
@@ -140,7 +147,11 @@ export class SectionFormDrawer {
           title: existing?.title ?? '',
           slug: section?.slug ?? '',
           description: existing?.description ?? '',
-          imageUrl: section?.imageUrl ? { kind: 'url', url: section.imageUrl } : undefined,
+          images: (section?.images ?? []).map((image) => ({
+            image: { kind: 'url', url: image.url } as ImageValue,
+            description: image.description,
+          })),
+          videoUrl: section?.videoUrl ?? '',
           question: this.toQuestionDraft(existing?.question),
           countryScope: section?.availableCountries?.length ? 'specific' : 'all',
           countries: section?.availableCountries ?? [],
@@ -359,9 +370,16 @@ export class SectionFormDrawer {
   }
 
   private async persist(): Promise<Section> {
-    const { title, slug, description, imageUrl, question, countryScope, countries } =
+    const { title, slug, description, images, videoUrl, question, countryScope, countries } =
       this.form.getRawValue();
-    const imagePayload = await resolveImagePayload(imageUrl);
+    const imagesPayload = await Promise.all(
+      images
+        .filter((row): row is GalleryImageValue & { image: ImageValue } => row.image !== undefined)
+        .map(async (row) => ({
+          ...(await resolveImagePayload(row.image)),
+          description: row.description,
+        })),
+    );
     const questionValue = question ? await this.resolveQuestionDraft(question) : undefined;
     const existing = this.section();
     const translation: SectionTranslation = { title, description, question: questionValue };
@@ -370,8 +388,8 @@ export class SectionFormDrawer {
     if (existing) {
       return this.sectionService.saveTranslation(existing.id, {
         slug,
-        imageUrl: imagePayload?.url,
-        imageData: imagePayload?.data,
+        images: imagesPayload,
+        videoUrl,
         language: this.targetLanguage(),
         translation,
         availableCountries,
@@ -380,8 +398,8 @@ export class SectionFormDrawer {
 
     return this.sectionService.create({
       slug,
-      imageUrl: imagePayload?.url,
-      imageData: imagePayload?.data,
+      images: imagesPayload,
+      videoUrl,
       language: this.targetLanguage(),
       translation,
       availableCountries,

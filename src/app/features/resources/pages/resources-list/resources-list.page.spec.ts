@@ -34,14 +34,15 @@ describe('ResourcesListPage', () => {
   function resourceFixture(category: ResourceCategory, slug: string, order = 0): Resource {
     const sharedFields: Record<string, unknown> = {
       nutrition: { sourceLinks: [], pdfUrls: [] },
-      recipes: { preparationMinutes: 10, photoUrls: [] },
-      multimedia: { mediaType: 'podcast', externalUrl: 'https://example.com', posterUrl: '' },
-      apps: { iconUrl: '' },
+      recipes: { preparationMinutes: 10 },
+      multimedia: { mediaType: 'podcast', externalUrl: 'https://example.com' },
+      apps: {},
     }[category]!;
     return makeResource({
       category,
       slug,
       order,
+      images: [],
       translations: { en: { title: slug, shortDescription: '' } },
       ...sharedFields,
     } as Partial<Resource>);

@@ -200,13 +200,20 @@ describe('SectionFormDrawer', () => {
 
     component.form.controls.title.setValue('A title');
     component.form.controls.description.setValue('A description');
-    component.form.controls.imageUrl.setValue({ kind: 'url', url: 'not-a-url' });
+    (fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const urlInput = fixture.nativeElement.querySelector(
+      '[data-testid="image-input-url-field"]',
+    ) as HTMLInputElement;
+    urlInput.value = 'not-a-url';
+    urlInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
     expect(buttons(fixture).save.disabled).toBe(true);
     expect(fixture.nativeElement.querySelector('[data-testid="image-preview"]')).toBeNull();
 
-    component.form.controls.imageUrl.setValue({ kind: 'url', url: 'https://example.com/image.png' });
+    urlInput.value = 'https://example.com/image.png';
+    urlInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
     expect(buttons(fixture).save.disabled).toBe(false);
@@ -215,6 +222,67 @@ describe('SectionFormDrawer', () => {
     ) as HTMLImageElement;
     expect(preview).not.toBeNull();
     expect(preview.src).toBe('https://example.com/image.png');
+  });
+
+  it('caps the image gallery at the default 3 images', () => {
+    const fixture = createFixture('en');
+
+    for (let i = 0; i < 3; i++) {
+      (
+        fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement
+      ).click();
+      fixture.detectChanges();
+    }
+
+    expect(fixture.nativeElement.querySelectorAll('[data-testid="gallery-row"]')).toHaveLength(3);
+    expect(
+      (fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+  });
+
+  describe('video link', () => {
+    it('rejects a malformed URL and accepts a valid one', () => {
+      const fixture = createFixture('en');
+      const component = fixture.componentInstance;
+
+      component.form.controls.title.setValue('A title');
+      component.form.controls.description.setValue('A description');
+      component.form.controls.videoUrl.setValue('not a url');
+      fixture.detectChanges();
+
+      expect(component.form.controls.videoUrl.hasError('pattern')).toBe(true);
+      expect(buttons(fixture).save.disabled).toBe(true);
+
+      component.form.controls.videoUrl.setValue('https://example.com/video.mp4');
+      fixture.detectChanges();
+
+      expect(component.form.controls.videoUrl.hasError('pattern')).toBe(false);
+      expect(buttons(fixture).save.disabled).toBe(false);
+    });
+
+    it('round-trips through populate and persist', async () => {
+      const existing = makeSection({
+        slug: 'with-video',
+        videoUrl: 'https://example.com/video.mp4',
+        translations: { en: { title: 'With video', description: 'Desc' } },
+      });
+      service.seed([existing]);
+      const fixture = TestBed.createComponent(SectionFormDrawer);
+      fixture.componentRef.setInput('section', existing);
+      fixture.componentRef.setInput('targetLanguage', 'en');
+      fixture.detectChanges();
+      const component = fixture.componentInstance;
+
+      expect(component.form.controls.videoUrl.value).toBe('https://example.com/video.mp4');
+
+      component.form.controls.title.setValue('With video updated');
+      fixture.detectChanges();
+      buttons(fixture).save.click();
+      await settle();
+
+      expect(service.sections()[0].videoUrl).toBe('https://example.com/video.mp4');
+    });
   });
 
   describe('slug', () => {
@@ -706,7 +774,7 @@ describe('SectionFormDrawer', () => {
 
       await service.saveTranslation(section.id, {
         slug: section.slug,
-        imageUrl: '',
+        images: [],
         language: 'en',
         translation: { title: 'Getting started v3', description: 'Intro text v3' },
       });

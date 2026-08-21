@@ -385,7 +385,7 @@ describe('SectionListItem', () => {
     it('shows the image and no placeholder when the section has one', () => {
       const section = makeSection({
         slug: 'with-image',
-        imageUrl: 'https://example.com/image.png',
+        images: [{ url: 'https://example.com/image.png' }],
         translations: { en: { title: 'With image', description: '' } },
       });
 

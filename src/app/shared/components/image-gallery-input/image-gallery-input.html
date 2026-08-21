@@ -1,0 +1,60 @@
+<div class="flex flex-col gap-3">
+  <p
+    class="text-sm text-gray-600"
+    aria-live="polite"
+    aria-atomic="true"
+    data-testid="gallery-image-count"
+  >
+    {{ language.t().imageGalleryInput.imageCountLabel(rows.controls.length, maxImages()) }}
+  </p>
+
+  @for (row of rows.controls; track $index) {
+    <div class="flex flex-col gap-2 rounded-lg border border-gray-200 p-3" data-testid="gallery-row">
+      <div class="flex items-start gap-2">
+        <app-image-input
+          class="min-w-0 flex-1"
+          [formControl]="row.controls.image"
+          [label]="rowLabel($index)"
+          data-testid="gallery-image-input"
+        />
+        <button
+          mat-icon-button
+          type="button"
+          data-testid="gallery-remove-button"
+          [attr.aria-label]="language.t().imageGalleryInput.removeRowAria"
+          (click)="removeRow($index)"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <mat-form-field class="min-w-0">
+        <mat-label>{{ descriptionLabel() }}</mat-label>
+        <textarea
+          matInput
+          data-testid="gallery-description-input"
+          [formControl]="row.controls.description"
+          [maxlength]="descriptionMaxLength() ?? null"
+          (blur)="onBlur()"
+        ></textarea>
+        @if (descriptionMaxLength(); as maxLength) {
+          <mat-hint align="end">{{
+            language.t().fieldLimits.charactersRemaining(maxLength - row.controls.description.value.length)
+          }}</mat-hint>
+        }
+      </mat-form-field>
+    </div>
+  }
+
+  <button
+    #addButton
+    mat-stroked-button
+    type="button"
+    class="w-fit"
+    data-testid="gallery-add-button"
+    [disabled]="rows.controls.length >= maxImages()"
+    (click)="addRow()"
+  >
+    {{ addButtonLabel() }}
+  </button>
+</div>

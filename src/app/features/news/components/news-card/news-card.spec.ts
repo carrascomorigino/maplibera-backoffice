@@ -36,7 +36,7 @@ describe('NewsCard', () => {
     return makeNewsItem({
       category: 'news',
       slug: 'new-visitor-center',
-      imageUrl: 'https://example.com/banner.jpg',
+      images: [{ url: 'https://example.com/banner.jpg' }],
       publishedAt: '2026-08-01',
       translations: { en: { title: 'New visitor center', subtitle: 'Now open', description: 'Details' } },
     });
@@ -46,7 +46,7 @@ describe('NewsCard', () => {
     return makeNewsItem({
       category: 'event',
       slug: 'summer-festival',
-      imageUrl: 'https://example.com/festival.jpg',
+      images: [{ url: 'https://example.com/festival.jpg' }],
       publishedAt: '2026-07-01',
       eventDate: '2026-08-15',
       translations: { en: { title: 'Summer festival', subtitle: 'Join us', description: 'Details' } },

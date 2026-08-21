@@ -9,7 +9,7 @@ export function makeSection(overrides: Partial<Section> = {}): Section {
   return {
     id: `id-${++nextId}`,
     slug: 'section',
-    imageUrl: '',
+    images: [],
     status: 'draft',
     order: 0,
     createdAt: '2026-01-01T00:00:00.000Z',
@@ -37,7 +37,11 @@ export class FakeSectionService {
   create = vi.fn(async (input: SectionTranslationInput): Promise<Section> => {
     const section = makeSection({
       slug: input.slug,
-      imageUrl: input.imageUrl ?? '',
+      images: (input.images ?? []).map((image) => ({
+        url: image.url ?? image.data ?? '',
+        description: image.description,
+      })),
+      videoUrl: input.videoUrl,
       order: this._sections().length,
       translations: { [input.language]: input.translation },
       availableCountries: input.availableCountries,
@@ -54,7 +58,11 @@ export class FakeSectionService {
     const updated: Section = {
       ...current,
       slug: input.slug,
-      imageUrl: input.imageUrl ?? '',
+      images: (input.images ?? []).map((image) => ({
+        url: image.url ?? image.data ?? '',
+        description: image.description,
+      })),
+      videoUrl: input.videoUrl,
       translations: { ...current.translations, [input.language]: input.translation },
       availableCountries: input.availableCountries,
       updatedAt: new Date().toISOString(),
