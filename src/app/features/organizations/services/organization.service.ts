@@ -14,7 +14,8 @@ import { ContentLanguage } from '../../guide/models/content-language.model';
 const BASE_URL = '/backend/organizations';
 
 export interface OrganizationSharedFields {
-  logoUrl: string;
+  images?: { url?: string; data?: string; description?: string }[];
+  videoUrl?: string;
   scopeType: OrganizationScopeType;
   countryCode?: string;
   city?: string;
@@ -79,6 +80,11 @@ export class OrganizationService {
     );
     this.replace(updated);
     return updated;
+  }
+
+  async delete(id: string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`${BASE_URL}/${id}`));
+    this.state.update((orgs) => orgs.filter((org) => org.id !== id));
   }
 
   async publish(id: string): Promise<Organization> {

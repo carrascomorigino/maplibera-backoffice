@@ -38,7 +38,8 @@ describe('ResourceCard', () => {
       slug: 'omega-3',
       sourceLinks: [],
       pdfUrls: [],
-      translations: { en: { title: 'Omega 3', shortDescription: 'Good fats', explanatoryText: '' } },
+      images: [],
+      translations: { en: { title: 'Omega 3', shortDescription: 'Good fats' } },
     } as Partial<Resource>);
   }
 
@@ -47,7 +48,7 @@ describe('ResourceCard', () => {
       category: 'recipes',
       slug: 'soup',
       preparationMinutes: 10,
-      photoUrls: ['https://example.com/soup.png'],
+      images: [{ url: 'https://example.com/soup.png' }],
       translations: { en: { title: 'Soup', shortDescription: 'Warm', ingredients: [], steps: [] } },
     } as unknown as Partial<Resource>);
   }
@@ -132,5 +133,18 @@ describe('ResourceCard', () => {
     await Promise.resolve();
 
     expect(service.removeTranslation).toHaveBeenCalledWith(resource.id, 'es');
+  });
+
+  it('emits selectionToggled when the checkbox is toggled', () => {
+    const resource = nutritionResource();
+    const fixture = createFixture(resource);
+    const selectionToggled = vi.fn();
+    fixture.componentInstance.selectionToggled.subscribe(selectionToggled);
+
+    (
+      fixture.nativeElement.querySelector('[data-testid="select-checkbox"] input') as HTMLInputElement
+    ).click();
+
+    expect(selectionToggled).toHaveBeenCalled();
   });
 });

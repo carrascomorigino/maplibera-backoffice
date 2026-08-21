@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -13,29 +22,38 @@ import { NutritionFieldsForm } from '../category-fields/nutrition-fields-form/nu
 import { RecipeFieldsForm } from '../category-fields/recipe-fields-form/recipe-fields-form';
 import { MultimediaFieldsForm } from '../category-fields/multimedia-fields-form/multimedia-fields-form';
 import { AppFieldsForm } from '../category-fields/app-fields-form/app-fields-form';
+import { ImageGalleryInput } from '../../../../shared/components/image-gallery-input/image-gallery-input';
+import { GalleryImageValue } from '../../../../shared/models/gallery-image-value.model';
+import { ImageValue } from '../../../../shared/models/image-value.model';
+import { resolveImagePayload } from '../../../../shared/utils/image-payload';
 import { slugify } from '../../../../shared/utils/slugify';
-import { SLUG_PATTERN } from '../../../../shared/utils/patterns';
+import { SLUG_PATTERN, URL_PATTERN } from '../../../../shared/utils/patterns';
+import { GALLERY_IMAGE_DESCRIPTION_MAX_LENGTH } from '../../../../shared/utils/gallery-limits';
+import { SHORT_DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from '../../utils/field-limits';
+import { categoryLabel } from '../../utils/category-labels';
 import { LanguageService } from '../../../../core/i18n/language.service';
 
+/** Category-scoped shared (non-translated) field keys living inside `categoryFields`. Images and
+ * videoUrl are category-agnostic and live directly on the drawer's main form group instead. */
 const SHARED_FIELD_KEYS: Record<ResourceCategory, readonly string[]> = {
   nutrition: ['sourceLinks', 'pdfUrls'],
-  recipes: ['preparationMinutes', 'photoUrls'],
-  multimedia: ['mediaType', 'externalUrl', 'posterUrl'],
-  apps: ['appStoreUrl', 'playStoreUrl', 'iconUrl'],
+  recipes: ['preparationMinutes'],
+  multimedia: ['mediaType', 'externalUrl'],
+  apps: ['appStoreUrl', 'playStoreUrl'],
 };
 
 const TRANSLATED_FIELD_KEYS: Record<ResourceCategory, readonly string[]> = {
-  nutrition: ['explanatoryText'],
+  nutrition: [],
   recipes: ['ingredients', 'steps'],
   multimedia: [],
   apps: [],
 };
 
 const DEFAULT_CATEGORY_FIELDS: Record<ResourceCategory, Record<string, unknown>> = {
-  nutrition: { sourceLinks: [], pdfUrls: [], explanatoryText: '' },
-  recipes: { preparationMinutes: 0, photoUrls: [], ingredients: [], steps: [] },
-  multimedia: { mediaType: 'documentary', externalUrl: '', posterUrl: '' },
-  apps: { appStoreUrl: '', playStoreUrl: '', iconUrl: '' },
+  nutrition: { sourceLinks: [], pdfUrls: [] },
+  recipes: { preparationMinutes: 0, ingredients: [], steps: [] },
+  multimedia: { mediaType: 'documentary', externalUrl: '' },
+  apps: { appStoreUrl: '', playStoreUrl: '' },
 };
 
 @Component({
@@ -45,6 +63,7 @@ const DEFAULT_CATEGORY_FIELDS: Record<ResourceCategory, Record<string, unknown>>
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    ImageGalleryInput,
     NutritionFieldsForm,
     RecipeFieldsForm,
     MultimediaFieldsForm,
@@ -60,6 +79,9 @@ export class ResourceFormDrawer {
   private readonly snackBar = inject(MatSnackBar);
   protected readonly language = inject(LanguageService);
   protected readonly contentLanguageLabels = CONTENT_LANGUAGE_LABELS;
+  protected readonly titleMaxLength = TITLE_MAX_LENGTH;
+  protected readonly shortDescriptionMaxLength = SHORT_DESCRIPTION_MAX_LENGTH;
+  protected readonly galleryDescriptionMaxLength = GALLERY_IMAGE_DESCRIPTION_MAX_LENGTH;
 
   readonly resource = input<Resource | undefined>(undefined);
   readonly category = input.required<ResourceCategory>();
@@ -74,6 +96,10 @@ export class ResourceFormDrawer {
   readonly staleSuggestion = signal<Record<string, unknown> | undefined>(undefined);
   readonly staleSuggestionLoading = signal(false);
   readonly previewRevealed = signal(false);
+
+  protected readonly categoryHeadingLabel = computed(() =>
+    categoryLabel(this.language.t().resources.resourcesList, this.category()),
+  );
 
   private readonly slugManuallyEdited = signal(false);
   private suggestionRequested = false;
@@ -92,12 +118,23 @@ export class ResourceFormDrawer {
   };
 
   readonly form = new FormGroup({
-    title: new FormControl('', { nonNullable: true, validators: Validators.required }),
+    title: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH)],
+    }),
     slug: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(SLUG_PATTERN), this.duplicateSlugValidator],
     }),
-    shortDescription: new FormControl('', { nonNullable: true, validators: Validators.required }),
+    shortDescription: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(SHORT_DESCRIPTION_MAX_LENGTH)],
+    }),
+    images: new FormControl<GalleryImageValue[]>([], { nonNullable: true }),
+    videoUrl: new FormControl('', {
+      nonNullable: true,
+      validators: Validators.pattern(URL_PATTERN),
+    }),
     categoryFields: new FormControl<Record<string, unknown>>({}, { nonNullable: true }),
   });
 
@@ -126,8 +163,9 @@ export class ResourceFormDrawer {
 
       const sharedValues: Record<string, unknown> = {};
       if (resource) {
+        const rawResource = resource as unknown as Record<string, unknown>;
         for (const key of SHARED_FIELD_KEYS[category]) {
-          sharedValues[key] = (resource as unknown as Record<string, unknown>)[key];
+          sharedValues[key] = rawResource[key];
         }
       }
       const translatedValues: Record<string, unknown> = {};
@@ -142,6 +180,11 @@ export class ResourceFormDrawer {
           title: (existing?.['title'] as string) ?? '',
           slug: resource?.slug ?? '',
           shortDescription: (existing?.['shortDescription'] as string) ?? '',
+          images: (resource?.images ?? []).map((image) => ({
+            image: { kind: 'url', url: image.url } as ImageValue,
+            description: image.description,
+          })),
+          videoUrl: (resource as unknown as { videoUrl?: string } | undefined)?.videoUrl ?? '',
           categoryFields: { ...DEFAULT_CATEGORY_FIELDS[category], ...sharedValues, ...translatedValues },
         },
         { emitEvent: false },
@@ -336,17 +379,31 @@ export class ResourceFormDrawer {
   }
 
   private async persist(): Promise<Resource> {
-    const { title, slug, shortDescription, categoryFields } = this.form.getRawValue();
+    const { title, slug, shortDescription, images, videoUrl, categoryFields } = this.form.getRawValue();
     const category = this.category();
     const sharedKeys = SHARED_FIELD_KEYS[category];
     const sharedFields: Record<string, unknown> = {};
     const translation: Record<string, unknown> = { title, shortDescription };
+
     for (const [key, value] of Object.entries(categoryFields)) {
       if (sharedKeys.includes(key)) {
         sharedFields[key] = value;
       } else {
         translation[key] = value;
       }
+    }
+
+    const imagesPayload = await Promise.all(
+      images
+        .filter((row): row is GalleryImageValue & { image: ImageValue } => row.image !== undefined)
+        .map(async (row) => ({
+          ...(await resolveImagePayload(row.image)),
+          description: row.description,
+        })),
+    );
+    sharedFields['images'] = imagesPayload;
+    if (category !== 'multimedia') {
+      sharedFields['videoUrl'] = videoUrl;
     }
 
     const existing = this.resource();

@@ -8,7 +8,8 @@ const BASE_URL = '/backend/sections';
 
 export interface SectionTranslationInput {
   slug: string;
-  imageUrl: string;
+  images?: { url?: string; data?: string; description?: string }[];
+  videoUrl?: string;
   language: ContentLanguage;
   translation: SectionTranslation;
   availableCountries?: string[];
@@ -57,6 +58,11 @@ export class SectionService {
 
   async pause(id: string): Promise<Section> {
     return this.setStatus(id, 'paused');
+  }
+
+  async delete(id: string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`${BASE_URL}/${id}`));
+    this.state.update((sections) => sections.filter((section) => section.id !== id));
   }
 
   async reorder(orderedIds: string[]): Promise<void> {

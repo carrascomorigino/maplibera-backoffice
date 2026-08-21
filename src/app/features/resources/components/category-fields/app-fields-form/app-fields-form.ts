@@ -19,7 +19,6 @@ import { LanguageService } from '../../../../../core/i18n/language.service';
 export interface AppFieldsValue {
   appStoreUrl: string;
   playStoreUrl: string;
-  iconUrl: string;
 }
 
 @Component({
@@ -38,7 +37,6 @@ export class AppFieldsForm implements ControlValueAccessor, Validator {
   readonly form = new FormGroup({
     appStoreUrl: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
     playStoreUrl: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
-    iconUrl: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
   });
 
   private onChange: (value: AppFieldsValue) => void = () => {};
@@ -55,7 +53,6 @@ export class AppFieldsForm implements ControlValueAccessor, Validator {
       {
         appStoreUrl: value?.appStoreUrl ?? '',
         playStoreUrl: value?.playStoreUrl ?? '',
-        iconUrl: value?.iconUrl ?? '',
       },
       { emitEvent: false },
     );

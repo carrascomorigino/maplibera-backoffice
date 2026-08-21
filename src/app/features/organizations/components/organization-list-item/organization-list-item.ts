@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -36,7 +37,7 @@ interface ContactLinkEntry {
 
 @Component({
   selector: 'app-organization-list-item',
-  imports: [MatButtonModule, MatIconModule, LanguageTags],
+  imports: [MatButtonModule, MatCheckboxModule, MatIconModule, LanguageTags],
   templateUrl: './organization-list-item.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
@@ -53,9 +54,11 @@ export class OrganizationListItem {
   protected readonly contentLanguageLabels = CONTENT_LANGUAGE_LABELS;
 
   readonly organization = input.required<Organization>();
+  readonly selected = input<boolean>(false);
 
   readonly editRequested = output<OrganizationEditRequestedEvent>();
   readonly translateRequested = output<OrganizationTranslateRequestedEvent>();
+  readonly selectionToggled = output<void>();
 
   private readonly _selectedLanguage = signal<ContentLanguage | undefined>(undefined);
 

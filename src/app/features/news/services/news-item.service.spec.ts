@@ -10,7 +10,11 @@ function createInput(overrides: Partial<NewsItemCreateInput> = {}): NewsItemCrea
   return {
     category: 'news',
     slug: 'news-one',
-    sharedFields: { imageUrl: 'https://example.com/n.jpg', publishedAt: '2026-01-01', sourceLinks: [] },
+    sharedFields: {
+      images: [{ url: 'https://example.com/n.jpg' }],
+      publishedAt: '2026-01-01',
+      sourceLinks: [],
+    },
     language: 'en',
     translation: { title: 'News One', subtitle: 'Sub', description: 'Desc' },
     ...overrides,
@@ -23,7 +27,7 @@ function item(overrides: Partial<NewsItem> = {}): NewsItem {
     slug: 'news-one',
     category: 'news',
     status: 'draft',
-    imageUrl: 'https://example.com/n.jpg',
+    images: [{ url: 'https://example.com/n.jpg' }],
     publishedAt: '2026-01-01',
     sourceLinks: [],
     createdAt: '2026-01-01T00:00:00.000Z',
@@ -99,7 +103,11 @@ describe('NewsItemService', () => {
 
   it('PATCHes /:id/shared-fields on updateSharedFields', async () => {
     await setup([item()]);
-    const sharedFields = { imageUrl: 'https://example.com/new.jpg', publishedAt: '2026-02-01', sourceLinks: [] };
+    const sharedFields = {
+      images: [{ url: 'https://example.com/new.jpg' }],
+      publishedAt: '2026-02-01',
+      sourceLinks: [],
+    };
     const updated = item(sharedFields);
 
     const promise = service.updateSharedFields('n1', sharedFields);
@@ -109,6 +117,18 @@ describe('NewsItemService', () => {
     req.flush(updated);
 
     await expect(promise).resolves.toEqual(updated);
+  });
+
+  it('DELETEs /:id on delete and removes the item from the list', async () => {
+    await setup([item({ id: 'a' }), item({ id: 'b' })]);
+
+    const promise = service.delete('a');
+    const req = httpMock.expectOne(`${BASE_URL}/a`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+
+    await promise;
+    expect(service.items().map((i) => i.id)).toEqual(['b']);
   });
 
   it('publish/pause POST to /:id/publish and /:id/pause', async () => {

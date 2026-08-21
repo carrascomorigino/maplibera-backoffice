@@ -38,6 +38,15 @@
       </button>
     </div>
 
+    @if (selectedCount() > 0) {
+      <app-selection-toolbar
+        class="mb-4 block"
+        [selectedCount]="selectedCount()"
+        (deleteRequested)="requestBulkDelete()"
+        (clearRequested)="clearSelection()"
+      />
+    }
+
     @if (visibleItems().length === 0) {
       <p
         data-testid="empty-state"
@@ -48,7 +57,13 @@
     } @else {
       <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))">
         @for (item of visibleItems(); track item.slug) {
-          <app-news-card [item]="item" (editRequested)="openEdit($event)" (translateRequested)="openTranslate($event)" />
+          <app-news-card
+            [item]="item"
+            [selected]="isSelected(item.id)"
+            (editRequested)="openEdit($event)"
+            (translateRequested)="openTranslate($event)"
+            (selectionToggled)="toggleSelection(item.id)"
+          />
         }
       </div>
     }

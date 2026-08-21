@@ -18,19 +18,23 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { Question, QuestionAnswer, QuestionType } from '../../models/section.model';
-import { URL_PATTERN } from '../../../../shared/utils/patterns';
+import { ImageValue } from '../../../../shared/models/image-value.model';
 import {
   ANSWER_TEXT_MAX_LENGTH,
   QUESTION_DETAIL_MAX_LENGTH,
   QUESTION_TEXT_MAX_LENGTH,
 } from '../../utils/field-limits';
 import { MarkdownEditor } from '../../../../shared/components/markdown-editor/markdown-editor';
+import { ImageInput } from '../../../../shared/components/image-input/image-input';
 import { LanguageService } from '../../../../core/i18n/language.service';
+
+export type QuestionAnswerDraft = Omit<QuestionAnswer, 'imageUrl'> & { imageUrl?: ImageValue };
+export type QuestionDraft = Omit<Question, 'answers'> & { answers?: QuestionAnswerDraft[] };
 
 type AnswerGroup = FormGroup<{
   text: FormControl<string>;
   isCorrect: FormControl<boolean>;
-  imageUrl: FormControl<string>;
+  imageUrl: FormControl<ImageValue | undefined>;
 }>;
 
 export type SingleCorrectKey = number | 'all' | 'none';
@@ -42,10 +46,8 @@ const imageRequiredWhenSiblingHasImage: ValidatorFn = (control: AbstractControl)
   if (!parentArray) {
     return null;
   }
-  const anyHasImage = parentArray.controls.some((row) =>
-    Boolean(row.controls.imageUrl.value.trim()),
-  );
-  const value = (control.value as string).trim();
+  const anyHasImage = parentArray.controls.some((row) => Boolean(row.controls.imageUrl.value));
+  const value = control.value as ImageValue | undefined;
   return anyHasImage && !value ? { imageRequired: true } : null;
 };
 
@@ -81,6 +83,7 @@ function questionGroupValidator(group: AbstractControl): ValidationErrors | null
     MatInputModule,
     MatIconModule,
     MarkdownEditor,
+    ImageInput,
   ],
   templateUrl: './question-editor.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -119,7 +122,7 @@ export class QuestionEditor implements ControlValueAccessor, Validator {
     return this.form.controls.answers;
   }
 
-  private onChange: (value: Question | undefined) => void = () => {};
+  private onChange: (value: QuestionDraft | undefined) => void = () => {};
   private onTouched: () => void = () => {};
   private onValidatorChange: () => void = () => {};
 
@@ -192,7 +195,7 @@ export class QuestionEditor implements ControlValueAccessor, Validator {
     });
   }
 
-  writeValue(question: Question | undefined): void {
+  writeValue(question: QuestionDraft | undefined): void {
     this.answers.clear({ emitEvent: false });
     this.form.reset(
       {
@@ -227,7 +230,7 @@ export class QuestionEditor implements ControlValueAccessor, Validator {
     this.cdr.markForCheck();
   }
 
-  registerOnChange(fn: (value: Question | undefined) => void): void {
+  registerOnChange(fn: (value: QuestionDraft | undefined) => void): void {
     this.onChange = fn;
   }
 
@@ -330,21 +333,21 @@ export class QuestionEditor implements ControlValueAccessor, Validator {
     this.cdr.markForCheck();
   }
 
-  private buildAnswerGroup(answer?: QuestionAnswer): AnswerGroup {
+  private buildAnswerGroup(answer?: QuestionAnswerDraft): AnswerGroup {
     return new FormGroup({
       text: new FormControl(answer?.text ?? '', {
         nonNullable: true,
         validators: Validators.required,
       }),
       isCorrect: new FormControl(answer?.isCorrect ?? false, { nonNullable: true }),
-      imageUrl: new FormControl(answer?.imageUrl ?? '', {
+      imageUrl: new FormControl<ImageValue | undefined>(answer?.imageUrl, {
         nonNullable: true,
-        validators: [Validators.pattern(URL_PATTERN), imageRequiredWhenSiblingHasImage],
+        validators: [imageRequiredWhenSiblingHasImage],
       }),
     });
   }
 
-  private buildQuestion(): Question | undefined {
+  private buildQuestion(): QuestionDraft | undefined {
     const raw = this.form.getRawValue();
     const text = raw.text.trim();
     if (!text) {
@@ -366,7 +369,7 @@ export class QuestionEditor implements ControlValueAccessor, Validator {
       };
     }
 
-    const answers: QuestionAnswer[] = raw.answers.map((answer) => ({
+    const answers: QuestionAnswerDraft[] = raw.answers.map((answer) => ({
       text: answer.text,
       isCorrect: answer.isCorrect,
       ...(answer.imageUrl ? { imageUrl: answer.imageUrl } : {}),

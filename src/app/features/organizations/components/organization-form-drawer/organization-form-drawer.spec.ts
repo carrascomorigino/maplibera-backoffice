@@ -7,10 +7,12 @@ import { TranslationSuggestionService } from '../../../../shared/services/transl
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { FakeOrganizationService, makeOrganization } from '../../testing/fake-organization-service';
 
+// A plain chain of microtask `await`s isn't deep enough here: resolving gallery images
+// goes through `resolveImagePayload` (itself async) inside a `Promise.all(...).map(...)`,
+// adding more microtask hops than the fixed-depth chain used elsewhere covers. Flushing at
+// a macrotask boundary drains the whole microtask queue regardless of depth.
 async function settle(): Promise<void> {
-  await Promise.resolve();
-  await Promise.resolve();
-  await Promise.resolve();
+  await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 describe('OrganizationFormDrawer', () => {
@@ -54,7 +56,9 @@ describe('OrganizationFormDrawer', () => {
   function fillRequiredFields(component: OrganizationFormDrawer) {
     component.form.controls.name.setValue('Friends of the River');
     component.form.controls.description.setValue('A local river conservation group');
-    component.form.controls.logoUrl.setValue('https://example.com/logo.png');
+    component.form.controls.images.setValue([
+      { image: { kind: 'url', url: 'https://example.com/logo.png' } },
+    ]);
   }
 
   function existingOrganization() {
@@ -88,7 +92,7 @@ describe('OrganizationFormDrawer', () => {
     expect(editFixture.componentInstance.form.controls.type.disabled).toBe(true);
   });
 
-  it('disables Save until name, description and logoUrl are filled', () => {
+  it('disables Save until name, description and at least one image are filled', () => {
     const fixture = createFixture();
     const component = fixture.componentInstance;
 
@@ -231,7 +235,9 @@ describe('OrganizationFormDrawer', () => {
     fixture.detectChanges();
     const component = fixture.componentInstance;
 
-    component.form.controls.logoUrl.setValue('https://example.com/new-logo.png');
+    component.form.controls.images.setValue([
+      { image: { kind: 'url', url: 'https://example.com/new-logo.png' } },
+    ]);
     component.form.controls.scopeType.setValue('country');
     component.form.controls.countryCode.setValue('AR');
     component.form.controls.website.setValue('https://example.org');
@@ -241,7 +247,7 @@ describe('OrganizationFormDrawer', () => {
     await settle();
 
     const updated = service.organizations()[0];
-    expect(updated.logoUrl).toBe('https://example.com/new-logo.png');
+    expect(updated.images).toEqual([{ url: 'https://example.com/new-logo.png', description: undefined }]);
     expect(updated.scopeType).toBe('country');
     expect(updated.countryCode).toBe('AR');
     expect(updated.contactLinks.website).toBe('https://example.org');
@@ -269,6 +275,91 @@ describe('OrganizationFormDrawer', () => {
 
       expect(component.form.controls.slug.hasError('duplicateSlug')).toBe(true);
       expect(buttons(fixture).save.disabled).toBe(true);
+    });
+  });
+
+  describe('image gallery', () => {
+    it('requires at least one image and blocks submission until one is added', () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      component.form.controls.name.setValue('Friends of the River');
+      component.form.controls.description.setValue('A local river conservation group');
+      fixture.detectChanges();
+
+      expect(component.form.controls.images.hasError('galleryRequired')).toBe(true);
+      expect(buttons(fixture).save.disabled).toBe(true);
+      expect(fixture.nativeElement.querySelector('mat-error')?.textContent?.trim()).toBe(
+        language.t().organizations.organizationForm.imagesRequiredError,
+      );
+
+      component.form.controls.images.setValue([
+        { image: { kind: 'url', url: 'https://example.com/logo.png' } },
+      ]);
+      fixture.detectChanges();
+
+      expect(component.form.controls.images.hasError('galleryRequired')).toBe(false);
+      expect(buttons(fixture).save.disabled).toBe(false);
+    });
+
+    it('caps the image gallery at the default 3 images', () => {
+      const fixture = createFixture();
+
+      for (let i = 0; i < 3; i++) {
+        (
+          fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement
+        ).click();
+        fixture.detectChanges();
+      }
+
+      expect(fixture.nativeElement.querySelectorAll('[data-testid="gallery-row"]')).toHaveLength(3);
+      expect(
+        (fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement)
+          .disabled,
+      ).toBe(true);
+    });
+  });
+
+  describe('video link', () => {
+    it('rejects a malformed URL and accepts a valid one', () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      fillRequiredFields(component);
+      component.form.controls.videoUrl.setValue('not a url');
+      fixture.detectChanges();
+
+      expect(component.form.controls.videoUrl.hasError('pattern')).toBe(true);
+      expect(buttons(fixture).save.disabled).toBe(true);
+
+      component.form.controls.videoUrl.setValue('https://example.com/video.mp4');
+      fixture.detectChanges();
+
+      expect(component.form.controls.videoUrl.hasError('pattern')).toBe(false);
+      expect(buttons(fixture).save.disabled).toBe(false);
+    });
+
+    it('round-trips through populate and persist', async () => {
+      const existing = makeOrganization({
+        slug: 'with-video',
+        videoUrl: 'https://example.com/video.mp4',
+        translations: { en: { name: 'With video', description: 'Desc' } },
+      });
+      service.seed([existing]);
+      const fixture = TestBed.createComponent(OrganizationFormDrawer);
+      fixture.componentRef.setInput('organization', existing);
+      fixture.componentRef.setInput('targetLanguage', 'en');
+      fixture.detectChanges();
+      const component = fixture.componentInstance;
+
+      expect(component.form.controls.videoUrl.value).toBe('https://example.com/video.mp4');
+
+      component.form.controls.name.setValue('With video updated');
+      fixture.detectChanges();
+      buttons(fixture).save.click();
+      await settle();
+
+      expect(service.organizations()[0].videoUrl).toBe('https://example.com/video.mp4');
     });
   });
 

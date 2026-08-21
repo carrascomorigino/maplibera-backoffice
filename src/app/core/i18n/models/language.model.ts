@@ -33,8 +33,33 @@ export interface Translations {
     removeRowAria: string;
     invalidUrlError: string;
   };
+  imageInput: {
+    urlModeLabel: string;
+    uploadModeLabel: string;
+    uploadButtonLabel: string;
+    changeButtonLabel: string;
+    invalidUrlError: string;
+    invalidFileTypeError: string;
+    fileTooLargeError: (maxSizeMb: number) => string;
+  };
+  imageGalleryInput: {
+    removeRowAria: string;
+    imageCountLabel: (current: number, max: number) => string;
+  };
   fieldLimits: {
     charactersRemaining: (count: number) => string;
+  };
+  bulkSelection: {
+    itemCheckboxAria: (itemLabel: string) => string;
+    selectedCountLabel: (count: number) => string;
+    deleteSelectedButton: string;
+    clearSelectionButton: string;
+    deleteConfirmTitle: string;
+    deleteConfirmMessage: (count: number) => string;
+    deleteConfirmConfirmButton: string;
+    deleteConfirmCancelButton: string;
+    actionFailedNotice: string;
+    actionFailedDismiss: string;
   };
   guide: {
     sectionsList: {
@@ -63,7 +88,11 @@ export interface Translations {
       slugPatternError: string;
       duplicateSlugError: string;
       descriptionLabel: string;
-      imageUrlLabel: string;
+      imagesLabel: string;
+      imageRowLabel: string;
+      addImageButton: string;
+      imageDescriptionLabel: string;
+      videoUrlLabel: string;
       countryScopeLabel: string;
       countryScopeAllOption: string;
       countryScopeSpecificOption: string;
@@ -132,13 +161,18 @@ export interface Translations {
       reorderAriaLabel: (title: string) => string;
     };
     resourceForm: {
-      editHeading: string;
-      newHeading: string;
+      editHeading: (category: string) => string;
+      newHeading: (category: string) => string;
       titleLabel: string;
       slugLabel: string;
       slugPatternError: string;
       duplicateSlugError: string;
       shortDescriptionLabel: string;
+      imagesLabel: string;
+      imageRowLabel: string;
+      addImageButton: string;
+      imageDescriptionLabel: string;
+      videoUrlLabel: string;
       saveButton: string;
       publishButton: string;
       cancelButton: string;
@@ -154,13 +188,11 @@ export interface Translations {
     };
     categoryFields: {
       nutrition: {
-        explanatoryTextLabel: string;
         sourceLinksLabel: string;
         pdfUrlsLabel: string;
       };
       recipes: {
         preparationMinutesLabel: string;
-        photoUrlsLabel: string;
         ingredientsLabel: string;
         stepsLabel: string;
       };
@@ -170,12 +202,10 @@ export interface Translations {
         mediaTypeBook: string;
         mediaTypePodcast: string;
         externalUrlLabel: string;
-        posterUrlLabel: string;
       };
       apps: {
         appStoreUrlLabel: string;
         playStoreUrlLabel: string;
-        iconUrlLabel: string;
       };
     };
   };
@@ -207,7 +237,12 @@ export interface Translations {
       duplicateSlugError: string;
       subtitleLabel: string;
       descriptionLabel: string;
-      imageUrlLabel: string;
+      imagesLabel: string;
+      imageRowLabel: string;
+      addImageButton: string;
+      imageDescriptionLabel: string;
+      imagesRequiredError: string;
+      videoUrlLabel: string;
       publishedAtLabel: string;
       eventDateLabel: string;
       eventDateRequiredError: string;
@@ -264,7 +299,12 @@ export interface Translations {
       slugPatternError: string;
       duplicateSlugError: string;
       descriptionLabel: string;
-      logoUrlLabel: string;
+      imagesLabel: string;
+      imageRowLabel: string;
+      addImageButton: string;
+      imageDescriptionLabel: string;
+      imagesRequiredError: string;
+      videoUrlLabel: string;
       scopeLabel: string;
       scopeGlobalOption: string;
       scopeCountryOption: string;

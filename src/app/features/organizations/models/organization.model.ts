@@ -24,7 +24,8 @@ export interface Organization {
   type: OrganizationType;
   status: OrganizationStatus;
   order: number;
-  logoUrl: string;
+  images: { url: string; description?: string }[];
+  videoUrl?: string;
   scopeType: OrganizationScopeType;
   /** ISO 3166-1 alpha-2 code. Only meaningful when scopeType === 'country'. */
   countryCode?: string;

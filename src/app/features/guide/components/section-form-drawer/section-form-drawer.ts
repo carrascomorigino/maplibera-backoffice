@@ -16,10 +16,15 @@ import { SectionService } from '../../services/section.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { StaleTranslationSuggestionCache } from '../../../../shared/services/stale-translation-suggestion-cache.service';
 import { MarkdownEditor } from '../../../../shared/components/markdown-editor/markdown-editor';
-import { QuestionEditor } from '../question-editor/question-editor';
+import { QuestionEditor, QuestionDraft } from '../question-editor/question-editor';
 import { CountrySelect } from '../country-select/country-select';
+import { ImageGalleryInput } from '../../../../shared/components/image-gallery-input/image-gallery-input';
+import { ImageValue } from '../../../../shared/models/image-value.model';
+import { GalleryImageValue } from '../../../../shared/models/gallery-image-value.model';
+import { resolveImagePayload } from '../../../../shared/utils/image-payload';
 import { slugify } from '../../../../shared/utils/slugify';
-import { URL_PATTERN, SLUG_PATTERN } from '../../../../shared/utils/patterns';
+import { SLUG_PATTERN, URL_PATTERN } from '../../../../shared/utils/patterns';
+import { GALLERY_IMAGE_DESCRIPTION_MAX_LENGTH } from '../../../../shared/utils/gallery-limits';
 import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from '../../utils/field-limits';
 import { LanguageService } from '../../../../core/i18n/language.service';
 
@@ -35,6 +40,7 @@ type CountryScope = 'all' | 'specific';
     MarkdownEditor,
     QuestionEditor,
     CountrySelect,
+    ImageGalleryInput,
   ],
   templateUrl: './section-form-drawer.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -48,6 +54,7 @@ export class SectionFormDrawer {
   protected readonly contentLanguageLabels = CONTENT_LANGUAGE_LABELS;
   protected readonly titleMaxLength = TITLE_MAX_LENGTH;
   protected readonly descriptionMaxLength = DESCRIPTION_MAX_LENGTH;
+  protected readonly galleryDescriptionMaxLength = GALLERY_IMAGE_DESCRIPTION_MAX_LENGTH;
 
   readonly section = input<Section | undefined>(undefined);
   readonly targetLanguage = input.required<ContentLanguage>();
@@ -97,11 +104,12 @@ export class SectionFormDrawer {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(DESCRIPTION_MAX_LENGTH)],
     }),
-    imageUrl: new FormControl('', {
+    images: new FormControl<GalleryImageValue[]>([], { nonNullable: true }),
+    videoUrl: new FormControl('', {
       nonNullable: true,
       validators: Validators.pattern(URL_PATTERN),
     }),
-    question: new FormControl<Question | undefined>(undefined),
+    question: new FormControl<QuestionDraft | undefined>(undefined),
     countryScope: new FormControl<CountryScope>('all', { nonNullable: true }),
     countries: new FormControl<string[]>([], {
       nonNullable: true,
@@ -139,8 +147,12 @@ export class SectionFormDrawer {
           title: existing?.title ?? '',
           slug: section?.slug ?? '',
           description: existing?.description ?? '',
-          imageUrl: section?.imageUrl ?? '',
-          question: existing?.question ?? undefined,
+          images: (section?.images ?? []).map((image) => ({
+            image: { kind: 'url', url: image.url } as ImageValue,
+            description: image.description,
+          })),
+          videoUrl: section?.videoUrl ?? '',
+          question: this.toQuestionDraft(existing?.question),
           countryScope: section?.availableCountries?.length ? 'specific' : 'all',
           countries: section?.availableCountries ?? [],
         },
@@ -184,7 +196,29 @@ export class SectionFormDrawer {
     if (!suggestedQuestion) {
       return false;
     }
-    return JSON.stringify(suggestedQuestion) !== JSON.stringify(this.form.controls.question.value ?? undefined);
+    // Comparing the AI suggestion's Question (plain string answer image URLs) against the
+    // form's QuestionDraft (ImageValue answer images) via JSON.stringify never matches once
+    // images are involved — acceptable, low-priority cosmetic limitation (see plan notes).
+    return (
+      JSON.stringify(suggestedQuestion) !== JSON.stringify(this.form.controls.question.value ?? undefined)
+    );
+  }
+
+  /** Wraps a persisted Question's plain string answer image URLs as ImageValue for the form. */
+  private toQuestionDraft(question: Question | undefined): QuestionDraft | undefined {
+    if (!question) {
+      return undefined;
+    }
+    if (!question.answers) {
+      return question as QuestionDraft;
+    }
+    return {
+      ...question,
+      answers: question.answers.map((answer) => {
+        const { imageUrl, ...rest } = answer;
+        return { ...rest, ...(imageUrl ? { imageUrl: { kind: 'url', url: imageUrl } as ImageValue } : {}) };
+      }),
+    };
   }
 
   private loadStaleSuggestion(
@@ -247,7 +281,9 @@ export class SectionFormDrawer {
   protected acceptQuestionSuggestion(): void {
     const suggestion = this.staleSuggestion();
     if (suggestion) {
-      this.form.controls.question.setValue(suggestion.question, { emitEvent: false });
+      this.form.controls.question.setValue(this.toQuestionDraft(suggestion.question), {
+        emitEvent: false,
+      });
     }
   }
 
@@ -306,7 +342,7 @@ export class SectionFormDrawer {
           {
             title: result.title,
             description: result.description,
-            question: result.question,
+            question: this.toQuestionDraft(result.question),
           },
           { emitEvent: false },
         );
@@ -321,7 +357,7 @@ export class SectionFormDrawer {
           {
             title: sourceTranslation.title,
             description: sourceTranslation.description,
-            question: sourceTranslation.question,
+            question: this.toQuestionDraft(sourceTranslation.question),
           },
           { emitEvent: false },
         );
@@ -334,9 +370,17 @@ export class SectionFormDrawer {
   }
 
   private async persist(): Promise<Section> {
-    const { title, slug, description, imageUrl, question, countryScope, countries } =
+    const { title, slug, description, images, videoUrl, question, countryScope, countries } =
       this.form.getRawValue();
-    const questionValue = question ?? undefined;
+    const imagesPayload = await Promise.all(
+      images
+        .filter((row): row is GalleryImageValue & { image: ImageValue } => row.image !== undefined)
+        .map(async (row) => ({
+          ...(await resolveImagePayload(row.image)),
+          description: row.description,
+        })),
+    );
+    const questionValue = question ? await this.resolveQuestionDraft(question) : undefined;
     const existing = this.section();
     const translation: SectionTranslation = { title, description, question: questionValue };
     const availableCountries = countryScope === 'specific' ? countries : undefined;
@@ -344,7 +388,8 @@ export class SectionFormDrawer {
     if (existing) {
       return this.sectionService.saveTranslation(existing.id, {
         slug,
-        imageUrl,
+        images: imagesPayload,
+        videoUrl,
         language: this.targetLanguage(),
         translation,
         availableCountries,
@@ -353,10 +398,25 @@ export class SectionFormDrawer {
 
     return this.sectionService.create({
       slug,
-      imageUrl,
+      images: imagesPayload,
+      videoUrl,
       language: this.targetLanguage(),
       translation,
       availableCountries,
     });
+  }
+
+  private async resolveQuestionDraft(draft: QuestionDraft): Promise<Question> {
+    if (!draft.answers) {
+      return draft as Question;
+    }
+    const answers = await Promise.all(
+      draft.answers.map(async (answer) => {
+        const payload = await resolveImagePayload(answer.imageUrl);
+        const { imageUrl: _imageUrl, ...rest } = answer;
+        return { ...rest, imageUrl: payload?.url, imageData: payload?.data };
+      }),
+    );
+    return { ...draft, answers } as Question;
   }
 }

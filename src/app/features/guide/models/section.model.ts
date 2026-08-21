@@ -8,6 +8,7 @@ export interface QuestionAnswer {
   text: string;
   isCorrect: boolean;
   imageUrl?: string;
+  imageData?: string;
 }
 
 export interface Question {
@@ -32,7 +33,8 @@ export interface Section {
   /** Stable backend identifier — unlike slug, this never changes on rename. */
   id: string;
   slug: string;
-  imageUrl: string;
+  images: { url: string; description?: string }[];
+  videoUrl?: string;
   status: SectionStatus;
   order: number;
   createdAt: string;

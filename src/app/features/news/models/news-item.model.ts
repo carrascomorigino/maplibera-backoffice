@@ -15,7 +15,8 @@ export interface NewsItem {
   slug: string;
   category: NewsCategory;
   status: NewsStatus;
-  imageUrl: string;
+  images: { url: string; description?: string }[];
+  videoUrl?: string;
   publishedAt: string;
   eventDate?: string;
   sourceLinks: string[];

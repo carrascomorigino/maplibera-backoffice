@@ -5,8 +5,9 @@ import { ResourceFormDrawer } from './resource-form-drawer';
 import { ResourceService } from '../../services/resource.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
-import { RecipeResource, Resource } from '../../models/resource.model';
+import { AppResource, MultimediaResource, RecipeResource, Resource } from '../../models/resource.model';
 import { FakeResourceService, makeResource } from '../../testing/fake-resource-service';
+import { TITLE_MAX_LENGTH, SHORT_DESCRIPTION_MAX_LENGTH } from '../../utils/field-limits';
 
 async function settle(): Promise<void> {
   await Promise.resolve();
@@ -123,7 +124,8 @@ describe('ResourceFormDrawer', () => {
       slug: 'omega-3',
       sourceLinks: [],
       pdfUrls: [],
-      translations: { en: { title: 'Omega 3', shortDescription: 'Good fats', explanatoryText: '' } },
+      images: [],
+      translations: { en: { title: 'Omega 3', shortDescription: 'Good fats' } },
     } as Partial<Resource>);
     service.seed([created]);
     const fixture = TestBed.createComponent(ResourceFormDrawer);
@@ -140,7 +142,7 @@ describe('ResourceFormDrawer', () => {
       category: 'recipes',
       slug: 'soup',
       preparationMinutes: 10,
-      photoUrls: [],
+      images: [],
       translations: { en: { title: 'Soup', shortDescription: 'Warm', ingredients: ['Water'], steps: ['Boil'] } },
     } as unknown as Partial<Resource>);
     service.seed([created]);
@@ -153,7 +155,6 @@ describe('ResourceFormDrawer', () => {
 
     component.form.controls.categoryFields.setValue({
       preparationMinutes: 20,
-      photoUrls: ['https://example.com/soup.png'],
       ingredients: ['Water', 'Salt'],
       steps: ['Boil', 'Season'],
     });
@@ -163,9 +164,209 @@ describe('ResourceFormDrawer', () => {
 
     const updated = service.resources()[0] as RecipeResource;
     expect(updated.preparationMinutes).toBe(20);
-    expect(updated.photoUrls).toEqual(['https://example.com/soup.png']);
     expect(updated.translations.en?.ingredients).toEqual(['Water', 'Salt']);
     expect(updated.translations.en?.steps).toEqual(['Boil', 'Season']);
+  });
+
+  describe('images gallery', () => {
+    it('round-trips existing resource images into the gallery for editing', () => {
+      const created = makeResource({
+        category: 'recipes',
+        slug: 'soup',
+        preparationMinutes: 10,
+        images: [{ url: 'https://example.com/soup.png' }],
+        translations: { en: { title: 'Soup', shortDescription: 'Warm', ingredients: [], steps: [] } },
+      } as unknown as Partial<Resource>);
+      service.seed([created]);
+      const fixture = TestBed.createComponent(ResourceFormDrawer);
+      fixture.componentRef.setInput('resource', created);
+      fixture.componentRef.setInput('category', 'recipes');
+      fixture.componentRef.setInput('targetLanguage', 'en');
+      fixture.detectChanges();
+      const component = fixture.componentInstance;
+
+      expect(component.form.controls.images.value).toEqual([
+        { image: { kind: 'url', url: 'https://example.com/soup.png' }, description: undefined },
+      ]);
+    });
+
+    it('persists gallery rows to the shared images field on save', async () => {
+      const fixture = createFixture('multimedia');
+      const component = fixture.componentInstance;
+
+      component.form.controls.title.setValue('Doc');
+      component.form.controls.shortDescription.setValue('A documentary');
+      component.form.controls.categoryFields.setValue({
+        mediaType: 'documentary',
+        externalUrl: 'https://example.com/watch',
+      });
+      (fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      const urlInput = fixture.nativeElement.querySelector(
+        '[data-testid="image-input-url-field"]',
+      ) as HTMLInputElement;
+      urlInput.value = 'https://example.com/poster.png';
+      urlInput.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      buttons(fixture).save.click();
+      await settle();
+
+      const updated = service.resources()[0] as MultimediaResource;
+      expect(updated.images).toEqual([{ url: 'https://example.com/poster.png' }]);
+    });
+
+    it('caps the image gallery at the default 3 images', () => {
+      const fixture = createFixture('apps');
+
+      for (let i = 0; i < 3; i++) {
+        (
+          fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement
+        ).click();
+        fixture.detectChanges();
+      }
+
+      expect(fixture.nativeElement.querySelectorAll('[data-testid="gallery-row"]')).toHaveLength(3);
+      expect(
+        (fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement)
+          .disabled,
+      ).toBe(true);
+    });
+  });
+
+  describe('video link', () => {
+    it.each(['nutrition', 'recipes', 'apps'] as const)(
+      'shows the video link field for %s',
+      (category) => {
+        const fixture = createFixture(category);
+
+        expect(fixture.nativeElement.querySelector('input[formcontrolname="videoUrl"]')).not.toBeNull();
+      },
+    );
+
+    it('hides the video link field for multimedia', () => {
+      const fixture = createFixture('multimedia');
+
+      expect(fixture.nativeElement.querySelector('input[formcontrolname="videoUrl"]')).toBeNull();
+    });
+
+    it('rejects a malformed URL and accepts a valid one', () => {
+      const fixture = createFixture('nutrition');
+      const component = fixture.componentInstance;
+
+      component.form.controls.title.setValue('Omega 3');
+      component.form.controls.shortDescription.setValue('Good fats');
+      component.form.controls.videoUrl.setValue('not a url');
+      fixture.detectChanges();
+
+      expect(component.form.controls.videoUrl.hasError('pattern')).toBe(true);
+      expect(buttons(fixture).save.disabled).toBe(true);
+
+      component.form.controls.videoUrl.setValue('https://example.com/video.mp4');
+      fixture.detectChanges();
+
+      expect(component.form.controls.videoUrl.hasError('pattern')).toBe(false);
+      expect(buttons(fixture).save.disabled).toBe(false);
+    });
+
+    it('persists the video link for a category that supports it', async () => {
+      const fixture = createFixture('apps');
+      const component = fixture.componentInstance;
+
+      component.form.controls.title.setValue('My app');
+      component.form.controls.shortDescription.setValue('Useful');
+      component.form.controls.videoUrl.setValue('https://example.com/video.mp4');
+      fixture.detectChanges();
+      buttons(fixture).save.click();
+      await settle();
+
+      const updated = service.resources()[0] as AppResource;
+      expect(updated.videoUrl).toBe('https://example.com/video.mp4');
+    });
+
+    it('omits the video link from the persisted payload for multimedia', async () => {
+      const fixture = createFixture('multimedia');
+      const component = fixture.componentInstance;
+
+      component.form.controls.title.setValue('Doc');
+      component.form.controls.shortDescription.setValue('A documentary');
+      component.form.controls.categoryFields.setValue({
+        mediaType: 'documentary',
+        externalUrl: 'https://example.com/watch',
+      });
+      fixture.detectChanges();
+      buttons(fixture).save.click();
+      await settle();
+
+      const updated = service.resources()[0] as unknown as Record<string, unknown>;
+      expect(updated['videoUrl']).toBeUndefined();
+    });
+  });
+
+  describe('dynamic title', () => {
+    it.each([
+      ['nutrition', 'Nutrition'],
+      ['recipes', 'Recipes'],
+      ['multimedia', 'Multimedia'],
+      ['apps', 'Apps'],
+    ] as const)('shows the %s category label when creating', (category, label) => {
+      const fixture = createFixture(category);
+
+      expect(fixture.nativeElement.querySelector('h2').textContent).toContain(label);
+      expect(fixture.nativeElement.querySelector('h2').textContent).toContain(
+        language.t().resources.resourceForm.newHeading(label),
+      );
+    });
+
+    it('shows the category label when editing an existing resource', () => {
+      const created = makeResource({
+        category: 'apps',
+        slug: 'my-app',
+        images: [],
+        translations: { en: { title: 'My app', shortDescription: 'Useful' } },
+      } as unknown as Partial<Resource>);
+      service.seed([created]);
+      const fixture = TestBed.createComponent(ResourceFormDrawer);
+      fixture.componentRef.setInput('resource', created);
+      fixture.componentRef.setInput('category', 'apps');
+      fixture.componentRef.setInput('targetLanguage', 'en');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('h2').textContent).toContain(
+        language.t().resources.resourceForm.editHeading('Apps'),
+      );
+    });
+  });
+
+  describe('character limits', () => {
+    it('caps the title input and shows how many characters remain', () => {
+      const fixture = createFixture('nutrition');
+      const titleInput = fixture.nativeElement.querySelector(
+        'input[formcontrolname="title"]',
+      ) as HTMLInputElement;
+      expect(titleInput.maxLength).toBe(TITLE_MAX_LENGTH);
+
+      fixture.componentInstance.form.controls.title.setValue('Hello');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain(
+        language.t().fieldLimits.charactersRemaining(TITLE_MAX_LENGTH - 5),
+      );
+    });
+
+    it('caps the short description input and shows how many characters remain', () => {
+      const fixture = createFixture('nutrition');
+      const textarea = fixture.nativeElement.querySelector(
+        'textarea[formcontrolname="shortDescription"]',
+      ) as HTMLTextAreaElement;
+      expect(textarea.maxLength).toBe(SHORT_DESCRIPTION_MAX_LENGTH);
+
+      fixture.componentInstance.form.controls.shortDescription.setValue('Hello');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain(
+        language.t().fieldLimits.charactersRemaining(SHORT_DESCRIPTION_MAX_LENGTH - 5),
+      );
+    });
   });
 
   describe('slug', () => {
@@ -183,7 +384,7 @@ describe('ResourceFormDrawer', () => {
         makeResource({
           category: 'apps',
           slug: 'existing-resource',
-          iconUrl: '',
+          images: [],
           translations: { en: { title: 'An app', shortDescription: 'Useful' } },
         } as unknown as Partial<Resource>),
       ]);
@@ -207,8 +408,9 @@ describe('ResourceFormDrawer', () => {
         slug: 'omega-3',
         sourceLinks: [],
         pdfUrls: [],
+        images: [],
         translations: {
-          en: { title: 'Omega 3', shortDescription: 'Good fats', explanatoryText: 'Details' },
+          en: { title: 'Omega 3', shortDescription: 'Good fats' },
         },
       } as Partial<Resource>);
       service.seed([resource]);
@@ -233,7 +435,7 @@ describe('ResourceFormDrawer', () => {
       expect(suggestionService.suggest).toHaveBeenCalledWith(
         {
           language: 'en',
-          fields: { title: 'Omega 3', shortDescription: 'Good fats', explanatoryText: 'Details' },
+          fields: { title: 'Omega 3', shortDescription: 'Good fats' },
         },
         'es',
       );
@@ -242,7 +444,6 @@ describe('ResourceFormDrawer', () => {
       resolveSuggest({
         title: 'Omega 3 es',
         shortDescription: 'Buenas grasas',
-        explanatoryText: 'Detalles',
       });
       await settle();
       fixture.detectChanges();

@@ -1,0 +1,23 @@
+<p class="text-sm font-medium text-brand-800" role="status" aria-live="polite">
+  {{ language.t().bulkSelection.selectedCountLabel(selectedCount()) }}
+</p>
+
+<div class="flex gap-2">
+  <button
+    mat-stroked-button
+    type="button"
+    data-testid="bulk-clear-button"
+    (click)="clearRequested.emit()"
+  >
+    {{ language.t().bulkSelection.clearSelectionButton }}
+  </button>
+  <button
+    mat-flat-button
+    type="button"
+    color="warn"
+    data-testid="bulk-delete-button"
+    (click)="deleteRequested.emit()"
+  >
+    {{ language.t().bulkSelection.deleteSelectedButton }}
+  </button>
+</div>

@@ -12,7 +12,7 @@ export function makeOrganization(overrides: Partial<Organization> = {}): Organiz
     type: 'ngo',
     status: 'draft',
     order: 0,
-    logoUrl: 'https://example.com/logo.png',
+    images: [{ url: 'https://example.com/logo.png' }],
     scopeType: 'global',
     contactLinks: {},
     createdAt: '2026-01-01T00:00:00.000Z',
@@ -33,12 +33,21 @@ export class FakeOrganizationService {
   }
 
   create = vi.fn(async (input: OrganizationCreateInput): Promise<Organization> => {
+    const { images, videoUrl, scopeType, countryCode, city, contactLinks } = input.sharedFields;
     const org = makeOrganization({
       slug: input.slug,
       type: input.type,
       order: this._orgs().length,
       translations: { [input.language]: input.translation },
-      ...input.sharedFields,
+      images: (images ?? []).map((image) => ({
+        url: image.url ?? image.data ?? '',
+        description: image.description,
+      })),
+      videoUrl,
+      scopeType,
+      countryCode,
+      city,
+      contactLinks,
     });
     this._orgs.update((orgs) => [...orgs, org]);
     return org;
@@ -84,11 +93,28 @@ export class FakeOrganizationService {
       if (!current) {
         throw new Error(`Unknown organization id: ${id}`);
       }
-      const updated: Organization = { ...current, ...sharedFields, updatedAt: new Date().toISOString() };
+      const { images, videoUrl, scopeType, countryCode, city, contactLinks } = sharedFields;
+      const updated: Organization = {
+        ...current,
+        images: (images ?? []).map((image) => ({
+          url: image.url ?? image.data ?? '',
+          description: image.description,
+        })),
+        videoUrl,
+        scopeType,
+        countryCode,
+        city,
+        contactLinks,
+        updatedAt: new Date().toISOString(),
+      };
       this.replace(updated);
       return updated;
     },
   );
+
+  delete = vi.fn(async (id: string): Promise<void> => {
+    this._orgs.update((orgs) => orgs.filter((o) => o.id !== id));
+  });
 
   publish = vi.fn((id: string): Promise<Organization> => this.setStatus(id, 'published'));
   pause = vi.fn((id: string): Promise<Organization> => this.setStatus(id, 'paused'));

@@ -27,6 +27,15 @@
       </button>
     </div>
 
+    @if (selectedCount() > 0) {
+      <app-selection-toolbar
+        class="mb-4 block"
+        [selectedCount]="selectedCount()"
+        (deleteRequested)="requestBulkDelete()"
+        (clearRequested)="clearSelection()"
+      />
+    }
+
     @if (sections().length === 0) {
       <p
         class="rounded-xl border border-dashed border-ink-200 bg-surface-muted p-8 text-center text-sm text-ink-500"
@@ -50,8 +59,10 @@
             <app-section-list-item
               [section]="section"
               [resetRequest]="cancelledSelection()"
+              [selected]="isSelected(section.id)"
               (editRequested)="openEdit($event)"
               (translateRequested)="openTranslate($event)"
+              (selectionToggled)="toggleSelection(section.id)"
             />
           </li>
         }

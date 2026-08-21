@@ -12,7 +12,7 @@ function createInput(overrides: Partial<ResourceCreateInput> = {}): ResourceCrea
     slug: 'protein',
     sharedFields: { sourceLinks: [], pdfUrls: [] },
     language: 'en',
-    translation: { title: 'Protein', shortDescription: 'short', explanatoryText: 'long' },
+    translation: { title: 'Protein', shortDescription: 'short' },
     ...overrides,
   } as ResourceCreateInput;
 }
@@ -26,9 +26,10 @@ function resource(overrides: Partial<Resource> = {}): Resource {
     order: 0,
     sourceLinks: [],
     pdfUrls: [],
+    images: [],
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
-    translations: { en: { title: 'Protein', shortDescription: 'short', explanatoryText: 'long' } },
+    translations: { en: { title: 'Protein', shortDescription: 'short' } },
     ...overrides,
   } as Resource;
 }
@@ -89,7 +90,7 @@ describe('ResourceService', () => {
   it('PUTs to /:id/translations on saveTranslation', async () => {
     await setup([resource()]);
     const updated = resource({
-      translations: { en: { title: 'Updated', shortDescription: 'short', explanatoryText: 'long' } },
+      translations: { en: { title: 'Updated', shortDescription: 'short' } },
     });
 
     const promise = service.saveTranslation('r1', 'en', updated.translations.en!, 'protein');
@@ -124,6 +125,18 @@ describe('ResourceService', () => {
     req.flush(updated);
 
     await expect(promise).resolves.toEqual(updated);
+  });
+
+  it('DELETEs /:id on delete and removes the resource from the list', async () => {
+    await setup([resource({ id: 'a' }), resource({ id: 'b' })]);
+
+    const promise = service.delete('a');
+    const req = httpMock.expectOne(`${BASE_URL}/a`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+
+    await promise;
+    expect(service.resources().map((r) => r.id)).toEqual(['b']);
   });
 
   it('publish/pause POST to /:id/publish and /:id/pause', async () => {

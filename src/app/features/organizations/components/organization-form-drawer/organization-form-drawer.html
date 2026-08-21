@@ -131,19 +131,24 @@
       <app-markdown-editor formControlName="description" [maxLength]="descriptionMaxLength" />
     </div>
 
-    <mat-form-field class="min-w-0">
-      <mat-label>{{ language.t().organizations.organizationForm.logoUrlLabel }}</mat-label>
-      <input matInput formControlName="logoUrl" />
-    </mat-form-field>
-
-    @if (form.controls.logoUrl.valid && form.controls.logoUrl.value) {
-      <img
-        data-testid="logo-preview"
-        [src]="form.controls.logoUrl.value"
-        alt=""
-        class="h-32 w-32 rounded-lg object-cover"
-      />
+    <app-image-gallery-input
+      formControlName="images"
+      [imageRowLabel]="language.t().organizations.organizationForm.imageRowLabel"
+      [addButtonLabel]="language.t().organizations.organizationForm.addImageButton"
+      [descriptionLabel]="language.t().organizations.organizationForm.imageDescriptionLabel"
+      [descriptionMaxLength]="galleryDescriptionMaxLength"
+    />
+    @if (form.controls.images.hasError('galleryRequired')) {
+      <mat-error>{{ language.t().organizations.organizationForm.imagesRequiredError }}</mat-error>
     }
+
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().organizations.organizationForm.videoUrlLabel }}</mat-label>
+      <input matInput formControlName="videoUrl" />
+      @if (form.controls.videoUrl.hasError('pattern')) {
+        <mat-error>{{ language.t().stringListEditor.invalidUrlError }}</mat-error>
+      }
+    </mat-form-field>
 
     <fieldset class="flex min-w-0 flex-col gap-2">
       <legend class="text-sm font-medium text-ink-700">{{ language.t().organizations.organizationForm.scopeLabel }}</legend>

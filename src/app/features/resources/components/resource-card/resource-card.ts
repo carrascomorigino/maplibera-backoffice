@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { CdkDragHandle } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -29,7 +30,7 @@ export interface ResourceTranslateRequestedEvent {
 
 @Component({
   selector: 'app-resource-card',
-  imports: [CdkDragHandle, MatButtonModule, MatIconModule, LanguageTags],
+  imports: [CdkDragHandle, MatButtonModule, MatCheckboxModule, MatIconModule, LanguageTags],
   templateUrl: './resource-card.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
@@ -46,9 +47,11 @@ export class ResourceCard {
   protected readonly contentLanguageLabels = CONTENT_LANGUAGE_LABELS;
 
   readonly resource = input.required<Resource>();
+  readonly selected = input<boolean>(false);
 
   readonly editRequested = output<ResourceEditRequestedEvent>();
   readonly translateRequested = output<ResourceTranslateRequestedEvent>();
+  readonly selectionToggled = output<void>();
 
   private readonly _selectedLanguage = signal<ContentLanguage | undefined>(undefined);
 
@@ -64,19 +67,7 @@ export class ResourceCard {
     () => this.contentLanguages.filter((lang) => this.resource().translations[lang]) as ContentLanguage[],
   );
 
-  readonly thumbnailUrl = computed<string | undefined>(() => {
-    const resource = this.resource();
-    switch (resource.category) {
-      case 'recipes':
-        return resource.photoUrls[0];
-      case 'multimedia':
-        return resource.posterUrl || undefined;
-      case 'apps':
-        return resource.iconUrl || undefined;
-      case 'nutrition':
-        return undefined;
-    }
-  });
+  readonly thumbnailUrl = computed<string | undefined>(() => this.resource().images[0]?.url);
 
   protected onLanguageSelected(newLanguage: ContentLanguage): void {
     this._selectedLanguage.set(newLanguage);

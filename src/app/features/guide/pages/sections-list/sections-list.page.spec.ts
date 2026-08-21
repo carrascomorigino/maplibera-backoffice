@@ -1,7 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { of } from 'rxjs';
 import { SectionsListPage } from './sections-list.page';
 import { SectionService } from '../../services/section.service';
 import { Section } from '../../models/section.model';
@@ -200,5 +202,75 @@ describe('SectionsListPage', () => {
 
     const enTag = fixture.nativeElement.querySelector('[data-testid="language-tag-en"]') as HTMLElement;
     expect(enTag.className).toContain('ring');
+  });
+
+  describe('bulk selection', () => {
+    it('hides the selection toolbar when nothing is selected', () => {
+      service.seed([seedSection('a', 'A')]);
+      const fixture = createFixture();
+
+      expect(fixture.nativeElement.querySelector('app-selection-toolbar')).toBeNull();
+    });
+
+    it('shows the selection toolbar with the selected count once an item is checked', () => {
+      service.seed([seedSection('a', 'A')]);
+      const fixture = createFixture();
+
+      (
+        fixture.nativeElement.querySelector('[data-testid="select-checkbox"] input') as HTMLInputElement
+      ).click();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('app-selection-toolbar')).not.toBeNull();
+      expect(fixture.componentInstance['selectedCount']()).toBe(1);
+    });
+
+    it('deletes the selected sections via the service after confirming', async () => {
+      const a = seedSection('a', 'A');
+      const b = seedSection('b', 'B');
+      service.seed([a, b]);
+      const fixture = createFixture();
+      const dialog = TestBed.inject(MatDialog);
+      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<MatDialog['open']>);
+
+      fixture.componentInstance['toggleSelection'](a.id);
+      fixture.componentInstance['requestBulkDelete']();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(service.delete).toHaveBeenCalledWith(a.id);
+      expect(fixture.componentInstance['selectedCount']()).toBe(0);
+    });
+
+    it('does not delete when the confirm dialog is cancelled', () => {
+      const a = seedSection('a', 'A');
+      service.seed([a]);
+      const fixture = createFixture();
+      const dialog = TestBed.inject(MatDialog);
+      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(false) } as ReturnType<MatDialog['open']>);
+
+      fixture.componentInstance['toggleSelection'](a.id);
+      fixture.componentInstance['requestBulkDelete']();
+
+      expect(service.delete).not.toHaveBeenCalled();
+    });
+
+    it('shows an error notice and keeps the selection when the bulk delete fails', async () => {
+      const a = seedSection('a', 'A');
+      service.seed([a]);
+      service.delete.mockRejectedValueOnce(new Error('network error'));
+      const fixture = createFixture();
+      const dialog = TestBed.inject(MatDialog);
+      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<MatDialog['open']>);
+      const snackBar = TestBed.inject(MatSnackBar);
+
+      fixture.componentInstance['toggleSelection'](a.id);
+      fixture.componentInstance['requestBulkDelete']();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(snackBar.open).toHaveBeenCalled();
+      expect(fixture.componentInstance['selectedCount']()).toBe(1);
+    });
   });
 });

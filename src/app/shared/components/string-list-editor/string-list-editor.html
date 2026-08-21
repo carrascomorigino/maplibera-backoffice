@@ -1,17 +1,32 @@
 <div class="flex flex-col gap-2">
   @for (row of rows.controls; track $index) {
     <div class="flex items-center gap-2">
-      <mat-form-field class="min-w-0 flex-1">
-        <input
-          matInput
-          data-testid="string-list-row-input"
+      @if (imageMode()) {
+        <app-image-input
+          class="min-w-0 flex-1"
           [formControl]="row"
-          (blur)="onBlur()"
+          [label]="imageRowLabel()"
+          data-testid="string-list-row-input"
         />
-        @if (urlMode() && row.hasError('pattern')) {
-          <mat-error>{{ language.t().stringListEditor.invalidUrlError }}</mat-error>
-        }
-      </mat-form-field>
+      } @else {
+        <mat-form-field class="min-w-0 flex-1">
+          <input
+            matInput
+            data-testid="string-list-row-input"
+            [formControl]="row"
+            [maxlength]="rowMaxLength() ?? null"
+            (blur)="onBlur()"
+          />
+          @if (urlMode() && row.hasError('pattern')) {
+            <mat-error>{{ language.t().stringListEditor.invalidUrlError }}</mat-error>
+          }
+          @if (rowMaxLength(); as maxLength) {
+            <mat-hint align="end">{{
+              language.t().fieldLimits.charactersRemaining(maxLength - rowLength(row))
+            }}</mat-hint>
+          }
+        </mat-form-field>
+      }
       <button
         mat-icon-button
         type="button"

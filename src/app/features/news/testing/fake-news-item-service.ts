@@ -11,7 +11,7 @@ export function makeNewsItem(overrides: Partial<NewsItem> = {}): NewsItem {
     slug: 'news-item',
     category: 'news',
     status: 'draft',
-    imageUrl: 'https://example.com/n.jpg',
+    images: [{ url: 'https://example.com/n.jpg' }],
     publishedAt: '2026-01-01',
     sourceLinks: [],
     createdAt: '2026-01-01T00:00:00.000Z',
@@ -37,11 +37,19 @@ export class FakeNewsItemService {
   }
 
   create = vi.fn(async (input: NewsItemCreateInput): Promise<NewsItem> => {
+    const { images, videoUrl, publishedAt, eventDate, sourceLinks } = input.sharedFields;
     const item = makeNewsItem({
       slug: input.slug,
       category: input.category,
       translations: { [input.language]: input.translation },
-      ...input.sharedFields,
+      images: (images ?? []).map((image) => ({
+        url: image.url ?? image.data ?? '',
+        description: image.description,
+      })),
+      videoUrl,
+      publishedAt,
+      eventDate,
+      sourceLinks,
     });
     this._items.update((items) => [...items, item]);
     return item;
@@ -86,9 +94,25 @@ export class FakeNewsItemService {
     if (!current) {
       throw new Error(`Unknown news item id: ${id}`);
     }
-    const updated: NewsItem = { ...current, ...sharedFields, updatedAt: new Date().toISOString() };
+    const { images, videoUrl, publishedAt, eventDate, sourceLinks } = sharedFields;
+    const updated: NewsItem = {
+      ...current,
+      images: (images ?? []).map((image) => ({
+        url: image.url ?? image.data ?? '',
+        description: image.description,
+      })),
+      videoUrl,
+      publishedAt,
+      eventDate,
+      sourceLinks,
+      updatedAt: new Date().toISOString(),
+    };
     this.replace(updated);
     return updated;
+  });
+
+  delete = vi.fn(async (id: string): Promise<void> => {
+    this._items.update((items) => items.filter((i) => i.id !== id));
   });
 
   publish = vi.fn((id: string): Promise<NewsItem> => this.setStatus(id, 'published'));

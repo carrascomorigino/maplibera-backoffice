@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { QuestionEditor } from './question-editor';
-import { Question } from '../../models/section.model';
+import { QuestionEditor, QuestionDraft } from './question-editor';
 import { QUESTION_DETAIL_MAX_LENGTH } from '../../utils/field-limits';
 
 describe('QuestionEditor', () => {
@@ -416,13 +415,13 @@ describe('QuestionEditor', () => {
       fixture.detectChanges();
       expect(component.validate()).toBeNull();
 
-      component.answers.at(0).controls.imageUrl.setValue('https://example.com/a.png');
+      component.answers.at(0).controls.imageUrl.setValue({ kind: 'url', url: 'https://example.com/a.png' });
       fixture.detectChanges();
 
       expect(component.answers.at(1).controls.imageUrl.hasError('imageRequired')).toBe(true);
       expect(component.validate()).toEqual({ question: true });
 
-      component.answers.at(1).controls.imageUrl.setValue('https://example.com/b.png');
+      component.answers.at(1).controls.imageUrl.setValue({ kind: 'url', url: 'https://example.com/b.png' });
       fixture.detectChanges();
 
       expect(component.answers.at(1).controls.imageUrl.hasError('imageRequired')).toBe(false);
@@ -437,11 +436,11 @@ describe('QuestionEditor', () => {
       component.addAnswer();
       component.answers.at(0).controls.text.setValue('Answer A');
       component.answers.at(1).controls.text.setValue('Answer B');
-      component.answers.at(0).controls.imageUrl.setValue('https://example.com/a.png');
+      component.answers.at(0).controls.imageUrl.setValue({ kind: 'url', url: 'https://example.com/a.png' });
       fixture.detectChanges();
       expect(component.answers.at(1).controls.imageUrl.hasError('imageRequired')).toBe(true);
 
-      component.answers.at(0).controls.imageUrl.setValue('');
+      component.answers.at(0).controls.imageUrl.setValue(undefined);
       fixture.detectChanges();
 
       expect(component.answers.at(1).controls.imageUrl.hasError('imageRequired')).toBe(false);
@@ -480,13 +479,13 @@ describe('QuestionEditor', () => {
     it('writeValue rebuilds the answers list from an existing question', () => {
       const fixture = createFixture();
       const component = fixture.componentInstance;
-      const question: Question = {
+      const question: QuestionDraft = {
         text: 'Pick all that apply',
         type: 'multiple',
         answers: [
           { text: 'A', isCorrect: true },
           { text: 'B', isCorrect: false },
-          { text: 'C', isCorrect: true, imageUrl: 'https://example.com/c.png' },
+          { text: 'C', isCorrect: true, imageUrl: { kind: 'url', url: 'https://example.com/c.png' } },
         ],
         includeNoneOfTheAbove: true,
         noneOfTheAboveCorrect: false,
@@ -498,7 +497,10 @@ describe('QuestionEditor', () => {
       expect(component.form.controls.text.value).toBe('Pick all that apply');
       expect(component.form.controls.type.value).toBe('multiple');
       expect(component.answers.length).toBe(3);
-      expect(component.answers.at(2).controls.imageUrl.value).toBe('https://example.com/c.png');
+      expect(component.answers.at(2).controls.imageUrl.value).toEqual({
+        kind: 'url',
+        url: 'https://example.com/c.png',
+      });
       expect(component.form.controls.includeNoneOfTheAbove.value).toBe(true);
       expect(answerRows(fixture)).toHaveLength(3);
     });
@@ -508,7 +510,7 @@ describe('QuestionEditor', () => {
       const component = fixture.componentInstance;
       const onChange = vi.fn();
       component.registerOnChange(onChange);
-      const question: Question = {
+      const question: QuestionDraft = {
         text: 'Pick one',
         type: 'single',
         answers: [

@@ -17,32 +17,56 @@ import { ContentLanguage } from '../../guide/models/content-language.model';
 
 const BASE_URL = '/backend/resources';
 
+export interface ResourceImageInput {
+  url?: string;
+  data?: string;
+  description?: string;
+}
+
 export type ResourceCreateInput =
   | {
       category: 'nutrition';
       slug: string;
-      sharedFields: { sourceLinks: string[]; pdfUrls: string[] };
+      sharedFields: {
+        sourceLinks: string[];
+        pdfUrls: string[];
+        images?: ResourceImageInput[];
+        videoUrl?: string;
+      };
       language: ContentLanguage;
       translation: NutritionTranslation;
     }
   | {
       category: 'recipes';
       slug: string;
-      sharedFields: { preparationMinutes: number; photoUrls: string[] };
+      sharedFields: {
+        preparationMinutes: number;
+        images?: ResourceImageInput[];
+        videoUrl?: string;
+      };
       language: ContentLanguage;
       translation: RecipeTranslation;
     }
   | {
       category: 'multimedia';
       slug: string;
-      sharedFields: { mediaType: MultimediaType; externalUrl: string; posterUrl: string };
+      sharedFields: {
+        mediaType: MultimediaType;
+        externalUrl: string;
+        images?: ResourceImageInput[];
+      };
       language: ContentLanguage;
       translation: MultimediaTranslation;
     }
   | {
       category: 'apps';
       slug: string;
-      sharedFields: { appStoreUrl?: string; playStoreUrl?: string; iconUrl: string };
+      sharedFields: {
+        appStoreUrl?: string;
+        playStoreUrl?: string;
+        images?: ResourceImageInput[];
+        videoUrl?: string;
+      };
       language: ContentLanguage;
       translation: AppTranslation;
     };
@@ -130,6 +154,11 @@ export class ResourceService {
           : resource,
       ),
     );
+  }
+
+  async delete(id: string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`${BASE_URL}/${id}`));
+    this.state.update((resources) => resources.filter((resource) => resource.id !== id));
   }
 
   async publish(id: string): Promise<Resource> {

@@ -112,19 +112,21 @@
       </div>
     }
 
-    <mat-form-field class="min-w-0">
-      <mat-label>{{ language.t().guide.sectionForm.imageUrlLabel }}</mat-label>
-      <input matInput formControlName="imageUrl" />
-    </mat-form-field>
+    <app-image-gallery-input
+      formControlName="images"
+      [imageRowLabel]="language.t().guide.sectionForm.imageRowLabel"
+      [addButtonLabel]="language.t().guide.sectionForm.addImageButton"
+      [descriptionLabel]="language.t().guide.sectionForm.imageDescriptionLabel"
+      [descriptionMaxLength]="galleryDescriptionMaxLength"
+    />
 
-    @if (form.controls.imageUrl.valid && form.controls.imageUrl.value) {
-      <img
-        data-testid="image-preview"
-        [src]="form.controls.imageUrl.value"
-        alt=""
-        class="h-32 w-32 rounded-lg object-cover"
-      />
-    }
+    <mat-form-field class="min-w-0">
+      <mat-label>{{ language.t().guide.sectionForm.videoUrlLabel }}</mat-label>
+      <input matInput formControlName="videoUrl" />
+      @if (form.controls.videoUrl.hasError('pattern')) {
+        <mat-error>{{ language.t().stringListEditor.invalidUrlError }}</mat-error>
+      }
+    </mat-form-field>
 
     <fieldset class="flex min-w-0 flex-col gap-2">
       <legend class="text-sm font-medium text-ink-700">{{

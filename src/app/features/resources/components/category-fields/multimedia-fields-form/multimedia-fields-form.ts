@@ -21,7 +21,6 @@ import { LanguageService } from '../../../../../core/i18n/language.service';
 export interface MultimediaFieldsValue {
   mediaType: MultimediaType;
   externalUrl: string;
-  posterUrl: string;
 }
 
 @Component({
@@ -46,7 +45,6 @@ export class MultimediaFieldsForm implements ControlValueAccessor, Validator {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(URL_PATTERN)],
     }),
-    posterUrl: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
   });
 
   private onChange: (value: MultimediaFieldsValue) => void = () => {};
@@ -63,7 +61,6 @@ export class MultimediaFieldsForm implements ControlValueAccessor, Validator {
       {
         mediaType: value?.mediaType ?? 'documentary',
         externalUrl: value?.externalUrl ?? '',
-        posterUrl: value?.posterUrl ?? '',
       },
       { emitEvent: false },
     );

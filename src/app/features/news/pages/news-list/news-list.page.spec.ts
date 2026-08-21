@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { of } from 'rxjs';
 import { NewsListPage } from './news-list.page';
 import { NewsItemService } from '../../services/news-item.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
@@ -101,5 +103,36 @@ describe('NewsListPage', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-news-form-drawer')).toBeNull();
+  });
+
+  describe('bulk selection', () => {
+    it('deletes the selected items via the service after confirming', async () => {
+      const a = itemFixture('news', 'a', '2026-01-01');
+      service.seed([a]);
+      const fixture = createFixture();
+      const dialog = TestBed.inject(MatDialog);
+      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<MatDialog['open']>);
+
+      fixture.componentInstance['toggleSelection'](a.id);
+      fixture.componentInstance['requestBulkDelete']();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(service.delete).toHaveBeenCalledWith(a.id);
+      expect(fixture.componentInstance['selectedCount']()).toBe(0);
+    });
+
+    it('does not delete when the confirm dialog is cancelled', () => {
+      const a = itemFixture('news', 'a', '2026-01-01');
+      service.seed([a]);
+      const fixture = createFixture();
+      const dialog = TestBed.inject(MatDialog);
+      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(false) } as ReturnType<MatDialog['open']>);
+
+      fixture.componentInstance['toggleSelection'](a.id);
+      fixture.componentInstance['requestBulkDelete']();
+
+      expect(service.delete).not.toHaveBeenCalled();
+    });
   });
 });

@@ -7,7 +7,8 @@ import { ContentLanguage } from '../../guide/models/content-language.model';
 const BASE_URL = '/backend/news';
 
 export interface NewsItemSharedFields {
-  imageUrl: string;
+  images?: { url?: string; data?: string; description?: string }[];
+  videoUrl?: string;
   publishedAt: string;
   eventDate?: string;
   sourceLinks: string[];
@@ -76,6 +77,11 @@ export class NewsItemService {
     );
     this.replace(updated);
     return updated;
+  }
+
+  async delete(id: string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`${BASE_URL}/${id}`));
+    this.state.update((items) => items.filter((item) => item.id !== id));
   }
 
   async publish(id: string): Promise<NewsItem> {

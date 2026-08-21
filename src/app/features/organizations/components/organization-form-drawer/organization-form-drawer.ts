@@ -16,14 +16,27 @@ import { OrganizationSharedFields, OrganizationService } from '../../services/or
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { StaleTranslationSuggestionCache } from '../../../../shared/services/stale-translation-suggestion-cache.service';
 import { MarkdownEditor } from '../../../../shared/components/markdown-editor/markdown-editor';
+import { ImageGalleryInput } from '../../../../shared/components/image-gallery-input/image-gallery-input';
 import { slugify } from '../../../../shared/utils/slugify';
 import { URL_PATTERN, SLUG_PATTERN } from '../../../../shared/utils/patterns';
+import { resolveImagePayload } from '../../../../shared/utils/image-payload';
+import { ImageValue } from '../../../../shared/models/image-value.model';
+import { GalleryImageValue } from '../../../../shared/models/gallery-image-value.model';
+import { atLeastOneGalleryImage } from '../../../../shared/utils/gallery-validators';
+import { GALLERY_IMAGE_DESCRIPTION_MAX_LENGTH } from '../../../../shared/utils/gallery-limits';
 import { DESCRIPTION_MAX_LENGTH, NAME_MAX_LENGTH } from '../../utils/field-limits';
 import { LanguageService } from '../../../../core/i18n/language.service';
 
 @Component({
   selector: 'app-organization-form-drawer',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MarkdownEditor],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MarkdownEditor,
+    ImageGalleryInput,
+  ],
   templateUrl: './organization-form-drawer.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -36,6 +49,7 @@ export class OrganizationFormDrawer {
   protected readonly contentLanguageLabels = CONTENT_LANGUAGE_LABELS;
   protected readonly nameMaxLength = NAME_MAX_LENGTH;
   protected readonly descriptionMaxLength = DESCRIPTION_MAX_LENGTH;
+  protected readonly galleryDescriptionMaxLength = GALLERY_IMAGE_DESCRIPTION_MAX_LENGTH;
   protected readonly countryOptions = [...COUNTRY_CODES]
     .map((code) => ({ code, label: countryDisplayName(code, this.language.language()) }))
     .sort((a, b) => a.label.localeCompare(b.label));
@@ -85,10 +99,11 @@ export class OrganizationFormDrawer {
       validators: [Validators.required, Validators.pattern(SLUG_PATTERN), this.duplicateSlugValidator],
     }),
     description: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    logoUrl: new FormControl('', {
+    images: new FormControl<GalleryImageValue[]>([], {
       nonNullable: true,
-      validators: [Validators.required, Validators.pattern(URL_PATTERN)],
+      validators: atLeastOneGalleryImage,
     }),
+    videoUrl: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
     scopeType: new FormControl<OrganizationScopeType>('global', { nonNullable: true }),
     countryCode: new FormControl<string | null>(null, { validators: this.countryCodeRequiredValidator }),
     city: new FormControl<string | null>(null, { validators: this.cityRequiredValidator }),
@@ -138,7 +153,11 @@ export class OrganizationFormDrawer {
           name: existing?.name ?? '',
           slug: organization?.slug ?? '',
           description: existing?.description ?? '',
-          logoUrl: organization?.logoUrl ?? '',
+          images: (organization?.images ?? []).map((image) => ({
+            image: { kind: 'url', url: image.url } as ImageValue,
+            description: image.description,
+          })),
+          videoUrl: organization?.videoUrl ?? '',
           scopeType: organization?.scopeType ?? 'global',
           countryCode: organization?.countryCode ?? null,
           city: organization?.city ?? null,
@@ -301,7 +320,8 @@ export class OrganizationFormDrawer {
       name,
       slug,
       description,
-      logoUrl,
+      images,
+      videoUrl,
       scopeType,
       countryCode,
       city,
@@ -313,8 +333,17 @@ export class OrganizationFormDrawer {
     } = this.form.getRawValue();
 
     const translation: OrganizationTranslation = { name, description };
+    const imagesPayload = await Promise.all(
+      images
+        .filter((row): row is GalleryImageValue & { image: ImageValue } => row.image !== undefined)
+        .map(async (row) => ({
+          ...(await resolveImagePayload(row.image)),
+          description: row.description,
+        })),
+    );
     const sharedFields: OrganizationSharedFields = {
-      logoUrl,
+      images: imagesPayload,
+      videoUrl,
       scopeType,
       countryCode: scopeType === 'country' ? (countryCode ?? undefined) : undefined,
       city: scopeType === 'city' ? (city ?? undefined) : undefined,

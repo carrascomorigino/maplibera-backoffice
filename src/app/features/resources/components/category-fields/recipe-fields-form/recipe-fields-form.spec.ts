@@ -1,7 +1,9 @@
 import { Component } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TestBed } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { RecipeFieldsForm, RecipeFieldsValue } from './recipe-fields-form';
+import { LIST_ITEM_MAX_LENGTH } from '../../../utils/field-limits';
 
 @Component({
   selector: 'app-host',
@@ -10,14 +12,17 @@ import { RecipeFieldsForm, RecipeFieldsValue } from './recipe-fields-form';
 })
 class HostComponent {
   control = new FormControl<RecipeFieldsValue>(
-    { preparationMinutes: 0, photoUrls: [], ingredients: [], steps: [] },
+    { preparationMinutes: 0, ingredients: [], steps: [] },
     { nonNullable: true },
   );
 }
 
 describe('RecipeFieldsForm', () => {
   function createFixture() {
-    TestBed.configureTestingModule({ imports: [HostComponent] });
+    TestBed.configureTestingModule({
+      imports: [HostComponent],
+      providers: [provideNoopAnimations()],
+    });
     const fixture = TestBed.createComponent(HostComponent);
     fixture.detectChanges();
     return fixture;
@@ -48,7 +53,6 @@ describe('RecipeFieldsForm', () => {
 
     fixture.componentInstance.control.setValue({
       preparationMinutes: 15,
-      photoUrls: [],
       ingredients: ['Flour', 'Sugar'],
       steps: ['Mix', 'Bake'],
     });
@@ -56,5 +60,22 @@ describe('RecipeFieldsForm', () => {
 
     const rows = fixture.nativeElement.querySelectorAll('[data-testid="string-list-row-input"]');
     expect(rows.length).toBe(4);
+  });
+
+  it('caps ingredient and step rows at LIST_ITEM_MAX_LENGTH characters', () => {
+    const fixture = createFixture();
+
+    fixture.componentInstance.control.setValue({
+      preparationMinutes: 15,
+      ingredients: ['Flour'],
+      steps: ['Mix'],
+    });
+    fixture.detectChanges();
+
+    const rows = fixture.nativeElement.querySelectorAll(
+      '[data-testid="string-list-row-input"]',
+    ) as NodeListOf<HTMLInputElement>;
+    expect(rows[0].maxLength).toBe(LIST_ITEM_MAX_LENGTH);
+    expect(rows[1].maxLength).toBe(LIST_ITEM_MAX_LENGTH);
   });
 });

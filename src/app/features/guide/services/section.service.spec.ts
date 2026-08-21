@@ -9,7 +9,7 @@ const BASE_URL = '/backend/sections';
 function input(overrides: Partial<SectionTranslationInput> = {}): SectionTranslationInput {
   return {
     slug: 'getting-started',
-    imageUrl: '',
+    images: [],
     language: 'en',
     translation: { title: 'Getting started', description: 'Intro section' },
     ...overrides,
@@ -20,7 +20,7 @@ function section(overrides: Partial<Section> = {}): Section {
   return {
     id: 's1',
     slug: 'getting-started',
-    imageUrl: '',
+    images: [],
     status: 'draft',
     order: 0,
     createdAt: '2026-01-01T00:00:00.000Z',
@@ -100,6 +100,20 @@ describe('SectionService', () => {
       req.flush(updated);
 
       await expect(promise).resolves.toEqual(updated);
+    });
+  });
+
+  describe('delete', () => {
+    it('DELETEs /:id and removes the section from the list', async () => {
+      await setup([section({ id: 'a' }), section({ id: 'b' })]);
+
+      const promise = service.delete('a');
+      const req = httpMock.expectOne(`${BASE_URL}/a`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null);
+
+      await promise;
+      expect(service.sections().map((s) => s.id)).toEqual(['b']);
     });
   });
 

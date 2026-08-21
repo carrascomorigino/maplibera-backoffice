@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { NewsItem, NewsStatus } from '../../models/news-item.model';
@@ -27,7 +28,7 @@ export interface NewsTranslateRequestedEvent {
 
 @Component({
   selector: 'app-news-card',
-  imports: [MatButtonModule, LanguageTags],
+  imports: [MatButtonModule, MatCheckboxModule, LanguageTags],
   templateUrl: './news-card.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
@@ -44,9 +45,11 @@ export class NewsCard {
   protected readonly contentLanguageLabels = CONTENT_LANGUAGE_LABELS;
 
   readonly item = input.required<NewsItem>();
+  readonly selected = input<boolean>(false);
 
   readonly editRequested = output<NewsEditRequestedEvent>();
   readonly translateRequested = output<NewsTranslateRequestedEvent>();
+  readonly selectionToggled = output<void>();
 
   private readonly _selectedLanguage = signal<ContentLanguage | undefined>(undefined);
 
