@@ -389,7 +389,7 @@ export class SectionFormDrawer {
       return this.sectionService.saveTranslation(existing.id, {
         slug,
         images: imagesPayload,
-        videoUrl,
+        videoUrl: videoUrl || undefined,
         language: this.targetLanguage(),
         translation,
         availableCountries,
@@ -399,7 +399,7 @@ export class SectionFormDrawer {
     return this.sectionService.create({
       slug,
       images: imagesPayload,
-      videoUrl,
+      videoUrl: videoUrl || undefined,
       language: this.targetLanguage(),
       translation,
       availableCountries,

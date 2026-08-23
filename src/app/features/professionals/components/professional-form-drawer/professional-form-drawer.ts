@@ -384,7 +384,7 @@ export class ProfessionalFormDrawer {
     const translation: ProfessionalTranslation = { name, credentialsTitle, bio };
     const sharedFields: Record<string, unknown> = {
       images: imagesPayload,
-      videoUrl,
+      videoUrl: videoUrl || undefined,
       scopeType,
       countryCode: scopeType === 'country' ? (countryCode ?? undefined) : undefined,
       city: scopeType === 'city' ? (city ?? undefined) : undefined,

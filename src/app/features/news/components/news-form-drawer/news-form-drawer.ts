@@ -337,7 +337,7 @@ export class NewsFormDrawer {
     );
     const sharedFields = {
       images: imagesPayload,
-      videoUrl,
+      videoUrl: videoUrl || undefined,
       publishedAt,
       eventDate: eventDate ?? undefined,
       sourceLinks,

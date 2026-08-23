@@ -343,7 +343,7 @@ export class OrganizationFormDrawer {
     );
     const sharedFields: OrganizationSharedFields = {
       images: imagesPayload,
-      videoUrl,
+      videoUrl: videoUrl || undefined,
       scopeType,
       countryCode: scopeType === 'country' ? (countryCode ?? undefined) : undefined,
       city: scopeType === 'city' ? (city ?? undefined) : undefined,
