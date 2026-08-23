@@ -403,7 +403,7 @@ export class ResourceFormDrawer {
     );
     sharedFields['images'] = imagesPayload;
     if (category !== 'multimedia') {
-      sharedFields['videoUrl'] = videoUrl;
+      sharedFields['videoUrl'] = videoUrl || undefined;
     }
 
     const existing = this.resource();
