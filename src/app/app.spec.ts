@@ -21,14 +21,24 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render a nav link to the guide sections module', async () => {
+  it('should render a nav link to the dashboard as the first nav item', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     const link = compiled.querySelector('a');
-    expect(link?.getAttribute('href')).toBe('/guide/sections');
-    expect(link?.textContent?.trim()).toBe(language.t().nav.sectionsLink);
+    expect(link?.getAttribute('href')).toBe('/');
+    expect(link?.textContent?.trim()).toBe(language.t().nav.dashboardLink);
+  });
+
+  it('should render a nav link to the guide sections module', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const links = compiled.querySelectorAll('a');
+    const sectionsLink = Array.from(links).find((link) => link.getAttribute('href') === '/guide/sections');
+    expect(sectionsLink?.textContent?.trim()).toBe(language.t().nav.sectionsLink);
   });
 
   it('should render a nav link to the resources module', async () => {

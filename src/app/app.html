@@ -14,6 +14,20 @@
       </div>
       <div class="flex items-center gap-1">
         <a
+          routerLink="/"
+          routerLinkActive
+          [routerLinkActiveOptions]="{ exact: true }"
+          #dashboardActive="routerLinkActive"
+          [class.text-brand-700]="dashboardActive.isActive"
+          [class.text-ink-600]="!dashboardActive.isActive"
+          [class.font-semibold]="dashboardActive.isActive"
+          [class.font-medium]="!dashboardActive.isActive"
+          [class.shadow-nav-active]="dashboardActive.isActive"
+          class="rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-brand-50 hover:text-brand-700"
+        >
+          {{ language.t().nav.dashboardLink }}
+        </a>
+        <a
           routerLink="/guide/sections"
           routerLinkActive
           #sectionsActive="routerLinkActive"
