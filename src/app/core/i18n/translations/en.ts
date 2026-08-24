@@ -3,6 +3,7 @@ import { Translations } from '../models/language.model';
 export const en: Translations = {
   nav: {
     appTitle: 'maplibera-backoffice',
+    dashboardLink: 'Dashboard',
     sectionsLink: 'Sections',
     resourcesLink: 'Resources',
     newsLink: 'News & Events',
@@ -65,6 +66,18 @@ export const en: Translations = {
     deleteConfirmCancelButton: 'Cancel',
     actionFailedNotice: 'Something went wrong. Please try again.',
     actionFailedDismiss: 'Dismiss',
+  },
+  dashboard: {
+    heading: 'Dashboard',
+    sectionsLabel: 'Sections',
+    resourcesLabel: 'Resources',
+    newsLabel: 'News & Events',
+    organizationsLabel: 'Organizations',
+    professionalsLabel: 'Professionals',
+    totalLabel: 'Total',
+    publishedLabel: 'Published',
+    draftLabel: 'Draft',
+    pausedLabel: 'Paused',
   },
   guide: {
     sectionsList: {

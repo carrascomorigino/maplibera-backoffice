@@ -3,6 +3,7 @@ export type UiLanguage = 'es' | 'en';
 export interface Translations {
   nav: {
     appTitle: string;
+    dashboardLink: string;
     sectionsLink: string;
     resourcesLink: string;
     newsLink: string;
@@ -60,6 +61,18 @@ export interface Translations {
     deleteConfirmCancelButton: string;
     actionFailedNotice: string;
     actionFailedDismiss: string;
+  };
+  dashboard: {
+    heading: string;
+    sectionsLabel: string;
+    resourcesLabel: string;
+    newsLabel: string;
+    organizationsLabel: string;
+    professionalsLabel: string;
+    totalLabel: string;
+    publishedLabel: string;
+    draftLabel: string;
+    pausedLabel: string;
   };
   guide: {
     sectionsList: {

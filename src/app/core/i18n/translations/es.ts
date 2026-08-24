@@ -3,6 +3,7 @@ import { Translations } from '../models/language.model';
 export const es: Translations = {
   nav: {
     appTitle: 'maplibera-backoffice',
+    dashboardLink: 'Panel',
     sectionsLink: 'Secciones',
     resourcesLink: 'Recursos',
     newsLink: 'Noticias y Eventos',
@@ -65,6 +66,18 @@ export const es: Translations = {
     deleteConfirmCancelButton: 'Cancelar',
     actionFailedNotice: 'Algo salió mal. Intentá de nuevo.',
     actionFailedDismiss: 'Cerrar',
+  },
+  dashboard: {
+    heading: 'Panel',
+    sectionsLabel: 'Secciones',
+    resourcesLabel: 'Recursos',
+    newsLabel: 'Noticias y Eventos',
+    organizationsLabel: 'Organizaciones',
+    professionalsLabel: 'Profesionales',
+    totalLabel: 'Total',
+    publishedLabel: 'Publicado',
+    draftLabel: 'Borrador',
+    pausedLabel: 'Pausado',
   },
   guide: {
     sectionsList: {
