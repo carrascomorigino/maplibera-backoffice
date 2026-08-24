@@ -4,7 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Before doing anything else in a new session, read [.claude-resume.md](../.claude-resume.md).**
 It says what the last commit did, the next planned step, and any open blockers — regenerated
-automatically after every commit by [.hooks/update-context.js](../.hooks/update-context.js).
+automatically after every commit by [.hooks/update-context.js](../.hooks/update-context.js). It only
+ever reflects the *latest* commit; for *why* past decisions were made across many sessions, see
+[.claude/WORK_LOG.md](WORK_LOG.md) — add an entry there when you finish something worth remembering
+long-term, the resume file can't do that on its own.
 
 ## Commands
 
