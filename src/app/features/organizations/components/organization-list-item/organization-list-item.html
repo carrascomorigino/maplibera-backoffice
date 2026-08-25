@@ -6,6 +6,39 @@
       (change)="selectionToggled.emit()"
       [attr.aria-label]="language.t().bulkSelection.itemCheckboxAria(organization().slug)"
     />
+    <span cdkDragHandle data-testid="drag-handle" aria-hidden="true" class="cursor-move text-ink-300 hover:text-ink-500">
+      <mat-icon>drag_indicator</mat-icon>
+    </span>
+    <button
+      mat-icon-button
+      type="button"
+      data-testid="move-to-top-button"
+      [disabled]="reorderingDisabled() || isFirst()"
+      [attr.aria-label]="language.t().organizations.organizationsList.moveToTopAriaLabel(organization().slug)"
+      (click)="moveToTopRequested.emit()"
+    >
+      <mat-icon>vertical_align_top</mat-icon>
+    </button>
+    <button
+      mat-icon-button
+      type="button"
+      data-testid="move-up-button"
+      [disabled]="reorderingDisabled() || isFirst()"
+      [attr.aria-label]="language.t().organizations.organizationsList.moveUpAriaLabel(organization().slug)"
+      (click)="moveUpRequested.emit()"
+    >
+      <mat-icon>arrow_upward</mat-icon>
+    </button>
+    <button
+      mat-icon-button
+      type="button"
+      data-testid="move-down-button"
+      [disabled]="reorderingDisabled() || isLast()"
+      [attr.aria-label]="language.t().organizations.organizationsList.moveDownAriaLabel(organization().slug)"
+      (click)="moveDownRequested.emit()"
+    >
+      <mat-icon>arrow_downward</mat-icon>
+    </button>
     <span
       data-testid="type-badge"
       class="rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700"
@@ -22,18 +55,18 @@
   </span>
 </div>
 
-@if (organization().images?.[0]?.url; as logoUrl) {
-  <img data-testid="logo-image" [src]="logoUrl" alt="" class="h-20 w-20 rounded-lg object-cover" />
+@if (organization().images?.length) {
+  <app-image-carousel [images]="organization().images!" />
 } @else {
   <div
     data-testid="logo-placeholder"
-    class="flex h-20 w-20 items-center justify-center rounded-lg bg-surface-sunken text-ink-300"
+    class="flex aspect-square w-full items-center justify-center rounded-lg bg-surface-sunken text-ink-300"
   >
     <mat-icon>apartment</mat-icon>
   </div>
 }
 
-<p data-testid="organization-name" class="font-medium text-ink-900">{{ translation()?.name }}</p>
+<p data-testid="organization-name" class="line-clamp-1 font-medium text-ink-900">{{ translation()?.name }}</p>
 <p class="line-clamp-2 text-sm text-ink-500">{{ translation()?.description }}</p>
 
 <span data-testid="scope-badge" class="w-fit rounded-full bg-ink-50 px-2 py-1 text-xs text-ink-600">

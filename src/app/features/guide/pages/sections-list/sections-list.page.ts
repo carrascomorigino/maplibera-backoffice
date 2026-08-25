@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDrawer, MatDrawerContainer, MatDrawerContent } from '@angular/material/sidenav';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Section } from '../../models/section.model';
+import { Section, SectionStatus } from '../../models/section.model';
 import { ContentLanguage } from '../../models/content-language.model';
 import { SectionService } from '../../services/section.service';
 import { SectionFormDrawer } from '../../components/section-form-drawer/section-form-drawer';
@@ -17,6 +18,8 @@ import {
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/confirm-dialog';
 import { SelectionToolbar } from '../../../../shared/components/selection-toolbar/selection-toolbar';
+import { InfiniteScrollDirective } from '../../../../shared/directives/infinite-scroll.directive';
+import { moveDown, moveToTop, moveUp } from '../../../../shared/utils/list-reorder';
 
 type DrawerContext =
   | { mode: 'create' }
@@ -34,12 +37,14 @@ type DrawerContext =
     CdkDropList,
     CdkDrag,
     MatButtonModule,
+    MatButtonToggleModule,
     MatDrawerContainer,
     MatDrawer,
     MatDrawerContent,
     SectionFormDrawer,
     SectionListItem,
     SelectionToolbar,
+    InfiniteScrollDirective,
   ],
   templateUrl: './sections-list.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -57,6 +62,26 @@ export class SectionsListPage {
 
   protected readonly selectedIds = signal<ReadonlySet<string>>(new Set());
   protected readonly selectedCount = computed(() => this.selectedIds().size);
+
+  protected readonly statusFilter = signal<SectionStatus | 'all'>('all');
+  protected readonly filteredSections = computed(() => {
+    const filter = this.statusFilter();
+    const all = this.sectionService.sections();
+    return filter === 'all' ? all : all.filter((s) => s.status === filter);
+  });
+  protected readonly reorderingEnabled = computed(() => this.statusFilter() === 'all');
+
+  private readonly PAGE_SIZE = 24;
+  protected readonly visibleCount = signal(this.PAGE_SIZE);
+  protected readonly visibleSections = computed(() => this.filteredSections().slice(0, this.visibleCount()));
+  protected readonly hasMore = computed(() => this.visibleCount() < this.filteredSections().length);
+
+  constructor() {
+    effect(() => {
+      this.statusFilter();
+      this.visibleCount.set(this.PAGE_SIZE);
+    });
+  }
 
   protected readonly drawerSection = computed<Section | undefined>(() => {
     const ctx = this.drawerContext();
@@ -116,12 +141,44 @@ export class SectionsListPage {
   }
 
   onDrop(event: CdkDragDrop<Section[]>): void {
-    const ids = event.container.data.map((section) => section.id);
+    const ids = this.sections().map((section) => section.id);
     moveItemInArray(ids, event.previousIndex, event.currentIndex);
-    this.sectionService.reorder(ids).catch(() => {
-      const labels = this.language.t().guide.sectionForm;
-      this.snackBar.open(labels.actionFailedNotice, labels.actionFailedDismiss);
-    });
+    this.sectionService.reorder(ids).catch(() => this.notifyReorderFailed());
+  }
+
+  protected onMoveToTop(id: string): void {
+    const ids = moveToTop(
+      this.sections().map((section) => section.id),
+      id,
+    );
+    this.sectionService.reorder(ids).catch(() => this.notifyReorderFailed());
+  }
+
+  protected onMoveUp(id: string): void {
+    const ids = moveUp(
+      this.sections().map((section) => section.id),
+      id,
+    );
+    this.sectionService.reorder(ids).catch(() => this.notifyReorderFailed());
+  }
+
+  protected onMoveDown(id: string): void {
+    const ids = moveDown(
+      this.sections().map((section) => section.id),
+      id,
+    );
+    this.sectionService.reorder(ids).catch(() => this.notifyReorderFailed());
+  }
+
+  protected onNearEnd(): void {
+    if (this.hasMore()) {
+      this.visibleCount.update((n) => n + this.PAGE_SIZE);
+    }
+  }
+
+  private notifyReorderFailed(): void {
+    const labels = this.language.t().guide.sectionForm;
+    this.snackBar.open(labels.actionFailedNotice, labels.actionFailedDismiss);
   }
 
   protected isSelected(id: string): boolean {

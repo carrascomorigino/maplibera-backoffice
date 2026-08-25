@@ -8,12 +8,34 @@ import { LanguageService } from '../../../../core/i18n/language.service';
 import { Question, Section } from '../../models/section.model';
 import { FakeSectionService, makeSection } from '../../testing/fake-section-service';
 
+class FakeIntersectionObserver implements IntersectionObserver {
+  static instances: FakeIntersectionObserver[] = [];
+
+  readonly root: Element | Document | null = null;
+  readonly rootMargin: string = '';
+  readonly thresholds: ReadonlyArray<number> = [];
+
+  disconnect = vi.fn();
+  observe = vi.fn();
+  unobserve = vi.fn();
+  takeRecords = vi.fn(() => []);
+
+  constructor(
+    public callback: IntersectionObserverCallback,
+    public options?: IntersectionObserverInit,
+  ) {
+    FakeIntersectionObserver.instances.push(this);
+  }
+}
+
 describe('SectionListItem', () => {
   let service: FakeSectionService;
   let language: LanguageService;
   let snackBarOpen: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    FakeIntersectionObserver.instances = [];
+    global.IntersectionObserver = FakeIntersectionObserver as unknown as typeof IntersectionObserver;
     service = new FakeSectionService();
     snackBarOpen = vi.fn();
     TestBed.configureTestingModule({
@@ -541,6 +563,104 @@ describe('SectionListItem', () => {
       await Promise.resolve();
 
       expect(snackBarOpen).toHaveBeenCalled();
+    });
+  });
+
+  describe('media', () => {
+    it('renders the image carousel when the section has images', () => {
+      const section = makeSection({
+        slug: 'gallery',
+        images: [{ url: 'https://example.com/1.png' }, { url: 'https://example.com/2.png' }],
+        translations: { en: { title: 'Gallery', description: '' } },
+      });
+
+      const fixture = createFixture(section);
+
+      expect(fixture.nativeElement.querySelector('app-image-carousel')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="thumbnail-placeholder"]')).toBeNull();
+    });
+  });
+
+  describe('reordering', () => {
+    function createReorderFixture(
+      section: Section,
+      overrides: Partial<{ isFirst: boolean; isLast: boolean; reorderingDisabled: boolean }> = {},
+    ) {
+      const fixture = createFixture(section);
+      if (overrides.isFirst !== undefined) {
+        fixture.componentRef.setInput('isFirst', overrides.isFirst);
+      }
+      if (overrides.isLast !== undefined) {
+        fixture.componentRef.setInput('isLast', overrides.isLast);
+      }
+      if (overrides.reorderingDisabled !== undefined) {
+        fixture.componentRef.setInput('reorderingDisabled', overrides.reorderingDisabled);
+      }
+      fixture.detectChanges();
+      return fixture;
+    }
+
+    it('emits moveToTopRequested, moveUpRequested, and moveDownRequested when the buttons are clicked', () => {
+      const section = twoLanguageSection();
+      const fixture = createFixture(section);
+      const moveToTop = vi.fn();
+      const moveUp = vi.fn();
+      const moveDown = vi.fn();
+      fixture.componentInstance.moveToTopRequested.subscribe(moveToTop);
+      fixture.componentInstance.moveUpRequested.subscribe(moveUp);
+      fixture.componentInstance.moveDownRequested.subscribe(moveDown);
+
+      (fixture.nativeElement.querySelector('[data-testid="move-to-top-button"]') as HTMLButtonElement).click();
+      (fixture.nativeElement.querySelector('[data-testid="move-up-button"]') as HTMLButtonElement).click();
+      (fixture.nativeElement.querySelector('[data-testid="move-down-button"]') as HTMLButtonElement).click();
+
+      expect(moveToTop).toHaveBeenCalled();
+      expect(moveUp).toHaveBeenCalled();
+      expect(moveDown).toHaveBeenCalled();
+    });
+
+    it('disables move-to-top and move-up when isFirst is true, but keeps move-down enabled', () => {
+      const section = twoLanguageSection();
+      const fixture = createReorderFixture(section, { isFirst: true });
+
+      expect(
+        (fixture.nativeElement.querySelector('[data-testid="move-to-top-button"]') as HTMLButtonElement)
+          .disabled,
+      ).toBe(true);
+      expect(
+        (fixture.nativeElement.querySelector('[data-testid="move-up-button"]') as HTMLButtonElement).disabled,
+      ).toBe(true);
+      expect(
+        (fixture.nativeElement.querySelector('[data-testid="move-down-button"]') as HTMLButtonElement)
+          .disabled,
+      ).toBe(false);
+    });
+
+    it('disables move-down when isLast is true', () => {
+      const section = twoLanguageSection();
+      const fixture = createReorderFixture(section, { isLast: true });
+
+      expect(
+        (fixture.nativeElement.querySelector('[data-testid="move-down-button"]') as HTMLButtonElement)
+          .disabled,
+      ).toBe(true);
+    });
+
+    it('disables all move buttons when reorderingDisabled is true', () => {
+      const section = twoLanguageSection();
+      const fixture = createReorderFixture(section, { reorderingDisabled: true });
+
+      expect(
+        (fixture.nativeElement.querySelector('[data-testid="move-to-top-button"]') as HTMLButtonElement)
+          .disabled,
+      ).toBe(true);
+      expect(
+        (fixture.nativeElement.querySelector('[data-testid="move-up-button"]') as HTMLButtonElement).disabled,
+      ).toBe(true);
+      expect(
+        (fixture.nativeElement.querySelector('[data-testid="move-down-button"]') as HTMLButtonElement)
+          .disabled,
+      ).toBe(true);
     });
   });
 });

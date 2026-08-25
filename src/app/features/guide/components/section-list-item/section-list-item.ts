@@ -12,6 +12,7 @@ import { LanguageService } from '../../../../core/i18n/language.service';
 import { LanguageTags } from '../../../../shared/components/language-tags/language-tags';
 import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/confirm-dialog';
 import { countryDisplayName } from '../../../../shared/models/country.model';
+import { ImageCarousel } from '../../../../shared/components/image-carousel/image-carousel';
 
 export interface EditRequestedEvent {
   section: Section;
@@ -32,11 +33,12 @@ export interface ResetSelectionRequest {
 
 @Component({
   selector: 'app-section-list-item',
-  imports: [CdkDragHandle, MatButtonModule, MatCheckboxModule, MatIconModule, LanguageTags],
+  imports: [CdkDragHandle, MatButtonModule, MatCheckboxModule, MatIconModule, LanguageTags, ImageCarousel],
   templateUrl: './section-list-item.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    class: 'flex flex-1 min-w-0 items-center gap-4',
+    class:
+      'flex flex-col gap-2 rounded-xl border border-ink-100 bg-surface-card p-3 shadow-[0_1px_2px_-1px_rgba(23,21,31,0.06),0_1px_3px_rgba(23,21,31,0.04)] transition-shadow hover:shadow-[0_2px_4px_-1px_rgba(23,21,31,0.08),0_4px_8px_rgba(23,21,31,0.05)]',
   },
 })
 export class SectionListItem {
@@ -51,10 +53,16 @@ export class SectionListItem {
   readonly section = input.required<Section>();
   readonly resetRequest = input<ResetSelectionRequest | undefined>(undefined);
   readonly selected = input<boolean>(false);
+  readonly isFirst = input<boolean>(false);
+  readonly isLast = input<boolean>(false);
+  readonly reorderingDisabled = input<boolean>(false);
 
   readonly editRequested = output<EditRequestedEvent>();
   readonly translateRequested = output<TranslateRequestedEvent>();
   readonly selectionToggled = output<void>();
+  readonly moveToTopRequested = output<void>();
+  readonly moveUpRequested = output<void>();
+  readonly moveDownRequested = output<void>();
 
   private readonly _selectedLanguage = signal<ContentLanguage | undefined>(undefined);
 

@@ -1,11 +1,17 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDrawer, MatDrawerContainer, MatDrawerContent } from '@angular/material/sidenav';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ORGANIZATION_TYPES, Organization, OrganizationType } from '../../models/organization.model';
+import {
+  ORGANIZATION_STATUSES,
+  ORGANIZATION_TYPES,
+  Organization,
+  OrganizationStatus,
+  OrganizationType,
+} from '../../models/organization.model';
 import { ContentLanguage } from '../../../guide/models/content-language.model';
 import { OrganizationService } from '../../services/organization.service';
 import { OrganizationFormDrawer } from '../../components/organization-form-drawer/organization-form-drawer';
@@ -17,6 +23,8 @@ import {
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/confirm-dialog';
 import { SelectionToolbar } from '../../../../shared/components/selection-toolbar/selection-toolbar';
+import { InfiniteScrollDirective } from '../../../../shared/directives/infinite-scroll.directive';
+import { moveDown, moveToTop, moveUp } from '../../../../shared/utils/list-reorder';
 
 type DrawerContext =
   | { mode: 'create' }
@@ -46,6 +54,7 @@ type DrawerContext =
     OrganizationFormDrawer,
     OrganizationListItem,
     SelectionToolbar,
+    InfiniteScrollDirective,
   ],
   templateUrl: './organizations-list.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,13 +65,45 @@ export class OrganizationsListPage {
   private readonly dialog = inject(MatDialog);
   protected readonly language = inject(LanguageService);
 
+  private readonly PAGE_SIZE = 24;
+
   protected readonly types = ORGANIZATION_TYPES;
+  protected readonly statuses = ORGANIZATION_STATUSES;
   protected readonly activeFilter = signal<OrganizationType | 'all'>('all');
-  protected readonly visibleOrganizations = computed<Organization[]>(() => {
-    const filter = this.activeFilter();
-    const orgs = this.organizationService.organizations();
-    return filter === 'all' ? orgs : orgs.filter((org) => org.type === filter);
+  protected readonly statusFilter = signal<OrganizationStatus | 'all'>('all');
+
+  protected readonly filteredOrganizations = computed<Organization[]>(() => {
+    const typeFilter = this.activeFilter();
+    const status = this.statusFilter();
+    let orgs = this.organizationService.organizations();
+    if (typeFilter !== 'all') {
+      orgs = orgs.filter((org) => org.type === typeFilter);
+    }
+    if (status !== 'all') {
+      orgs = orgs.filter((org) => org.status === status);
+    }
+    return orgs;
   });
+
+  protected readonly visibleCount = signal(this.PAGE_SIZE);
+
+  protected readonly visibleOrganizations = computed<Organization[]>(() =>
+    this.filteredOrganizations().slice(0, this.visibleCount()),
+  );
+
+  protected readonly hasMore = computed(() => this.visibleCount() < this.filteredOrganizations().length);
+
+  protected readonly reorderingEnabled = computed(
+    () => this.activeFilter() === 'all' && this.statusFilter() === 'all',
+  );
+
+  constructor() {
+    effect(() => {
+      this.activeFilter();
+      this.statusFilter();
+      this.visibleCount.set(this.PAGE_SIZE);
+    });
+  }
 
   protected readonly selectedIds = signal<ReadonlySet<string>>(new Set());
   protected readonly selectedCount = computed(() => this.selectedIds().size);
@@ -124,12 +165,44 @@ export class OrganizationsListPage {
   }
 
   onDrop(event: CdkDragDrop<Organization[]>): void {
-    const ids = event.container.data.map((org) => org.id);
+    const ids = this.organizationService.organizations().map((org) => org.id);
     moveItemInArray(ids, event.previousIndex, event.currentIndex);
-    this.organizationService.reorder(ids).catch(() => {
-      const form = this.language.t().organizations.organizationForm;
-      this.snackBar.open(form.actionFailedNotice, form.actionFailedDismiss);
-    });
+    this.organizationService.reorder(ids).catch(() => this.notifyActionFailed());
+  }
+
+  protected onMoveToTop(id: string): void {
+    const ids = moveToTop(
+      this.organizationService.organizations().map((org) => org.id),
+      id,
+    );
+    this.organizationService.reorder(ids).catch(() => this.notifyActionFailed());
+  }
+
+  protected onMoveUp(id: string): void {
+    const ids = moveUp(
+      this.organizationService.organizations().map((org) => org.id),
+      id,
+    );
+    this.organizationService.reorder(ids).catch(() => this.notifyActionFailed());
+  }
+
+  protected onMoveDown(id: string): void {
+    const ids = moveDown(
+      this.organizationService.organizations().map((org) => org.id),
+      id,
+    );
+    this.organizationService.reorder(ids).catch(() => this.notifyActionFailed());
+  }
+
+  protected onNearEnd(): void {
+    if (this.hasMore()) {
+      this.visibleCount.update((n) => n + this.PAGE_SIZE);
+    }
+  }
+
+  private notifyActionFailed(): void {
+    const form = this.language.t().organizations.organizationForm;
+    this.snackBar.open(form.actionFailedNotice, form.actionFailedDismiss);
   }
 
   protected filterLabel(type: OrganizationType): string {
@@ -143,6 +216,18 @@ export class OrganizationsListPage {
         return labels.filterSocialNetworkLabel;
       case 'campaign':
         return labels.filterCampaignLabel;
+    }
+  }
+
+  protected statusFilterLabel(status: OrganizationStatus): string {
+    const labels = this.language.t().organizations.organizationsList;
+    switch (status) {
+      case 'draft':
+        return labels.statusFilterDraftLabel;
+      case 'published':
+        return labels.statusFilterPublishedLabel;
+      case 'paused':
+        return labels.statusFilterPausedLabel;
     }
   }
 

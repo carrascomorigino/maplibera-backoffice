@@ -1,34 +1,75 @@
-<mat-checkbox
-  data-testid="select-checkbox"
-  [checked]="selected()"
-  (change)="selectionToggled.emit()"
-  [attr.aria-label]="language.t().bulkSelection.itemCheckboxAria(section().slug)"
-/>
+<div class="flex items-center justify-between gap-2">
+  <div class="flex items-center gap-1">
+    <mat-checkbox
+      data-testid="select-checkbox"
+      [checked]="selected()"
+      (change)="selectionToggled.emit()"
+      [attr.aria-label]="language.t().bulkSelection.itemCheckboxAria(section().slug)"
+    />
+    <span
+      cdkDragHandle
+      data-testid="drag-handle"
+      aria-hidden="true"
+      class="cursor-move text-ink-300 hover:text-ink-500"
+    >
+      <mat-icon>drag_indicator</mat-icon>
+    </span>
+    <button
+      mat-icon-button
+      type="button"
+      data-testid="move-to-top-button"
+      [disabled]="reorderingDisabled() || isFirst()"
+      [attr.aria-label]="language.t().guide.sectionsList.moveToTopAriaLabel(section().slug)"
+      (click)="moveToTopRequested.emit()"
+    >
+      <mat-icon>vertical_align_top</mat-icon>
+    </button>
+    <button
+      mat-icon-button
+      type="button"
+      data-testid="move-up-button"
+      [disabled]="reorderingDisabled() || isFirst()"
+      [attr.aria-label]="language.t().guide.sectionsList.moveUpAriaLabel(section().slug)"
+      (click)="moveUpRequested.emit()"
+    >
+      <mat-icon>arrow_upward</mat-icon>
+    </button>
+    <button
+      mat-icon-button
+      type="button"
+      data-testid="move-down-button"
+      [disabled]="reorderingDisabled() || isLast()"
+      [attr.aria-label]="language.t().guide.sectionsList.moveDownAriaLabel(section().slug)"
+      (click)="moveDownRequested.emit()"
+    >
+      <mat-icon>arrow_downward</mat-icon>
+    </button>
+  </div>
 
-<span
-  cdkDragHandle
-  data-testid="drag-handle"
-  aria-hidden="true"
-  class="cursor-move text-ink-300 hover:text-ink-500"
->
-  <mat-icon>drag_indicator</mat-icon>
-</span>
+  <span
+    data-testid="status-badge"
+    class="rounded-full px-2 py-1 text-xs font-medium"
+    [class]="statusBadgeClass(section().status)"
+  >
+    {{ section().status }}
+  </span>
+</div>
 
-@if (section().images?.[0]; as coverImage) {
-  <img [src]="coverImage.url" alt="" class="h-12 w-12 rounded-lg object-cover" />
+@if (section().images?.length) {
+  <app-image-carousel [images]="section().images!" />
 } @else {
   <div
     data-testid="thumbnail-placeholder"
-    class="flex h-12 w-12 items-center justify-center rounded-lg bg-surface-sunken text-ink-300"
+    class="flex aspect-square w-full items-center justify-center rounded-lg bg-surface-sunken text-ink-300"
   >
     <mat-icon>image</mat-icon>
   </div>
 }
 
-<div class="flex-1">
-  <p data-testid="section-title" class="font-medium text-ink-900">{{ translation()?.title }}</p>
+<div>
+  <p data-testid="section-title" class="line-clamp-1 font-medium text-ink-900">{{ translation()?.title }}</p>
   <p data-testid="section-slug" class="font-mono text-xs text-ink-400">{{ section().slug }}</p>
-  <p class="text-sm text-ink-500">{{ translation()?.description }}</p>
+  <p class="line-clamp-2 text-sm text-ink-500">{{ translation()?.description }}</p>
 
   @if (translation()?.question; as question) {
     <div class="mt-1">
@@ -52,35 +93,28 @@
   <p data-testid="country-availability-indicator" class="mt-1 text-xs text-ink-400">
     {{ countryAvailabilityIndicator() }}
   </p>
-
-  <div class="mt-2">
-    <app-language-tags
-      [languages]="contentLanguages"
-      [translatedLanguages]="availableLanguages()"
-      [staleLanguages]="section().staleLanguages ?? {}"
-      [selectedLanguage]="selectedLanguage()"
-      (languageSelected)="onLanguageSelected($event)"
-      (translateRequested)="onTranslateRequested($event)"
-      (languageRemoved)="onLanguageRemoved($event)"
-    />
-  </div>
 </div>
 
-<span
-  class="rounded-full px-2 py-1 text-xs font-medium"
-  [class]="statusBadgeClass(section().status)"
->
-  {{ section().status }}
-</span>
+<app-language-tags
+  [languages]="contentLanguages"
+  [translatedLanguages]="availableLanguages()"
+  [staleLanguages]="section().staleLanguages ?? {}"
+  [selectedLanguage]="selectedLanguage()"
+  (languageSelected)="onLanguageSelected($event)"
+  (translateRequested)="onTranslateRequested($event)"
+  (languageRemoved)="onLanguageRemoved($event)"
+/>
 
-<button mat-stroked-button type="button" data-testid="edit-button" class="shrink-0" (click)="onEdit()">
-  {{ language.t().guide.sectionsList.editButton }}
-</button>
-<button
-  mat-stroked-button
-  type="button"
-  [attr.data-testid]="'status-action-' + section().slug"
-  (click)="onStatusAction()"
->
-  {{ statusActionLabel(section().status) }}
-</button>
+<div class="mt-auto flex gap-2">
+  <button mat-stroked-button type="button" data-testid="edit-button" (click)="onEdit()">
+    {{ language.t().guide.sectionsList.editButton }}
+  </button>
+  <button
+    mat-stroked-button
+    type="button"
+    [attr.data-testid]="'status-action-' + section().slug"
+    (click)="onStatusAction()"
+  >
+    {{ statusActionLabel(section().status) }}
+  </button>
+</div>
