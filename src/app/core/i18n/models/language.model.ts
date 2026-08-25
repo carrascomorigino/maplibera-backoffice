@@ -47,6 +47,11 @@ export interface Translations {
     removeRowAria: string;
     imageCountLabel: (current: number, max: number) => string;
   };
+  imageCarousel: {
+    goToImageAria: (index: number) => string;
+    previousImageAria: string;
+    nextImageAria: string;
+  };
   fieldLimits: {
     charactersRemaining: (count: number) => string;
   };
@@ -92,6 +97,13 @@ export interface Translations {
       reorderAriaLabel: (title: string) => string;
       countryAvailabilityIndicator: (countries: string) => string;
       countryAvailabilityWorldwide: string;
+      filterAllLabel: string;
+      filterDraftLabel: string;
+      filterPublishedLabel: string;
+      filterPausedLabel: string;
+      moveToTopAriaLabel: (slug: string) => string;
+      moveUpAriaLabel: (slug: string) => string;
+      moveDownAriaLabel: (slug: string) => string;
     };
     sectionForm: {
       editHeading: string;
@@ -283,6 +295,10 @@ export interface Translations {
       filterNgoLabel: string;
       filterSocialNetworkLabel: string;
       filterCampaignLabel: string;
+      statusFilterAllLabel: string;
+      statusFilterDraftLabel: string;
+      statusFilterPublishedLabel: string;
+      statusFilterPausedLabel: string;
       emptyState: string;
       editButton: string;
       publishAction: string;
@@ -293,6 +309,9 @@ export interface Translations {
       typeBadgeCampaign: string;
       scopeGlobalLabel: string;
       reorderAriaLabel: (slug: string) => string;
+      moveToTopAriaLabel: (slug: string) => string;
+      moveUpAriaLabel: (slug: string) => string;
+      moveDownAriaLabel: (slug: string) => string;
       contactLinkWebsiteAria: string;
       contactLinkInstagramAria: string;
       contactLinkTelegramAria: string;

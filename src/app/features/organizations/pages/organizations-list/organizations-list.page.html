@@ -33,6 +33,21 @@
         }
       </mat-button-toggle-group>
 
+      <mat-button-toggle-group
+        [value]="statusFilter()"
+        (change)="statusFilter.set($event.value)"
+        aria-label="Status filter"
+      >
+        <mat-button-toggle value="all" data-testid="status-filter-all">
+          {{ language.t().organizations.organizationsList.statusFilterAllLabel }}
+        </mat-button-toggle>
+        @for (status of statuses; track status) {
+          <mat-button-toggle [value]="status" [attr.data-testid]="'status-filter-' + status">
+            {{ statusFilterLabel(status) }}
+          </mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+
       <button mat-flat-button type="button" data-testid="add-button" (click)="openCreate()">
         {{ language.t().organizations.organizationsList.addButton }}
       </button>
@@ -47,7 +62,7 @@
       />
     }
 
-    @if (visibleOrganizations().length === 0) {
+    @if (filteredOrganizations().length === 0) {
       <p
         data-testid="empty-state"
         class="rounded-xl border border-dashed border-ink-200 bg-surface-muted p-8 text-center text-sm text-ink-500"
@@ -55,15 +70,16 @@
         {{ language.t().organizations.organizationsList.emptyState }}
       </p>
     } @else {
-      <ul
+      <div
         cdkDropList
         [cdkDropListData]="visibleOrganizations()"
-        [cdkDropListDisabled]="activeFilter() !== 'all'"
-        class="flex flex-col gap-2"
+        [cdkDropListDisabled]="!reorderingEnabled()"
+        class="grid gap-4"
+        style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))"
         (cdkDropListDropped)="onDrop($event)"
       >
-        @for (org of visibleOrganizations(); track org.slug) {
-          <li
+        @for (org of visibleOrganizations(); track org.slug; let isFirst = $first; let isLast = $last) {
+          <div
             cdkDrag
             tabindex="0"
             [attr.aria-label]="language.t().organizations.organizationsList.reorderAriaLabel(org.slug)"
@@ -71,13 +87,23 @@
             <app-organization-list-item
               [organization]="org"
               [selected]="isSelected(org.id)"
+              [isFirst]="isFirst"
+              [isLast]="isLast"
+              [reorderingDisabled]="!reorderingEnabled()"
               (editRequested)="openEdit($event)"
               (translateRequested)="openTranslate($event)"
               (selectionToggled)="toggleSelection(org.id)"
+              (moveToTopRequested)="onMoveToTop(org.id)"
+              (moveUpRequested)="onMoveUp(org.id)"
+              (moveDownRequested)="onMoveDown(org.id)"
             />
-          </li>
+          </div>
         }
-      </ul>
+      </div>
+
+      @if (hasMore()) {
+        <div appInfiniteScroll (nearEnd)="onNearEnd()" class="h-4"></div>
+      }
     }
   </mat-drawer-content>
 </mat-drawer-container>

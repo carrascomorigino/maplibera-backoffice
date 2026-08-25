@@ -1,0 +1,58 @@
+@if (images().length === 1) {
+  <img
+    [src]="images()[0].url"
+    [alt]="images()[0].description ?? ''"
+    class="aspect-square w-full rounded-lg object-cover"
+  />
+} @else if (images().length > 1) {
+  <div class="relative aspect-square w-full">
+    <div
+      class="scrollbar-hide flex aspect-square w-full overflow-x-auto rounded-lg"
+      style="scroll-snap-type: x mandatory;"
+    >
+      @for (image of images(); track $index) {
+        <img
+          #slide
+          [src]="image.url"
+          [alt]="image.description ?? ''"
+          class="aspect-square w-full shrink-0 object-cover"
+          style="scroll-snap-align: start; flex: 0 0 100%;"
+        />
+      }
+    </div>
+
+    <button
+      type="button"
+      data-testid="carousel-previous"
+      class="absolute left-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-ink-900/70 text-white transition-opacity disabled:opacity-40"
+      [disabled]="activeIndex() === 0"
+      [attr.aria-label]="language.t().imageCarousel.previousImageAria"
+      (click)="goToPrevious()"
+    >
+      <mat-icon class="!text-lg">chevron_left</mat-icon>
+    </button>
+    <button
+      type="button"
+      data-testid="carousel-next"
+      class="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-ink-900/70 text-white transition-opacity disabled:opacity-40"
+      [disabled]="activeIndex() === images().length - 1"
+      [attr.aria-label]="language.t().imageCarousel.nextImageAria"
+      (click)="goToNext()"
+    >
+      <mat-icon class="!text-lg">chevron_right</mat-icon>
+    </button>
+
+    <div class="absolute bottom-1 left-1/2 flex -translate-x-1/2 gap-1 rounded-full bg-ink-900/70 px-1.5 py-1">
+      @for (image of images(); track $index; let i = $index) {
+        <button
+          type="button"
+          data-testid="carousel-dot"
+          class="h-2 w-2 rounded-full bg-white transition-opacity"
+          [style.opacity]="activeIndex() === i ? 1 : 0.7"
+          [attr.aria-label]="language.t().imageCarousel.goToImageAria(i + 1)"
+          (click)="goToSlide(i)"
+        ></button>
+      }
+    </div>
+  </div>
+}

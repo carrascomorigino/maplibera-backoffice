@@ -48,6 +48,11 @@ export const es: Translations = {
     removeRowAria: 'Quitar imagen',
     imageCountLabel: (current, max) => `${current}/${max} imágenes`,
   },
+  imageCarousel: {
+    goToImageAria: (index) => `Ir a la imagen ${index}`,
+    previousImageAria: 'Imagen anterior',
+    nextImageAria: 'Imagen siguiente',
+  },
   fieldLimits: {
     charactersRemaining: (count) =>
       count === 1 ? '1 carácter restante' : `${count} caracteres restantes`,
@@ -98,6 +103,13 @@ export const es: Translations = {
         `Reordenar ${title}. Presioná espacio para levantar, flechas para mover, espacio para soltar.`,
       countryAvailabilityIndicator: (countries) => `Disponibilidad: ${countries}`,
       countryAvailabilityWorldwide: 'mundial',
+      filterAllLabel: 'Todas',
+      filterDraftLabel: 'Borrador',
+      filterPublishedLabel: 'Publicado',
+      filterPausedLabel: 'Pausado',
+      moveToTopAriaLabel: (slug) => `Mover ${slug} al principio`,
+      moveUpAriaLabel: (slug) => `Mover ${slug} hacia arriba`,
+      moveDownAriaLabel: (slug) => `Mover ${slug} hacia abajo`,
     },
     sectionForm: {
       editHeading: 'Editar sección',
@@ -294,6 +306,10 @@ export const es: Translations = {
       filterNgoLabel: 'ONGs',
       filterSocialNetworkLabel: 'Redes sociales',
       filterCampaignLabel: 'Campañas',
+      statusFilterAllLabel: 'Todas',
+      statusFilterDraftLabel: 'Borrador',
+      statusFilterPublishedLabel: 'Publicado',
+      statusFilterPausedLabel: 'Pausado',
       emptyState: 'Todavía no hay organizaciones. Creá la primera para empezar.',
       editButton: 'Editar',
       publishAction: 'Publicar',
@@ -305,6 +321,9 @@ export const es: Translations = {
       scopeGlobalLabel: 'Global',
       reorderAriaLabel: (slug) =>
         `Reordenar ${slug}. Presioná espacio para levantar, flechas para mover, espacio para soltar.`,
+      moveToTopAriaLabel: (slug) => `Mover ${slug} al principio`,
+      moveUpAriaLabel: (slug) => `Mover ${slug} hacia arriba`,
+      moveDownAriaLabel: (slug) => `Mover ${slug} hacia abajo`,
       contactLinkWebsiteAria: 'Sitio web',
       contactLinkInstagramAria: 'Instagram',
       contactLinkTelegramAria: 'Telegram',

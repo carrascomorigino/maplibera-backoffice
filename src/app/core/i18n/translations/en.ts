@@ -48,6 +48,11 @@ export const en: Translations = {
     removeRowAria: 'Remove image',
     imageCountLabel: (current, max) => `${current}/${max} images`,
   },
+  imageCarousel: {
+    goToImageAria: (index) => `Go to image ${index}`,
+    previousImageAria: 'Previous image',
+    nextImageAria: 'Next image',
+  },
   fieldLimits: {
     charactersRemaining: (count) =>
       count === 1 ? '1 character remaining' : `${count} characters remaining`,
@@ -98,6 +103,13 @@ export const en: Translations = {
         `Reorder ${title}. Press space to lift, arrow keys to move, space to drop.`,
       countryAvailabilityIndicator: (countries) => `Availability: ${countries}`,
       countryAvailabilityWorldwide: 'worldwide',
+      filterAllLabel: 'All',
+      filterDraftLabel: 'Draft',
+      filterPublishedLabel: 'Published',
+      filterPausedLabel: 'Paused',
+      moveToTopAriaLabel: (slug) => `Move ${slug} to top`,
+      moveUpAriaLabel: (slug) => `Move ${slug} up`,
+      moveDownAriaLabel: (slug) => `Move ${slug} down`,
     },
     sectionForm: {
       editHeading: 'Edit section',
@@ -294,6 +306,10 @@ export const en: Translations = {
       filterNgoLabel: 'NGOs',
       filterSocialNetworkLabel: 'Social networks',
       filterCampaignLabel: 'Campaigns',
+      statusFilterAllLabel: 'All',
+      statusFilterDraftLabel: 'Draft',
+      statusFilterPublishedLabel: 'Published',
+      statusFilterPausedLabel: 'Paused',
       emptyState: 'No organizations yet. Create the first one to get started.',
       editButton: 'Edit',
       publishAction: 'Publish',
@@ -305,6 +321,9 @@ export const en: Translations = {
       scopeGlobalLabel: 'Global',
       reorderAriaLabel: (slug) =>
         `Reorder ${slug}. Press space to lift, arrow keys to move, space to drop.`,
+      moveToTopAriaLabel: (slug) => `Move ${slug} to top`,
+      moveUpAriaLabel: (slug) => `Move ${slug} up`,
+      moveDownAriaLabel: (slug) => `Move ${slug} down`,
       contactLinkWebsiteAria: 'Website',
       contactLinkInstagramAria: 'Instagram',
       contactLinkTelegramAria: 'Telegram',

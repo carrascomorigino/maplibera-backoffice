@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { CdkDragHandle } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
@@ -15,6 +16,7 @@ import { OrganizationService } from '../../services/organization.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { LanguageTags } from '../../../../shared/components/language-tags/language-tags';
 import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/confirm-dialog';
+import { ImageCarousel } from '../../../../shared/components/image-carousel/image-carousel';
 
 export interface OrganizationEditRequestedEvent {
   organization: Organization;
@@ -37,7 +39,7 @@ interface ContactLinkEntry {
 
 @Component({
   selector: 'app-organization-list-item',
-  imports: [MatButtonModule, MatCheckboxModule, MatIconModule, LanguageTags],
+  imports: [CdkDragHandle, MatButtonModule, MatCheckboxModule, MatIconModule, LanguageTags, ImageCarousel],
   templateUrl: './organization-list-item.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
@@ -55,10 +57,16 @@ export class OrganizationListItem {
 
   readonly organization = input.required<Organization>();
   readonly selected = input<boolean>(false);
+  readonly isFirst = input<boolean>(false);
+  readonly isLast = input<boolean>(false);
+  readonly reorderingDisabled = input<boolean>(false);
 
   readonly editRequested = output<OrganizationEditRequestedEvent>();
   readonly translateRequested = output<OrganizationTranslateRequestedEvent>();
   readonly selectionToggled = output<void>();
+  readonly moveToTopRequested = output<void>();
+  readonly moveUpRequested = output<void>();
+  readonly moveDownRequested = output<void>();
 
   private readonly _selectedLanguage = signal<ContentLanguage | undefined>(undefined);
 

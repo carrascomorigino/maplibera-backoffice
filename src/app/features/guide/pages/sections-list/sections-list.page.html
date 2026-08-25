@@ -13,10 +13,30 @@
   </mat-drawer>
 
   <mat-drawer-content class="p-6 md:p-8">
-    <div class="mb-6 flex items-center justify-between">
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
       <h1 class="text-2xl font-semibold tracking-tight text-ink-900">
         {{ language.t().guide.sectionsList.heading }}
       </h1>
+
+      <mat-button-toggle-group
+        [value]="statusFilter()"
+        (change)="statusFilter.set($event.value)"
+        aria-label="Filter"
+      >
+        <mat-button-toggle value="all" data-testid="filter-all">
+          {{ language.t().guide.sectionsList.filterAllLabel }}
+        </mat-button-toggle>
+        <mat-button-toggle value="draft" data-testid="filter-draft">
+          {{ language.t().guide.sectionsList.filterDraftLabel }}
+        </mat-button-toggle>
+        <mat-button-toggle value="published" data-testid="filter-published">
+          {{ language.t().guide.sectionsList.filterPublishedLabel }}
+        </mat-button-toggle>
+        <mat-button-toggle value="paused" data-testid="filter-paused">
+          {{ language.t().guide.sectionsList.filterPausedLabel }}
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+
       <button
         mat-flat-button
         type="button"
@@ -36,37 +56,53 @@
       />
     }
 
-    @if (sections().length === 0) {
+    @if (filteredSections().length === 0) {
       <p
         class="rounded-xl border border-dashed border-ink-200 bg-surface-muted p-8 text-center text-sm text-ink-500"
       >
         {{ language.t().guide.sectionsList.emptyState }}
       </p>
     } @else {
-      <ul
+      <div
         cdkDropList
-        [cdkDropListData]="sections()"
-        class="flex flex-col gap-2"
+        [cdkDropListData]="visibleSections()"
+        [cdkDropListDisabled]="!reorderingEnabled()"
+        class="grid gap-4"
+        style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))"
         (cdkDropListDropped)="onDrop($event)"
       >
-        @for (section of sections(); track section.slug) {
-          <li
+        @for (
+          section of visibleSections();
+          track section.slug;
+          let isFirst = $first;
+          let isLast = $last
+        ) {
+          <div
             cdkDrag
             tabindex="0"
             [attr.aria-label]="language.t().guide.sectionsList.reorderAriaLabel(section.slug)"
-            class="flex items-center gap-4 rounded-xl border border-ink-100 bg-surface-card p-3 shadow-[0_1px_2px_-1px_rgba(23,21,31,0.06),0_1px_3px_rgba(23,21,31,0.04)] transition-shadow hover:shadow-[0_2px_4px_-1px_rgba(23,21,31,0.08),0_4px_8px_rgba(23,21,31,0.05)]"
           >
             <app-section-list-item
               [section]="section"
               [resetRequest]="cancelledSelection()"
               [selected]="isSelected(section.id)"
+              [isFirst]="isFirst"
+              [isLast]="isLast"
+              [reorderingDisabled]="!reorderingEnabled()"
               (editRequested)="openEdit($event)"
               (translateRequested)="openTranslate($event)"
               (selectionToggled)="toggleSelection(section.id)"
+              (moveToTopRequested)="onMoveToTop(section.id)"
+              (moveUpRequested)="onMoveUp(section.id)"
+              (moveDownRequested)="onMoveDown(section.id)"
             />
-          </li>
+          </div>
         }
-      </ul>
+      </div>
+
+      @if (hasMore()) {
+        <div appInfiniteScroll (nearEnd)="onNearEnd()" class="h-4"></div>
+      }
     }
   </mat-drawer-content>
 </mat-drawer-container>

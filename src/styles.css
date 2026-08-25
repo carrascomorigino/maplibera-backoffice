@@ -65,3 +65,15 @@ body {
 .shadow-nav-active {
   box-shadow: inset 0 -2px 0 0 var(--color-brand-500);
 }
+
+/* Hides the native scrollbar on a scrollable element while keeping it
+   scrollable/swipeable, e.g. for the carousel track which is navigated via
+   its own prev/next buttons and dots instead. */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

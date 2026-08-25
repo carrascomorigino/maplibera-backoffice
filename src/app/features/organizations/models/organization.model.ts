@@ -46,3 +46,5 @@ export const ORGANIZATION_TYPES: readonly OrganizationType[] = [
   'social-network',
   'campaign',
 ];
+
+export const ORGANIZATION_STATUSES: readonly OrganizationStatus[] = ['draft', 'published', 'paused'];
