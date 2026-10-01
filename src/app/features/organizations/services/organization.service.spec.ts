@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { API_BASE_URL } from '../../../core/http/api-base-url.token';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { OrganizationCreateInput, OrganizationService } from './organization.service';
@@ -44,7 +45,9 @@ describe('OrganizationService', () => {
 
   async function setup(initial: Organization[] = []): Promise<void> {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(),
+        { provide: API_BASE_URL, useValue: '/backend' },
+      ],
     });
     service = TestBed.inject(OrganizationService);
     httpMock = TestBed.inject(HttpTestingController);

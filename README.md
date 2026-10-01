@@ -50,6 +50,38 @@ cp .env.example .env
 > [!NOTE]
 > Without these variables the app still runs — the AI-suggestion feature simply degrades to showing the untranslated source text instead of a generated draft.
 
+#### Backend URL and Firebase
+
+Everything else is configured in `src/environments/`, not in `.env`, because these values have to be
+baked into the browser bundle. `environment.prod.ts` replaces `environment.ts` in production builds
+via `fileReplacements` in `angular.json`.
+
+| Field | Development | Production |
+| --- | --- | --- |
+| `apiBaseUrl` | The Cloud Run backend (set `/backend` to use a local backend through `proxy.conf.json`) | The Cloud Run backend |
+| `firebase.*` | Web config of the `maplibera` Firebase project | Same |
+
+The values come from the `Maplibera-backoffice` web app in the `maplibera` Firebase project. The Firebase web config is **not** a secret — it
+identifies the project to Google and is visible in any browser bundle; access is enforced by the
+backend verifying the ID token, not by hiding these values.
+
+In the Firebase console, enable the **Google** provider (the only sign-in method), and add every
+deployment domain under *Authentication → Settings → Authorized domains*.
+
+#### How the frontend talks to the backend
+
+`core/http/auth.interceptor.ts` sends `Authorization: Bearer <Firebase ID token>` on every call to
+`apiBaseUrl`, and reacts to the backend's guard:
+
+- `401` → force-refresh the token and retry once; a second `401` signs the user out.
+- `403` → the account has no `role: 'admin'` claim. Not retried; the user sees a message. A claim
+  added later only reaches the token after the user signs out and in again.
+- `429` → the user is told to wait the number of seconds in `Retry-After`. The browser can only read
+  that header if the backend's CORS config lists it in `exposedHeaders`.
+
+The backend must list the frontend's origin in `CORS_ALLOWED_ORIGINS` (`http://localhost:4200` for
+`npm start`).
+
 ### Run
 
 The app and the translation API run as two processes in development. In one terminal:
@@ -121,7 +153,8 @@ Every feature follows the same internal layout: `models/`, `services/`, `pages/<
 
 - **Standalone components only** — no NgModules; features are lazy-loaded with `loadChildren`.
 - **Signals instead of NgRx** — each feature has a root-provided service owning a private `signal` plus a `computed()` view that components read directly. Components never keep their own copy of service-owned state.
-- **Persistence is isolated** — data currently lives in `localStorage`, wrapped so a missing or corrupt value falls back to an empty list. Swapping in an HTTP backend means changing one file per feature.
+- **Persistence is isolated** — every feature service talks to the backend over `HttpClient`; the root of those URLs is injected as `API_BASE_URL` (`src/app/core/http/api-base-url.token.ts`), so pointing at a different backend means editing one environment file, not the services. The only `localStorage` left is the UI language.
+- **Auth is isolated too** — the Firebase SDK is used in exactly one file (`src/app/core/auth/firebase-auth-client.browser.ts`) behind the `FirebaseAuthClient` interface. `AuthService` holds the session as signals; `authGuard` gates every data route; `authInterceptor` attaches the ID token.
 - **Shared translation route** — `src/server/register-translate-route.ts` is mounted by both the SSR server and the standalone dev API. The dev API exists because `tsx` can't JIT-compile Angular's SSR engine outside the CLI build pipeline.
 - **English identifiers** — all code, files, folders and route paths are in English (`guide`/`section`, never `guia`/`seccion`), regardless of the product's language. UI copy is localized separately.
 - **Test-first** — new features are built with the spec written alongside (and before) the implementation.

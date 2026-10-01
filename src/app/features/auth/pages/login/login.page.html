@@ -1,0 +1,35 @@
+<div
+  class="flex w-full max-w-sm flex-col gap-5 rounded-xl border border-ink-100 bg-surface-card p-8 shadow-sm"
+>
+  <div class="flex flex-col gap-1">
+    <h1 class="text-xl font-semibold tracking-tight text-ink-900">
+      {{ language.t().auth.heading }}
+    </h1>
+    <p class="text-sm text-ink-600">{{ language.t().auth.subheading }}</p>
+  </div>
+
+  @if (error(); as errorKey) {
+    <p
+      data-testid="login-error"
+      role="alert"
+      class="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700"
+    >
+      {{ language.t().auth.errors[errorKey] }}
+    </p>
+  }
+
+  <button
+    mat-flat-button
+    type="button"
+    data-testid="login-google"
+    [disabled]="pending()"
+    (click)="signInWithGoogle()"
+    class="w-full"
+  >
+    {{ pending() ? language.t().auth.signingInLabel : language.t().auth.googleButton }}
+  </button>
+
+  <span aria-live="polite" class="sr-only">
+    {{ pending() ? language.t().auth.signingInLabel : '' }}
+  </span>
+</div>

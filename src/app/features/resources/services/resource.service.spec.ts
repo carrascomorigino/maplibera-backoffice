@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { API_BASE_URL } from '../../../core/http/api-base-url.token';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { ResourceCreateInput, ResourceService } from './resource.service';
@@ -40,7 +41,9 @@ describe('ResourceService', () => {
 
   async function setup(initial: Resource[] = []): Promise<void> {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(),
+        { provide: API_BASE_URL, useValue: '/backend' },
+      ],
     });
     service = TestBed.inject(ResourceService);
     httpMock = TestBed.inject(HttpTestingController);

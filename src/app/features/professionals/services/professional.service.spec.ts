@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { API_BASE_URL } from '../../../core/http/api-base-url.token';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfessionalCreateInput, ProfessionalService } from './professional.service';
@@ -48,7 +49,9 @@ describe('ProfessionalService', () => {
 
   async function setup(initial: Professional[] = []): Promise<void> {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(),
+        { provide: API_BASE_URL, useValue: '/backend' },
+      ],
     });
     service = TestBed.inject(ProfessionalService);
     httpMock = TestBed.inject(HttpTestingController);
