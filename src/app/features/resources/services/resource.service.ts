@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { API_BASE_URL } from '../../../core/http/api-base-url.token';
 import { firstValueFrom } from 'rxjs';
 import {
   AppTranslation,
@@ -14,8 +15,6 @@ import {
   ResourceTranslation,
 } from '../models/resource.model';
 import { ContentLanguage } from '../../guide/models/content-language.model';
-
-const BASE_URL = '/backend/resources';
 
 export interface ResourceImageInput {
   url?: string;
@@ -74,6 +73,7 @@ export type ResourceCreateInput =
 @Injectable({ providedIn: 'root' })
 export class ResourceService {
   private readonly http = inject(HttpClient);
+  private readonly baseUrl = `${inject(API_BASE_URL)}/resources`;
 
   private readonly state = signal<Resource[]>([]);
 
@@ -105,12 +105,12 @@ export class ResourceService {
   }
 
   async refresh(): Promise<void> {
-    const resources = await firstValueFrom(this.http.get<Resource[]>(BASE_URL));
+    const resources = await firstValueFrom(this.http.get<Resource[]>(this.baseUrl));
     this.state.set(resources);
   }
 
   async create(input: ResourceCreateInput): Promise<Resource> {
-    const resource = await firstValueFrom(this.http.post<Resource>(BASE_URL, input));
+    const resource = await firstValueFrom(this.http.post<Resource>(this.baseUrl, input));
     this.state.update((resources) => [...resources, resource]);
     return resource;
   }
@@ -122,7 +122,7 @@ export class ResourceService {
     newSlug?: string,
   ): Promise<Resource> {
     const updated = await firstValueFrom(
-      this.http.put<Resource>(`${BASE_URL}/${id}/translations`, { language, translation, newSlug }),
+      this.http.put<Resource>(`${this.baseUrl}/${id}/translations`, { language, translation, newSlug }),
     );
     this.replace(updated);
     return updated;
@@ -130,7 +130,7 @@ export class ResourceService {
 
   async removeTranslation(id: string, language: ContentLanguage): Promise<Resource> {
     const updated = await firstValueFrom(
-      this.http.delete<Resource>(`${BASE_URL}/${id}/translations/${language}`),
+      this.http.delete<Resource>(`${this.baseUrl}/${id}/translations/${language}`),
     );
     this.replace(updated);
     return updated;
@@ -138,14 +138,14 @@ export class ResourceService {
 
   async updateSharedFields(id: string, sharedFields: Record<string, unknown>): Promise<Resource> {
     const updated = await firstValueFrom(
-      this.http.patch<Resource>(`${BASE_URL}/${id}/shared-fields`, { sharedFields }),
+      this.http.patch<Resource>(`${this.baseUrl}/${id}/shared-fields`, { sharedFields }),
     );
     this.replace(updated);
     return updated;
   }
 
   async reorder(category: ResourceCategory, orderedIds: string[]): Promise<void> {
-    await firstValueFrom(this.http.post(`${BASE_URL}/reorder`, { category, orderedIds }));
+    await firstValueFrom(this.http.post(`${this.baseUrl}/reorder`, { category, orderedIds }));
     const orderById = new Map(orderedIds.map((id, index) => [id, index]));
     this.state.update((resources) =>
       resources.map((resource) =>
@@ -157,7 +157,7 @@ export class ResourceService {
   }
 
   async delete(id: string): Promise<void> {
-    await firstValueFrom(this.http.delete<void>(`${BASE_URL}/${id}`));
+    await firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${id}`));
     this.state.update((resources) => resources.filter((resource) => resource.id !== id));
   }
 
@@ -171,7 +171,7 @@ export class ResourceService {
 
   private async setStatus(id: string, status: ResourceStatus): Promise<Resource> {
     const action = status === 'published' ? 'publish' : 'pause';
-    const updated = await firstValueFrom(this.http.post<Resource>(`${BASE_URL}/${id}/${action}`, {}));
+    const updated = await firstValueFrom(this.http.post<Resource>(`${this.baseUrl}/${id}/${action}`, {}));
     this.replace(updated);
     return updated;
   }

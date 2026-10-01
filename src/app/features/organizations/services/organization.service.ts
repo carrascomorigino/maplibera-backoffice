@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { API_BASE_URL } from '../../../core/http/api-base-url.token';
 import { firstValueFrom } from 'rxjs';
 import {
   Organization,
@@ -10,8 +11,6 @@ import {
   OrganizationType,
 } from '../models/organization.model';
 import { ContentLanguage } from '../../guide/models/content-language.model';
-
-const BASE_URL = '/backend/organizations';
 
 export interface OrganizationSharedFields {
   images?: { url?: string; data?: string; description?: string }[];
@@ -33,6 +32,7 @@ export interface OrganizationCreateInput {
 @Injectable({ providedIn: 'root' })
 export class OrganizationService {
   private readonly http = inject(HttpClient);
+  private readonly baseUrl = `${inject(API_BASE_URL)}/organizations`;
 
   private readonly state = signal<Organization[]>([]);
 
@@ -43,12 +43,12 @@ export class OrganizationService {
   }
 
   async refresh(): Promise<void> {
-    const orgs = await firstValueFrom(this.http.get<Organization[]>(BASE_URL));
+    const orgs = await firstValueFrom(this.http.get<Organization[]>(this.baseUrl));
     this.state.set(orgs);
   }
 
   async create(input: OrganizationCreateInput): Promise<Organization> {
-    const org = await firstValueFrom(this.http.post<Organization>(BASE_URL, input));
+    const org = await firstValueFrom(this.http.post<Organization>(this.baseUrl, input));
     this.state.update((orgs) => [...orgs, org]);
     return org;
   }
@@ -60,7 +60,7 @@ export class OrganizationService {
     newSlug?: string,
   ): Promise<Organization> {
     const updated = await firstValueFrom(
-      this.http.put<Organization>(`${BASE_URL}/${id}/translations`, { language, translation, newSlug }),
+      this.http.put<Organization>(`${this.baseUrl}/${id}/translations`, { language, translation, newSlug }),
     );
     this.replace(updated);
     return updated;
@@ -68,7 +68,7 @@ export class OrganizationService {
 
   async removeTranslation(id: string, language: ContentLanguage): Promise<Organization> {
     const updated = await firstValueFrom(
-      this.http.delete<Organization>(`${BASE_URL}/${id}/translations/${language}`),
+      this.http.delete<Organization>(`${this.baseUrl}/${id}/translations/${language}`),
     );
     this.replace(updated);
     return updated;
@@ -76,14 +76,14 @@ export class OrganizationService {
 
   async updateSharedFields(id: string, sharedFields: OrganizationSharedFields): Promise<Organization> {
     const updated = await firstValueFrom(
-      this.http.patch<Organization>(`${BASE_URL}/${id}/shared-fields`, { sharedFields }),
+      this.http.patch<Organization>(`${this.baseUrl}/${id}/shared-fields`, { sharedFields }),
     );
     this.replace(updated);
     return updated;
   }
 
   async delete(id: string): Promise<void> {
-    await firstValueFrom(this.http.delete<void>(`${BASE_URL}/${id}`));
+    await firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${id}`));
     this.state.update((orgs) => orgs.filter((org) => org.id !== id));
   }
 
@@ -96,14 +96,14 @@ export class OrganizationService {
   }
 
   async reorder(orderedIds: string[]): Promise<void> {
-    await firstValueFrom(this.http.post(`${BASE_URL}/reorder`, { orderedIds }));
+    await firstValueFrom(this.http.post(`${this.baseUrl}/reorder`, { orderedIds }));
     const orderById = new Map(orderedIds.map((id, index) => [id, index]));
     this.state.update((orgs) => orgs.map((org) => ({ ...org, order: orderById.get(org.id) ?? org.order })));
   }
 
   private async setStatus(id: string, status: OrganizationStatus): Promise<Organization> {
     const action = status === 'published' ? 'publish' : 'pause';
-    const updated = await firstValueFrom(this.http.post<Organization>(`${BASE_URL}/${id}/${action}`, {}));
+    const updated = await firstValueFrom(this.http.post<Organization>(`${this.baseUrl}/${id}/${action}`, {}));
     this.replace(updated);
     return updated;
   }

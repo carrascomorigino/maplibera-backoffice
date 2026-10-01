@@ -3,12 +3,34 @@ import { Translations } from '../models/language.model';
 export const es: Translations = {
   nav: {
     appTitle: 'maplibera-backoffice',
+    signOutButton: 'Cerrar sesión',
     dashboardLink: 'Panel',
     sectionsLink: 'Secciones',
     resourcesLink: 'Recursos',
     newsLink: 'Noticias y Eventos',
     organizationsLink: 'Organizaciones',
     professionalsLink: 'Profesionales',
+  },
+  auth: {
+    heading: 'Iniciar sesión',
+    subheading: 'Usa tu cuenta de administrador de maplibera para gestionar el contenido.',
+    signingInLabel: 'Entrando…',
+    googleButton: 'Continuar con Google',
+    signedInAs: (email) => `Sesión iniciada como ${email}`,
+    errors: {
+      tooManyRequests: 'Demasiados intentos. Prueba de nuevo en unos minutos.',
+      network: 'No se pudo contactar con el servicio de autenticación. Revisa tu conexión.',
+      popupClosed: 'Se cerró la ventana de Google antes de terminar.',
+      unknown: 'No se pudo iniciar sesión. Inténtalo de nuevo.',
+    },
+  },
+  apiErrors: {
+    notAdmin: 'Esta cuenta no es administradora.',
+    rateLimited: (seconds) =>
+      seconds === null
+        ? 'Demasiadas solicitudes. Espera un momento y vuelve a intentarlo.'
+        : `Demasiadas solicitudes. Espera ${seconds} segundos y vuelve a intentarlo.`,
+    dismissButton: 'Cerrar',
   },
   languageTags: {
     untranslatedAria: (languageName) => `${languageName} sin traducir`,

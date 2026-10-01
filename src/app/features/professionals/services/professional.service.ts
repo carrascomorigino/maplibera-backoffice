@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { API_BASE_URL } from '../../../core/http/api-base-url.token';
 import { firstValueFrom } from 'rxjs';
 import {
   PROFESSIONAL_SPECIALTIES,
@@ -11,8 +12,6 @@ import {
   ProfessionalTranslation,
 } from '../models/professional.model';
 import { ContentLanguage } from '../../guide/models/content-language.model';
-
-const BASE_URL = '/backend/professionals';
 
 interface ProfessionalSharedFieldsBase {
   images: { url?: string; data?: string; description?: string }[];
@@ -68,6 +67,7 @@ export type ProfessionalCreateInput =
 @Injectable({ providedIn: 'root' })
 export class ProfessionalService {
   private readonly http = inject(HttpClient);
+  private readonly baseUrl = `${inject(API_BASE_URL)}/professionals`;
 
   private readonly state = signal<Professional[]>([]);
 
@@ -101,12 +101,12 @@ export class ProfessionalService {
   }
 
   async refresh(): Promise<void> {
-    const professionals = await firstValueFrom(this.http.get<Professional[]>(BASE_URL));
+    const professionals = await firstValueFrom(this.http.get<Professional[]>(this.baseUrl));
     this.state.set(professionals);
   }
 
   async create(input: ProfessionalCreateInput): Promise<Professional> {
-    const professional = await firstValueFrom(this.http.post<Professional>(BASE_URL, input));
+    const professional = await firstValueFrom(this.http.post<Professional>(this.baseUrl, input));
     this.state.update((professionals) => [...professionals, professional]);
     return professional;
   }
@@ -118,7 +118,7 @@ export class ProfessionalService {
     newSlug?: string,
   ): Promise<Professional> {
     const updated = await firstValueFrom(
-      this.http.put<Professional>(`${BASE_URL}/${id}/translations`, { language, translation, newSlug }),
+      this.http.put<Professional>(`${this.baseUrl}/${id}/translations`, { language, translation, newSlug }),
     );
     this.replace(updated);
     return updated;
@@ -126,7 +126,7 @@ export class ProfessionalService {
 
   async removeTranslation(id: string, language: ContentLanguage): Promise<Professional> {
     const updated = await firstValueFrom(
-      this.http.delete<Professional>(`${BASE_URL}/${id}/translations/${language}`),
+      this.http.delete<Professional>(`${this.baseUrl}/${id}/translations/${language}`),
     );
     this.replace(updated);
     return updated;
@@ -134,14 +134,14 @@ export class ProfessionalService {
 
   async updateSharedFields(id: string, sharedFields: Record<string, unknown>): Promise<Professional> {
     const updated = await firstValueFrom(
-      this.http.patch<Professional>(`${BASE_URL}/${id}/shared-fields`, { sharedFields }),
+      this.http.patch<Professional>(`${this.baseUrl}/${id}/shared-fields`, { sharedFields }),
     );
     this.replace(updated);
     return updated;
   }
 
   async reorder(specialty: ProfessionalSpecialty, orderedIds: string[]): Promise<void> {
-    await firstValueFrom(this.http.post(`${BASE_URL}/reorder`, { specialty, orderedIds }));
+    await firstValueFrom(this.http.post(`${this.baseUrl}/reorder`, { specialty, orderedIds }));
     const orderById = new Map(orderedIds.map((id, index) => [id, index]));
     this.state.update((professionals) =>
       professionals.map((professional) =>
@@ -162,7 +162,7 @@ export class ProfessionalService {
 
   private async setStatus(id: string, status: ProfessionalStatus): Promise<Professional> {
     const action = status === 'published' ? 'publish' : 'pause';
-    const updated = await firstValueFrom(this.http.post<Professional>(`${BASE_URL}/${id}/${action}`, {}));
+    const updated = await firstValueFrom(this.http.post<Professional>(`${this.baseUrl}/${id}/${action}`, {}));
     this.replace(updated);
     return updated;
   }

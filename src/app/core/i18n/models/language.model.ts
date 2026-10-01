@@ -3,12 +3,32 @@ export type UiLanguage = 'es' | 'en';
 export interface Translations {
   nav: {
     appTitle: string;
+    signOutButton: string;
     dashboardLink: string;
     sectionsLink: string;
     resourcesLink: string;
     newsLink: string;
     organizationsLink: string;
     professionalsLink: string;
+  };
+  auth: {
+    heading: string;
+    subheading: string;
+    signingInLabel: string;
+    googleButton: string;
+    signedInAs: (email: string) => string;
+    errors: {
+      tooManyRequests: string;
+      network: string;
+      popupClosed: string;
+      unknown: string;
+    };
+  };
+  apiErrors: {
+    notAdmin: string;
+    /** `seconds` is null when the backend sent no readable `Retry-After` header. */
+    rateLimited: (seconds: number | null) => string;
+    dismissButton: string;
   };
   languageTags: {
     untranslatedAria: (languageName: string) => string;

@@ -3,12 +3,34 @@ import { Translations } from '../models/language.model';
 export const en: Translations = {
   nav: {
     appTitle: 'maplibera-backoffice',
+    signOutButton: 'Sign out',
     dashboardLink: 'Dashboard',
     sectionsLink: 'Sections',
     resourcesLink: 'Resources',
     newsLink: 'News & Events',
     organizationsLink: 'Organizations',
     professionalsLink: 'Professionals',
+  },
+  auth: {
+    heading: 'Sign in',
+    subheading: 'Use your maplibera administrator account to manage the content.',
+    signingInLabel: 'Signing in…',
+    googleButton: 'Continue with Google',
+    signedInAs: (email) => `Signed in as ${email}`,
+    errors: {
+      tooManyRequests: 'Too many attempts. Try again in a few minutes.',
+      network: 'Could not reach the authentication service. Check your connection.',
+      popupClosed: 'The Google sign-in window was closed before finishing.',
+      unknown: 'Could not sign you in. Try again.',
+    },
+  },
+  apiErrors: {
+    notAdmin: 'This account is not an admin.',
+    rateLimited: (seconds) =>
+      seconds === null
+        ? 'Too many requests. Wait a moment and try again.'
+        : `Too many requests. Wait ${seconds} seconds and try again.`,
+    dismissButton: 'Close',
   },
   languageTags: {
     untranslatedAria: (languageName) => `${languageName} not translated yet`,
