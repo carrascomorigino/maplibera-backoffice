@@ -21,6 +21,7 @@ import { NewsItemService } from '../../services/news-item.service';
 import { BusyOverlay } from '../../../../shared/components/busy-overlay/busy-overlay';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { LanguageTags } from '../../../../shared/components/language-tags/language-tags';
+import { countryDisplayName } from '../../../../shared/models/country.model';
 import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/confirm-dialog';
 
 export interface NewsEditRequestedEvent {
@@ -146,6 +147,17 @@ export class NewsCard {
   private notifyActionFailed(): void {
     const form = this.language.t().news.newsForm;
     this.snackBar.open(form.actionFailedNotice, form.actionFailedDismiss);
+  }
+
+  protected countryAvailabilityIndicator(): string {
+    const codes = this.item().availableCountries;
+    const labels = this.language.t().news.newsList;
+    if (!codes?.length) {
+      return labels.countryAvailabilityIndicator(labels.countryAvailabilityWorldwide);
+    }
+    const uiLanguage = this.language.language();
+    const names = codes.map((code) => countryDisplayName(code, uiLanguage)).join(', ');
+    return labels.countryAvailabilityIndicator(names);
   }
 
   protected statusBadgeClass(status: NewsStatus): string {

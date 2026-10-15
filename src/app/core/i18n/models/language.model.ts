@@ -272,6 +272,8 @@ export interface Translations {
       categoryBadgeEvent: string;
       publishedAtIndicator: (date: string) => string;
       eventDateIndicator: (date: string) => string;
+      countryAvailabilityIndicator: (countries: string) => string;
+      countryAvailabilityWorldwide: string;
     };
     newsForm: {
       editHeading: string;
@@ -295,6 +297,11 @@ export interface Translations {
       eventDateLabel: string;
       eventDateRequiredError: string;
       sourceLinksLabel: string;
+      countryScopeLabel: string;
+      countryScopeAllOption: string;
+      countryScopeSpecificOption: string;
+      countriesLabel: string;
+      countriesRequiredError: string;
       saveButton: string;
       publishButton: string;
       cancelButton: string;

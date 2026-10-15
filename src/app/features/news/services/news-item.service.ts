@@ -12,6 +12,7 @@ export interface NewsItemSharedFields {
   publishedAt: string;
   eventDate?: string;
   sourceLinks: string[];
+  availableCountries?: string[];
 }
 
 export interface NewsItemCreateInput {

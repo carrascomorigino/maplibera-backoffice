@@ -239,6 +239,75 @@ describe('NewsFormDrawer', () => {
     expect(updated.translations.en?.title).toBe('Updated title');
   });
 
+  describe('country availability', () => {
+    it('defaults to all countries and saves without availableCountries', async () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      fillRequiredFields(component);
+      fixture.detectChanges();
+      buttons(fixture).save.click();
+      await settle();
+
+      expect(component.form.controls.countryScope.value).toBe('all');
+      expect(service.items()[0].availableCountries).toBeUndefined();
+    });
+
+    it('requires at least one country when the scope is specific', () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+      fillRequiredFields(component);
+
+      component.form.controls.countryScope.setValue('specific');
+      fixture.detectChanges();
+
+      expect(component.form.controls.countries.hasError('countriesRequired')).toBe(true);
+      expect(buttons(fixture).save.disabled).toBe(true);
+
+      component.form.controls.countries.setValue(['PE']);
+      fixture.detectChanges();
+
+      expect(buttons(fixture).save.disabled).toBe(false);
+    });
+
+    it('saves the selected countries on create', async () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+      fillRequiredFields(component);
+      component.form.controls.countryScope.setValue('specific');
+      component.form.controls.countries.setValue(['PE', 'GB']);
+      fixture.detectChanges();
+      buttons(fixture).save.click();
+      await settle();
+
+      expect(service.items()[0].availableCountries).toEqual(['PE', 'GB']);
+    });
+
+    it('loads the saved countries when editing and can reset them to all countries', async () => {
+      const created = makeNewsItem({
+        slug: 'restricted',
+        availableCountries: ['PE'],
+        translations: { en: { title: 'Restricted', subtitle: 'Sub', description: 'Desc' } },
+      });
+      service.seed([created]);
+      const fixture = TestBed.createComponent(NewsFormDrawer);
+      fixture.componentRef.setInput('item', created);
+      fixture.componentRef.setInput('targetLanguage', 'en');
+      fixture.detectChanges();
+      const component = fixture.componentInstance;
+
+      expect(component.form.controls.countryScope.value).toBe('specific');
+      expect(component.form.controls.countries.value).toEqual(['PE']);
+
+      component.form.controls.countryScope.setValue('all');
+      fixture.detectChanges();
+      buttons(fixture).save.click();
+      await settle();
+
+      expect(service.items()[0].availableCountries).toBeUndefined();
+    });
+  });
+
   describe('slug', () => {
     it('auto-suggests a slug from the title until manually edited', () => {
       const fixture = createFixture();

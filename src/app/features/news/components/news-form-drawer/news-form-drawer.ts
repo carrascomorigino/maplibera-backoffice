@@ -41,8 +41,11 @@ import {
   SUBTITLE_MAX_LENGTH,
   DESCRIPTION_MAX_LENGTH,
 } from '../../utils/field-limits';
+import { CountrySelect } from '../../../guide/components/country-select/country-select';
 import { BusyOverlay } from '../../../../shared/components/busy-overlay/busy-overlay';
 import { LanguageService } from '../../../../core/i18n/language.service';
+
+type CountryScope = 'all' | 'specific';
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -59,6 +62,7 @@ function todayIso(): string {
     MarkdownEditor,
     StringListEditor,
     ImageGalleryInput,
+    CountrySelect,
   ],
   templateUrl: './news-form-drawer.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -97,6 +101,12 @@ export class NewsFormDrawer {
   private readonly slugManuallyEdited = signal(false);
   private suggestionRequested = false;
   private staleSuggestionRequested = false;
+
+  private readonly countriesRequiredValidator: ValidatorFn = (control) => {
+    const scope = control.parent?.get('countryScope')?.value as CountryScope | undefined;
+    const countries = control.value as string[];
+    return scope === 'specific' && countries.length === 0 ? { countriesRequired: true } : null;
+  };
 
   private readonly duplicateSlugValidator: ValidatorFn = (control) => {
     const slug = (control.value as string).trim().toLowerCase();
@@ -150,9 +160,18 @@ export class NewsFormDrawer {
       validators: this.eventDateRequiredValidator,
     }),
     sourceLinks: new FormControl<string[]>([], { nonNullable: true }),
+    countryScope: new FormControl<CountryScope>('all', { nonNullable: true }),
+    countries: new FormControl<string[]>([], {
+      nonNullable: true,
+      validators: this.countriesRequiredValidator,
+    }),
   });
 
   constructor() {
+    this.form.controls.countryScope.valueChanges.subscribe(() => {
+      this.form.controls.countries.updateValueAndValidity();
+    });
+
     this.form.controls.category.valueChanges.subscribe((category) => {
       if (category !== 'event') {
         this.form.controls.eventDate.setValue(null, { emitEvent: false });
@@ -196,6 +215,8 @@ export class NewsFormDrawer {
           publishedAt: item?.publishedAt ?? todayIso(),
           eventDate: item?.eventDate ?? null,
           sourceLinks: item?.sourceLinks ?? [],
+          countryScope: item?.availableCountries?.length ? 'specific' : 'all',
+          countries: item?.availableCountries ?? [],
         },
         { emitEvent: false },
       );
@@ -380,6 +401,8 @@ export class NewsFormDrawer {
       publishedAt,
       eventDate,
       sourceLinks,
+      countryScope,
+      countries,
     } = this.form.getRawValue();
     const translation: NewsTranslation = { title, subtitle, description };
     const imagesPayload = await Promise.all(
@@ -396,6 +419,7 @@ export class NewsFormDrawer {
       publishedAt,
       eventDate: eventDate ?? undefined,
       sourceLinks,
+      availableCountries: countryScope === 'specific' ? countries : undefined,
     };
 
     const existing = this.item();
