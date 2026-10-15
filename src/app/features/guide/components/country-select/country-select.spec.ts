@@ -57,7 +57,9 @@ describe('CountrySelect', () => {
   it('renders no chips and no listbox before the input is focused', () => {
     const fixture = createFixture();
 
-    expect(fixture.nativeElement.querySelectorAll('[data-testid^="country-chip-"]')).toHaveLength(0);
+    expect(fixture.nativeElement.querySelectorAll('[data-testid^="country-chip-"]')).toHaveLength(
+      0,
+    );
     expect(fixture.nativeElement.querySelector('[role="listbox"]')).toBeNull();
   });
 
@@ -154,7 +156,9 @@ describe('CountrySelect', () => {
     fixture.componentInstance.writeValue(null);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelectorAll('[data-testid^="country-chip-"]')).toHaveLength(0);
+    expect(fixture.nativeElement.querySelectorAll('[data-testid^="country-chip-"]')).toHaveLength(
+      0,
+    );
   });
 
   it('notifies onTouched on blur', () => {

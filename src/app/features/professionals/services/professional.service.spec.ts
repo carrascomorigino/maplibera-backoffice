@@ -38,7 +38,9 @@ function professional(overrides: Partial<Professional> = {}): Professional {
     dietarySpecialties: [],
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
-    translations: { en: { name: 'Jane Doe', credentialsTitle: 'RD', bio: 'Plant-based nutritionist' } },
+    translations: {
+      en: { name: 'Jane Doe', credentialsTitle: 'RD', bio: 'Plant-based nutritionist' },
+    },
     ...overrides,
   } as Professional;
 }
@@ -49,7 +51,9 @@ describe('ProfessionalService', () => {
 
   async function setup(initial: Professional[] = []): Promise<void> {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(),
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: API_BASE_URL, useValue: '/backend' },
       ],
     });
@@ -74,7 +78,12 @@ describe('ProfessionalService', () => {
 
   it('groups professionals by specialty in PROFESSIONAL_SPECIALTIES order', async () => {
     await setup([
-      professional({ id: 'c', specialty: 'coach', certifications: [], coachingAreas: [] } as Partial<Professional>),
+      professional({
+        id: 'c',
+        specialty: 'coach',
+        certifications: [],
+        coachingAreas: [],
+      } as Partial<Professional>),
       professional({ id: 'n', specialty: 'nutritionist' }),
     ]);
 
@@ -180,7 +189,9 @@ describe('ProfessionalService', () => {
     await setup([]);
 
     const promise = service.create(createInput());
-    httpMock.expectOne(BASE_URL).flush({ error: 'ConflictError' }, { status: 409, statusText: 'Conflict' });
+    httpMock
+      .expectOne(BASE_URL)
+      .flush({ error: 'ConflictError' }, { status: 409, statusText: 'Conflict' });
 
     await expect(promise).rejects.toBeTruthy();
   });

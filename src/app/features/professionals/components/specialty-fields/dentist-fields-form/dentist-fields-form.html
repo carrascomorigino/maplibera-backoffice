@@ -1,6 +1,8 @@
 <div [formGroup]="form" class="flex flex-col gap-4">
   <mat-form-field class="min-w-0">
-    <mat-label>{{ language.t().professionals.specialtyFields.dentist.licenseNumberLabel }}</mat-label>
+    <mat-label>{{
+      language.t().professionals.specialtyFields.dentist.licenseNumberLabel
+    }}</mat-label>
     <input
       matInput
       data-testid="dentist-license-number"
@@ -10,7 +12,11 @@
   </mat-form-field>
 
   <label class="flex items-center gap-2 text-sm text-ink-700">
-    <input type="checkbox" data-testid="dentist-accepts-children" formControlName="acceptsChildren" />
+    <input
+      type="checkbox"
+      data-testid="dentist-accepts-children"
+      formControlName="acceptsChildren"
+    />
     {{ language.t().professionals.specialtyFields.dentist.acceptsChildrenLabel }}
   </label>
 </div>

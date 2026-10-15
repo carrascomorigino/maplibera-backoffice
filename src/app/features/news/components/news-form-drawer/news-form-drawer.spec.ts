@@ -6,7 +6,11 @@ import { NewsItemService } from '../../services/news-item.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { FakeNewsItemService, makeNewsItem } from '../../testing/fake-news-item-service';
-import { TITLE_MAX_LENGTH, SUBTITLE_MAX_LENGTH, DESCRIPTION_MAX_LENGTH } from '../../utils/field-limits';
+import {
+  TITLE_MAX_LENGTH,
+  SUBTITLE_MAX_LENGTH,
+  DESCRIPTION_MAX_LENGTH,
+} from '../../utils/field-limits';
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -54,7 +58,9 @@ describe('NewsFormDrawer', () => {
       publish: fixture.nativeElement.querySelector(
         '[data-testid="publish-button"]',
       ) as HTMLButtonElement | null,
-      cancel: fixture.nativeElement.querySelector('[data-testid="cancel-button"]') as HTMLButtonElement,
+      cancel: fixture.nativeElement.querySelector(
+        '[data-testid="cancel-button"]',
+      ) as HTMLButtonElement,
     };
   }
 
@@ -225,7 +231,9 @@ describe('NewsFormDrawer', () => {
     await settle();
 
     const updated = service.items()[0];
-    expect(updated.images).toEqual([{ url: 'https://example.com/new.jpg', description: undefined }]);
+    expect(updated.images).toEqual([
+      { url: 'https://example.com/new.jpg', description: undefined },
+    ]);
     expect(updated.publishedAt).toBe('2026-09-01');
     expect(updated.sourceLinks).toEqual(['https://example.com/source']);
     expect(updated.translations.en?.title).toBe('Updated title');
@@ -285,15 +293,20 @@ describe('NewsFormDrawer', () => {
 
       for (let i = 0; i < 3; i++) {
         (
-          fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement
+          fixture.nativeElement.querySelector(
+            '[data-testid="gallery-add-button"]',
+          ) as HTMLButtonElement
         ).click();
         fixture.detectChanges();
       }
 
       expect(fixture.nativeElement.querySelectorAll('[data-testid="gallery-row"]')).toHaveLength(3);
       expect(
-        (fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement)
-          .disabled,
+        (
+          fixture.nativeElement.querySelector(
+            '[data-testid="gallery-add-button"]',
+          ) as HTMLButtonElement
+        ).disabled,
       ).toBe(true);
     });
   });
@@ -446,5 +459,39 @@ describe('NewsFormDrawer', () => {
 
     expect(service.items()).toHaveLength(0);
     expect(cancelled).toBe(true);
+  });
+
+  describe('saving lock', () => {
+    it('locks the form with an overlay while Save runs and ignores a second click', async () => {
+      let finishCreate!: () => void;
+      const originalCreate = service.create.getMockImplementation()!;
+      service.create.mockImplementation(async (input) => {
+        await new Promise<void>((resolve) => (finishCreate = resolve));
+        return originalCreate(input);
+      });
+      const fixture = createFixture();
+      fillRequiredFields(fixture.componentInstance);
+      fixture.detectChanges();
+
+      buttons(fixture).save.click();
+      await settle();
+      fixture.detectChanges();
+
+      const form = fixture.nativeElement.querySelector('form') as HTMLFormElement;
+      expect(fixture.nativeElement.querySelector('[data-testid="busy-overlay"]')).not.toBeNull();
+      expect(form.hasAttribute('inert')).toBe(true);
+      expect(buttons(fixture).save.disabled).toBe(true);
+
+      buttons(fixture).save.click();
+      await settle();
+      expect(service.create).toHaveBeenCalledTimes(1);
+
+      finishCreate();
+      await settle();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-testid="busy-overlay"]')).toBeNull();
+      expect(form.hasAttribute('inert')).toBe(false);
+    });
   });
 });

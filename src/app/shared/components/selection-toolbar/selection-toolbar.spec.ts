@@ -21,7 +21,9 @@ describe('SelectionToolbar', () => {
   it('shows the selected count', () => {
     const fixture = createFixture(3);
 
-    expect(fixture.nativeElement.textContent).toContain(language.t().bulkSelection.selectedCountLabel(3));
+    expect(fixture.nativeElement.textContent).toContain(
+      language.t().bulkSelection.selectedCountLabel(3),
+    );
   });
 
   it('emits deleteRequested when the delete button is clicked', () => {
@@ -29,7 +31,9 @@ describe('SelectionToolbar', () => {
     const deleteRequested = vi.fn();
     fixture.componentInstance.deleteRequested.subscribe(deleteRequested);
 
-    (fixture.nativeElement.querySelector('[data-testid="bulk-delete-button"]') as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector('[data-testid="bulk-delete-button"]') as HTMLButtonElement
+    ).click();
 
     expect(deleteRequested).toHaveBeenCalled();
   });
@@ -39,7 +43,9 @@ describe('SelectionToolbar', () => {
     const clearRequested = vi.fn();
     fixture.componentInstance.clearRequested.subscribe(clearRequested);
 
-    (fixture.nativeElement.querySelector('[data-testid="bulk-clear-button"]') as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector('[data-testid="bulk-clear-button"]') as HTMLButtonElement
+    ).click();
 
     expect(clearRequested).toHaveBeenCalled();
   });

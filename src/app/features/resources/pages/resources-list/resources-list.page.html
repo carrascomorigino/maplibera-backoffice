@@ -1,5 +1,11 @@
 <mat-drawer-container class="h-full">
-  <mat-drawer #drawer mode="over" position="end" [opened]="isDrawerOpen()" (closedStart)="onCancelled()">
+  <mat-drawer
+    #drawer
+    mode="over"
+    position="end"
+    [opened]="isDrawerOpen()"
+    (closedStart)="onCancelled()"
+  >
     @if (isDrawerOpen()) {
       <app-resource-form-drawer
         [resource]="drawerResource()"
@@ -13,9 +19,9 @@
     }
   </mat-drawer>
 
-  <mat-drawer-content class="p-6 md:p-8">
+  <mat-drawer-content class="p-4 sm:p-6 md:p-8">
     <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
-      <h1 class="text-2xl font-semibold tracking-tight text-ink-900">
+      <h1 class="font-display text-3xl uppercase tracking-wide text-ink-900">
         {{ language.t().resources.resourcesList.heading }}
       </h1>
 
@@ -75,14 +81,16 @@
             cdkDropList
             [cdkDropListData]="resourcesByCategory()[category]"
             class="grid gap-4"
-            style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))"
+            style="grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr))"
             (cdkDropListDropped)="onDrop(category, $event)"
           >
             @for (resource of resourcesByCategory()[category]; track resource.slug) {
               <div
                 cdkDrag
                 tabindex="0"
-                [attr.aria-label]="language.t().resources.resourcesList.reorderAriaLabel(resource.slug)"
+                [attr.aria-label]="
+                  language.t().resources.resourcesList.reorderAriaLabel(resource.slug)
+                "
               >
                 <app-resource-card
                   [resource]="resource"

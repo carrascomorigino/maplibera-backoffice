@@ -1,5 +1,19 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import {
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -10,7 +24,10 @@ import {
   OrganizationTranslation,
   OrganizationType,
 } from '../../models/organization.model';
-import { ContentLanguage, CONTENT_LANGUAGE_LABELS } from '../../../guide/models/content-language.model';
+import {
+  ContentLanguage,
+  CONTENT_LANGUAGE_LABELS,
+} from '../../../guide/models/content-language.model';
 import { COUNTRY_CODES, countryDisplayName } from '../../../../shared/models/country.model';
 import { OrganizationSharedFields, OrganizationService } from '../../services/organization.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
@@ -25,11 +42,13 @@ import { GalleryImageValue } from '../../../../shared/models/gallery-image-value
 import { atLeastOneGalleryImage } from '../../../../shared/utils/gallery-validators';
 import { GALLERY_IMAGE_DESCRIPTION_MAX_LENGTH } from '../../../../shared/utils/gallery-limits';
 import { DESCRIPTION_MAX_LENGTH, NAME_MAX_LENGTH } from '../../utils/field-limits';
+import { BusyOverlay } from '../../../../shared/components/busy-overlay/busy-overlay';
 import { LanguageService } from '../../../../core/i18n/language.service';
 
 @Component({
   selector: 'app-organization-form-drawer',
   imports: [
+    BusyOverlay,
     ReactiveFormsModule,
     MatButtonModule,
     MatFormFieldModule,
@@ -39,6 +58,10 @@ import { LanguageService } from '../../../../core/i18n/language.service';
   ],
   templateUrl: './organization-form-drawer.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    class: 'relative block h-full',
+    '[attr.aria-busy]': 'saving()',
+  },
 })
 export class OrganizationFormDrawer {
   private readonly organizationService = inject(OrganizationService);
@@ -63,6 +86,8 @@ export class OrganizationFormDrawer {
   readonly cancelled = output<void>();
 
   readonly loading = signal(false);
+  /** True while Save or Publish runs; locks the form so nobody edits what is being written. */
+  readonly saving = signal(false);
   readonly staleSuggestion = signal<OrganizationTranslation | undefined>(undefined);
   readonly staleSuggestionLoading = signal(false);
   readonly previewRevealed = signal(false);
@@ -89,29 +114,55 @@ export class OrganizationFormDrawer {
       : null;
 
   private readonly cityRequiredValidator: ValidatorFn = (control) =>
-    control.parent?.get('scopeType')?.value === 'city' && !control.value ? { cityRequired: true } : null;
+    control.parent?.get('scopeType')?.value === 'city' && !control.value
+      ? { cityRequired: true }
+      : null;
 
   readonly form = new FormGroup({
     type: new FormControl<OrganizationType>('local-group', { nonNullable: true }),
     name: new FormControl('', { nonNullable: true, validators: Validators.required }),
     slug: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.pattern(SLUG_PATTERN), this.duplicateSlugValidator],
+      validators: [
+        Validators.required,
+        Validators.pattern(SLUG_PATTERN),
+        this.duplicateSlugValidator,
+      ],
     }),
     description: new FormControl('', { nonNullable: true, validators: Validators.required }),
     images: new FormControl<GalleryImageValue[]>([], {
       nonNullable: true,
       validators: atLeastOneGalleryImage,
     }),
-    videoUrl: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
+    videoUrl: new FormControl('', {
+      nonNullable: true,
+      validators: Validators.pattern(URL_PATTERN),
+    }),
     scopeType: new FormControl<OrganizationScopeType>('global', { nonNullable: true }),
-    countryCode: new FormControl<string | null>(null, { validators: this.countryCodeRequiredValidator }),
+    countryCode: new FormControl<string | null>(null, {
+      validators: this.countryCodeRequiredValidator,
+    }),
     city: new FormControl<string | null>(null, { validators: this.cityRequiredValidator }),
-    website: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
-    instagram: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
-    telegram: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
-    whatsapp: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
-    volunteerFormUrl: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
+    website: new FormControl('', {
+      nonNullable: true,
+      validators: Validators.pattern(URL_PATTERN),
+    }),
+    instagram: new FormControl('', {
+      nonNullable: true,
+      validators: Validators.pattern(URL_PATTERN),
+    }),
+    telegram: new FormControl('', {
+      nonNullable: true,
+      validators: Validators.pattern(URL_PATTERN),
+    }),
+    whatsapp: new FormControl('', {
+      nonNullable: true,
+      validators: Validators.pattern(URL_PATTERN),
+    }),
+    volunteerFormUrl: new FormControl('', {
+      nonNullable: true,
+      validators: Validators.pattern(URL_PATTERN),
+    }),
   });
 
   constructor() {
@@ -188,7 +239,12 @@ export class OrganizationFormDrawer {
         const sourceTranslation = organization.translations[staleSource];
         if (sourceTranslation) {
           this.staleSuggestionRequested = true;
-          this.loadStaleSuggestion(organization.slug, targetLanguage, staleSource, sourceTranslation);
+          this.loadStaleSuggestion(
+            organization.slug,
+            targetLanguage,
+            staleSource,
+            sourceTranslation,
+          );
         }
       }
     });
@@ -214,25 +270,40 @@ export class OrganizationFormDrawer {
     if (!suggestion) {
       return;
     }
-    this.form.patchValue({ name: suggestion.name, description: suggestion.description }, { emitEvent: false });
+    this.form.patchValue(
+      { name: suggestion.name, description: suggestion.description },
+      { emitEvent: false },
+    );
   }
 
   protected async save(): Promise<void> {
+    if (this.saving()) {
+      return;
+    }
+    this.saving.set(true);
     try {
       await this.persist();
       this.saved.emit();
     } catch {
       this.notifyActionFailed();
+    } finally {
+      this.saving.set(false);
     }
   }
 
   protected async publish(): Promise<void> {
+    if (this.saving()) {
+      return;
+    }
+    this.saving.set(true);
     try {
       const organization = await this.persist();
       await this.organizationService.publish(organization.id);
       this.saved.emit();
     } catch {
       this.notifyActionFailed();
+    } finally {
+      this.saving.set(false);
     }
   }
 
@@ -264,7 +335,10 @@ export class OrganizationFormDrawer {
           return;
         }
         const organizationForm = this.language.t().organizations.organizationForm;
-        this.snackBar.open(organizationForm.suggestionFailedNotice, organizationForm.suggestionFailedDismiss);
+        this.snackBar.open(
+          organizationForm.suggestionFailedNotice,
+          organizationForm.suggestionFailedDismiss,
+        );
         this.applySuggestionToForm(sourceTranslation);
       })
       .finally(() => {
@@ -300,7 +374,10 @@ export class OrganizationFormDrawer {
       })
       .catch(() => {
         const organizationForm = this.language.t().organizations.organizationForm;
-        this.snackBar.open(organizationForm.suggestionFailedNotice, organizationForm.suggestionFailedDismiss);
+        this.snackBar.open(
+          organizationForm.suggestionFailedNotice,
+          organizationForm.suggestionFailedDismiss,
+        );
       })
       .finally(() => {
         this.staleSuggestionLoading.set(false);
@@ -359,7 +436,12 @@ export class OrganizationFormDrawer {
     const existing = this.organization();
     if (existing) {
       await this.organizationService.updateSharedFields(existing.id, sharedFields);
-      return this.organizationService.saveTranslation(existing.id, this.targetLanguage(), translation, slug);
+      return this.organizationService.saveTranslation(
+        existing.id,
+        this.targetLanguage(),
+        translation,
+        slug,
+      );
     }
 
     return this.organizationService.create({

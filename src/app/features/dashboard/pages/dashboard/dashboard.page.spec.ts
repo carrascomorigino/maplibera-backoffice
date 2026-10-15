@@ -8,10 +8,19 @@ import { OrganizationService } from '../../../organizations/services/organizatio
 import { ProfessionalService } from '../../../professionals/services/professional.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { FakeSectionService, makeSection } from '../../../guide/testing/fake-section-service';
-import { FakeResourceService, makeResource } from '../../../resources/testing/fake-resource-service';
+import {
+  FakeResourceService,
+  makeResource,
+} from '../../../resources/testing/fake-resource-service';
 import { FakeNewsItemService, makeNewsItem } from '../../../news/testing/fake-news-item-service';
-import { FakeOrganizationService, makeOrganization } from '../../../organizations/testing/fake-organization-service';
-import { FakeProfessionalService, makeProfessional } from '../../../professionals/testing/fake-professional-service';
+import {
+  FakeOrganizationService,
+  makeOrganization,
+} from '../../../organizations/testing/fake-organization-service';
+import {
+  FakeProfessionalService,
+  makeProfessional,
+} from '../../../professionals/testing/fake-professional-service';
 
 describe('DashboardPage', () => {
   let sectionService: FakeSectionService;
@@ -55,7 +64,9 @@ describe('DashboardPage', () => {
     ]);
 
     const fixture = createFixture();
-    const card = fixture.nativeElement.querySelector('[data-testid="dashboard-card-sections"]') as HTMLElement;
+    const card = fixture.nativeElement.querySelector(
+      '[data-testid="dashboard-card-sections"]',
+    ) as HTMLElement;
 
     expect(card.textContent).toContain(language.t().dashboard.sectionsLabel);
     expect(card.querySelector('[data-testid="count-total"]')?.textContent?.trim()).toBe('3');
@@ -66,7 +77,9 @@ describe('DashboardPage', () => {
 
   it('shows zero counts when a module has no items yet', () => {
     const fixture = createFixture();
-    const card = fixture.nativeElement.querySelector('[data-testid="dashboard-card-news"]') as HTMLElement;
+    const card = fixture.nativeElement.querySelector(
+      '[data-testid="dashboard-card-news"]',
+    ) as HTMLElement;
 
     expect(card.querySelector('[data-testid="count-total"]')?.textContent?.trim()).toBe('0');
   });
@@ -90,7 +103,10 @@ describe('DashboardPage', () => {
   });
 
   it('reflects counts from resources, news, organizations, and professionals', () => {
-    resourceService.seed([makeResource({ status: 'published' }), makeResource({ status: 'draft' })]);
+    resourceService.seed([
+      makeResource({ status: 'published' }),
+      makeResource({ status: 'draft' }),
+    ]);
     newsItemService.seed([makeNewsItem({ status: 'published' })]);
     organizationService.seed([
       makeOrganization({ status: 'paused' }),

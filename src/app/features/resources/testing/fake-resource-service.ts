@@ -1,5 +1,10 @@
 import { computed, signal } from '@angular/core';
-import { RESOURCE_CATEGORIES, Resource, ResourceCategory, ResourceStatus } from '../models/resource.model';
+import {
+  RESOURCE_CATEGORIES,
+  Resource,
+  ResourceCategory,
+  ResourceStatus,
+} from '../models/resource.model';
 import { ContentLanguage } from '../../guide/models/content-language.model';
 import { ResourceCreateInput } from '../services/resource.service';
 
@@ -24,8 +29,14 @@ export function makeResource(overrides: Partial<Resource> = {}): Resource {
 
 /** Component-level test double for ResourceService — see FakeSectionService for rationale. */
 export class FakeResourceService {
+  /** Ids the test marks as having a write in flight; drives `isPending`. */
+  readonly pendingIds = signal<ReadonlySet<string>>(new Set());
+  isPending = (id: string): boolean => this.pendingIds().has(id);
+
   private readonly _resources = signal<Resource[]>([]);
-  private readonly categoryOrder = new Map(RESOURCE_CATEGORIES.map((category, index) => [category, index]));
+  private readonly categoryOrder = new Map(
+    RESOURCE_CATEGORIES.map((category, index) => [category, index]),
+  );
 
   readonly resources = computed(() =>
     [...this._resources()].sort((a, b) => {
@@ -99,15 +110,21 @@ export class FakeResourceService {
     return updated;
   });
 
-  updateSharedFields = vi.fn(async (id: string, sharedFields: Record<string, unknown>): Promise<Resource> => {
-    const current = this._resources().find((r) => r.id === id);
-    if (!current) {
-      throw new Error(`Unknown resource id: ${id}`);
-    }
-    const updated = { ...current, ...sharedFields, updatedAt: new Date().toISOString() } as Resource;
-    this.replace(updated);
-    return updated;
-  });
+  updateSharedFields = vi.fn(
+    async (id: string, sharedFields: Record<string, unknown>): Promise<Resource> => {
+      const current = this._resources().find((r) => r.id === id);
+      if (!current) {
+        throw new Error(`Unknown resource id: ${id}`);
+      }
+      const updated = {
+        ...current,
+        ...sharedFields,
+        updatedAt: new Date().toISOString(),
+      } as Resource;
+      this.replace(updated);
+      return updated;
+    },
+  );
 
   reorder = vi.fn(async (category: ResourceCategory, orderedIds: string[]): Promise<void> => {
     const orderById = new Map(orderedIds.map((id, index) => [id, index]));
@@ -138,6 +155,8 @@ export class FakeResourceService {
   }
 
   private replace(updated: Resource): void {
-    this._resources.update((resources) => resources.map((r) => (r.id === updated.id ? updated : r)));
+    this._resources.update((resources) =>
+      resources.map((r) => (r.id === updated.id ? updated : r)),
+    );
   }
 }

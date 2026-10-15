@@ -167,7 +167,12 @@ describe('QuestionEditor', () => {
       const fixture = createFixture();
       const component = fixture.componentInstance;
 
-      component.writeValue({ text: 'Q', type: 'yes-no', yesNoCorrectAnswer: 'yes', detail: 'Some detail' });
+      component.writeValue({
+        text: 'Q',
+        type: 'yes-no',
+        yesNoCorrectAnswer: 'yes',
+        detail: 'Some detail',
+      });
       fixture.detectChanges();
       expect(component.form.controls.detail.value).toBe('Some detail');
 
@@ -415,13 +420,17 @@ describe('QuestionEditor', () => {
       fixture.detectChanges();
       expect(component.validate()).toBeNull();
 
-      component.answers.at(0).controls.imageUrl.setValue({ kind: 'url', url: 'https://example.com/a.png' });
+      component.answers
+        .at(0)
+        .controls.imageUrl.setValue({ kind: 'url', url: 'https://example.com/a.png' });
       fixture.detectChanges();
 
       expect(component.answers.at(1).controls.imageUrl.hasError('imageRequired')).toBe(true);
       expect(component.validate()).toEqual({ question: true });
 
-      component.answers.at(1).controls.imageUrl.setValue({ kind: 'url', url: 'https://example.com/b.png' });
+      component.answers
+        .at(1)
+        .controls.imageUrl.setValue({ kind: 'url', url: 'https://example.com/b.png' });
       fixture.detectChanges();
 
       expect(component.answers.at(1).controls.imageUrl.hasError('imageRequired')).toBe(false);
@@ -436,7 +445,9 @@ describe('QuestionEditor', () => {
       component.addAnswer();
       component.answers.at(0).controls.text.setValue('Answer A');
       component.answers.at(1).controls.text.setValue('Answer B');
-      component.answers.at(0).controls.imageUrl.setValue({ kind: 'url', url: 'https://example.com/a.png' });
+      component.answers
+        .at(0)
+        .controls.imageUrl.setValue({ kind: 'url', url: 'https://example.com/a.png' });
       fixture.detectChanges();
       expect(component.answers.at(1).controls.imageUrl.hasError('imageRequired')).toBe(true);
 
@@ -485,7 +496,11 @@ describe('QuestionEditor', () => {
         answers: [
           { text: 'A', isCorrect: true },
           { text: 'B', isCorrect: false },
-          { text: 'C', isCorrect: true, imageUrl: { kind: 'url', url: 'https://example.com/c.png' } },
+          {
+            text: 'C',
+            isCorrect: true,
+            imageUrl: { kind: 'url', url: 'https://example.com/c.png' },
+          },
         ],
         includeNoneOfTheAbove: true,
         noneOfTheAboveCorrect: false,

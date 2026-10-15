@@ -45,7 +45,9 @@ describe('OrganizationService', () => {
 
   async function setup(initial: Organization[] = []): Promise<void> {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(),
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: API_BASE_URL, useValue: '/backend' },
       ],
     });
@@ -88,7 +90,11 @@ describe('OrganizationService', () => {
     const promise = service.saveTranslation('o1', 'en', updated.translations.en!, 'org-one');
     const req = httpMock.expectOne(`${BASE_URL}/o1/translations`);
     expect(req.request.method).toBe('PUT');
-    expect(req.request.body).toEqual({ language: 'en', translation: updated.translations.en, newSlug: 'org-one' });
+    expect(req.request.body).toEqual({
+      language: 'en',
+      translation: updated.translations.en,
+      newSlug: 'org-one',
+    });
     req.flush(updated);
 
     await expect(promise).resolves.toEqual(updated);
@@ -173,7 +179,9 @@ describe('OrganizationService', () => {
     await setup([]);
 
     const promise = service.create(createInput());
-    httpMock.expectOne(BASE_URL).flush({ error: 'ConflictError' }, { status: 409, statusText: 'Conflict' });
+    httpMock
+      .expectOne(BASE_URL)
+      .flush({ error: 'ConflictError' }, { status: 409, statusText: 'Conflict' });
 
     await expect(promise).rejects.toBeTruthy();
   });

@@ -40,7 +40,8 @@ class HostComponent {
 describe('InfiniteScrollDirective', () => {
   beforeEach(() => {
     FakeIntersectionObserver.instances = [];
-    global.IntersectionObserver = FakeIntersectionObserver as unknown as typeof IntersectionObserver;
+    global.IntersectionObserver =
+      FakeIntersectionObserver as unknown as typeof IntersectionObserver;
     TestBed.configureTestingModule({});
   });
 

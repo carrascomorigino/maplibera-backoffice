@@ -44,7 +44,9 @@ describe('NewsItemService', () => {
 
   async function setup(initial: NewsItem[] = []): Promise<void> {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(),
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: API_BASE_URL, useValue: '/backend' },
       ],
     });
@@ -82,7 +84,9 @@ describe('NewsItemService', () => {
 
   it('PUTs to /:id/translations on saveTranslation', async () => {
     await setup([item()]);
-    const updated = item({ translations: { en: { title: 'Updated', subtitle: 'Sub', description: 'Desc' } } });
+    const updated = item({
+      translations: { en: { title: 'Updated', subtitle: 'Sub', description: 'Desc' } },
+    });
 
     const promise = service.saveTranslation('n1', 'en', updated.translations.en!, 'news-one');
     const req = httpMock.expectOne(`${BASE_URL}/n1/translations`);
@@ -160,7 +164,9 @@ describe('NewsItemService', () => {
     await setup([]);
 
     const promise = service.create(createInput());
-    httpMock.expectOne(BASE_URL).flush({ error: 'ConflictError' }, { status: 409, statusText: 'Conflict' });
+    httpMock
+      .expectOne(BASE_URL)
+      .flush({ error: 'ConflictError' }, { status: 409, statusText: 'Conflict' });
 
     await expect(promise).rejects.toBeTruthy();
   });

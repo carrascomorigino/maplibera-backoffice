@@ -32,14 +32,16 @@ describe('ProfessionalCard', () => {
     return fixture;
   }
 
-  function professionalWith(overrides: {
-    specialty?: ProfessionalSpecialty;
-    scopeType?: 'global' | 'country' | 'city';
-    countryCode?: string;
-    city?: string;
-    images?: { url: string; description?: string }[];
-    contactLinks?: Professional['contactLinks'];
-  } = {}): Professional {
+  function professionalWith(
+    overrides: {
+      specialty?: ProfessionalSpecialty;
+      scopeType?: 'global' | 'country' | 'city';
+      countryCode?: string;
+      city?: string;
+      images?: { url: string; description?: string }[];
+      contactLinks?: Professional['contactLinks'];
+    } = {},
+  ): Professional {
     return makeProfessional({
       specialty: overrides.specialty ?? 'nutritionist',
       slug: 'jane-doe',
@@ -57,7 +59,9 @@ describe('ProfessionalCard', () => {
   it('shows the photo image', () => {
     const fixture = createFixture(professionalWith());
 
-    const img = fixture.nativeElement.querySelector('[data-testid="photo-image"]') as HTMLImageElement;
+    const img = fixture.nativeElement.querySelector(
+      '[data-testid="photo-image"]',
+    ) as HTMLImageElement;
     expect(img).not.toBeNull();
     expect(img.src).toBe('https://example.com/jane.png');
   });
@@ -72,9 +76,9 @@ describe('ProfessionalCard', () => {
   it('shows the status badge', () => {
     const fixture = createFixture(professionalWith());
 
-    expect(fixture.nativeElement.querySelector('[data-testid="status-badge"]')?.textContent?.trim()).toBe(
-      'draft',
-    );
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="status-badge"]')?.textContent?.trim(),
+    ).toBe('draft');
   });
 
   it.each([
@@ -85,46 +89,54 @@ describe('ProfessionalCard', () => {
   ] as const)('shows the specialty badge for %s', (specialty, key) => {
     const fixture = createFixture(professionalWith({ specialty }));
 
-    expect(fixture.nativeElement.querySelector('[data-testid="specialty-badge"]')?.textContent?.trim()).toBe(
-      language.t().professionals.professionalsList[key],
-    );
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="specialty-badge"]')?.textContent?.trim(),
+    ).toBe(language.t().professionals.professionalsList[key]);
   });
 
   it('shows a Global scope badge', () => {
     const fixture = createFixture(professionalWith({ scopeType: 'global' }));
 
-    expect(fixture.nativeElement.querySelector('[data-testid="scope-badge"]')?.textContent?.trim()).toBe(
-      language.t().professionals.professionalsList.scopeGlobalLabel,
-    );
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="scope-badge"]')?.textContent?.trim(),
+    ).toBe(language.t().professionals.professionalsList.scopeGlobalLabel);
   });
 
   it('shows the country name for a country-scoped professional', () => {
     const fixture = createFixture(professionalWith({ scopeType: 'country', countryCode: 'AR' }));
 
-    expect(fixture.nativeElement.querySelector('[data-testid="scope-badge"]')?.textContent?.trim()).not.toBe(
-      '',
-    );
-    expect(fixture.nativeElement.querySelector('[data-testid="scope-badge"]')?.textContent?.trim()).not.toBe(
-      language.t().professionals.professionalsList.scopeGlobalLabel,
-    );
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="scope-badge"]')?.textContent?.trim(),
+    ).not.toBe('');
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="scope-badge"]')?.textContent?.trim(),
+    ).not.toBe(language.t().professionals.professionalsList.scopeGlobalLabel);
   });
 
   it('shows the city name for a city-scoped professional', () => {
     const fixture = createFixture(professionalWith({ scopeType: 'city', city: 'Springfield' }));
 
-    expect(fixture.nativeElement.querySelector('[data-testid="scope-badge"]')?.textContent?.trim()).toBe(
-      'Springfield',
-    );
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="scope-badge"]')?.textContent?.trim(),
+    ).toBe('Springfield');
   });
 
   it('only shows contact link icons for populated fields', () => {
     const fixture = createFixture(
-      professionalWith({ contactLinks: { website: 'https://example.com', bookingUrl: 'https://cal.com/jane' } }),
+      professionalWith({
+        contactLinks: { website: 'https://example.com', bookingUrl: 'https://cal.com/jane' },
+      }),
     );
 
-    expect(fixture.nativeElement.querySelector('[data-testid="contact-link-website"]')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('[data-testid="contact-link-booking"]')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('[data-testid="contact-link-instagram"]')).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="contact-link-website"]'),
+    ).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="contact-link-booking"]'),
+    ).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="contact-link-instagram"]'),
+    ).toBeNull();
     expect(fixture.nativeElement.querySelector('[data-testid="contact-link-telegram"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('[data-testid="contact-link-whatsapp"]')).toBeNull();
   });
@@ -133,9 +145,11 @@ describe('ProfessionalCard', () => {
     const professional = professionalWith();
     const fixture = createFixture(professional);
 
-    (fixture.nativeElement.querySelector(
-      `[data-testid="status-action-${professional.slug}"]`,
-    ) as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector(
+        `[data-testid="status-action-${professional.slug}"]`,
+      ) as HTMLButtonElement
+    ).click();
     await Promise.resolve();
 
     expect(service.publish).toHaveBeenCalledWith(professional.id);
@@ -146,9 +160,11 @@ describe('ProfessionalCard', () => {
     const professional = professionalWith();
     const fixture = createFixture(professional);
 
-    (fixture.nativeElement.querySelector(
-      `[data-testid="status-action-${professional.slug}"]`,
-    ) as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector(
+        `[data-testid="status-action-${professional.slug}"]`,
+      ) as HTMLButtonElement
+    ).click();
     await Promise.resolve();
     await Promise.resolve();
 
@@ -167,7 +183,9 @@ describe('ProfessionalCard', () => {
     const editRequested = vi.fn();
     fixture.componentInstance.editRequested.subscribe(editRequested);
 
-    (fixture.nativeElement.querySelector('[data-testid="edit-button"]') as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector('[data-testid="edit-button"]') as HTMLButtonElement
+    ).click();
 
     expect(editRequested).toHaveBeenCalledWith({
       professional,
@@ -180,7 +198,9 @@ describe('ProfessionalCard', () => {
     const professional = professionalWith();
     const fixture = createFixture(professional);
     const dialog = TestBed.inject(MatDialog);
-    vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<MatDialog['open']>);
+    vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<
+      MatDialog['open']
+    >);
 
     fixture.componentInstance['onLanguageRemoved']('es');
     await Promise.resolve();

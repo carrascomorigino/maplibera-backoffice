@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -29,7 +36,12 @@ type DrawerContext =
       targetLanguage: ContentLanguage;
       staleSourceLanguage?: ContentLanguage;
     }
-  | { mode: 'translate'; section: Section; targetLanguage: ContentLanguage; sourceLanguage: ContentLanguage };
+  | {
+      mode: 'translate';
+      section: Section;
+      targetLanguage: ContentLanguage;
+      sourceLanguage: ContentLanguage;
+    };
 
 @Component({
   selector: 'app-sections-list',
@@ -73,7 +85,9 @@ export class SectionsListPage {
 
   private readonly PAGE_SIZE = 24;
   protected readonly visibleCount = signal(this.PAGE_SIZE);
-  protected readonly visibleSections = computed(() => this.filteredSections().slice(0, this.visibleCount()));
+  protected readonly visibleSections = computed(() =>
+    this.filteredSections().slice(0, this.visibleCount()),
+  );
   protected readonly hasMore = computed(() => this.visibleCount() < this.filteredSections().length);
 
   constructor() {

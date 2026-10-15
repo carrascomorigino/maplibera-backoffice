@@ -36,8 +36,18 @@ export class DashboardPage {
   protected readonly cards = computed<DashboardCard[]>(() => {
     const labels = this.language.t().dashboard;
     return [
-      this.toCard('sections', labels.sectionsLabel, this.sectionService.sections(), '/guide/sections'),
-      this.toCard('resources', labels.resourcesLabel, this.resourceService.resources(), '/resources'),
+      this.toCard(
+        'sections',
+        labels.sectionsLabel,
+        this.sectionService.sections(),
+        '/guide/sections',
+      ),
+      this.toCard(
+        'resources',
+        labels.resourcesLabel,
+        this.resourceService.resources(),
+        '/resources',
+      ),
       this.toCard('news', labels.newsLabel, this.newsItemService.items(), '/news'),
       this.toCard(
         'organizations',

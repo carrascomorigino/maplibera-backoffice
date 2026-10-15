@@ -67,6 +67,9 @@ export interface Translations {
     removeRowAria: string;
     imageCountLabel: (current: number, max: number) => string;
   };
+  busyOverlay: {
+    label: string;
+  };
   imageCarousel: {
     goToImageAria: (index: number) => string;
     previousImageAria: string;

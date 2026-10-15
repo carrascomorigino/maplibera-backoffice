@@ -5,7 +5,12 @@ import { ResourceFormDrawer } from './resource-form-drawer';
 import { ResourceService } from '../../services/resource.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
-import { AppResource, MultimediaResource, RecipeResource, Resource } from '../../models/resource.model';
+import {
+  AppResource,
+  MultimediaResource,
+  RecipeResource,
+  Resource,
+} from '../../models/resource.model';
 import { FakeResourceService, makeResource } from '../../testing/fake-resource-service';
 import { TITLE_MAX_LENGTH, SHORT_DESCRIPTION_MAX_LENGTH } from '../../utils/field-limits';
 
@@ -143,7 +148,9 @@ describe('ResourceFormDrawer', () => {
       slug: 'soup',
       preparationMinutes: 10,
       images: [],
-      translations: { en: { title: 'Soup', shortDescription: 'Warm', ingredients: ['Water'], steps: ['Boil'] } },
+      translations: {
+        en: { title: 'Soup', shortDescription: 'Warm', ingredients: ['Water'], steps: ['Boil'] },
+      },
     } as unknown as Partial<Resource>);
     service.seed([created]);
     const fixture = TestBed.createComponent(ResourceFormDrawer);
@@ -175,7 +182,9 @@ describe('ResourceFormDrawer', () => {
         slug: 'soup',
         preparationMinutes: 10,
         images: [{ url: 'https://example.com/soup.png' }],
-        translations: { en: { title: 'Soup', shortDescription: 'Warm', ingredients: [], steps: [] } },
+        translations: {
+          en: { title: 'Soup', shortDescription: 'Warm', ingredients: [], steps: [] },
+        },
       } as unknown as Partial<Resource>);
       service.seed([created]);
       const fixture = TestBed.createComponent(ResourceFormDrawer);
@@ -200,7 +209,11 @@ describe('ResourceFormDrawer', () => {
         mediaType: 'documentary',
         externalUrl: 'https://example.com/watch',
       });
-      (fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement).click();
+      (
+        fixture.nativeElement.querySelector(
+          '[data-testid="gallery-add-button"]',
+        ) as HTMLButtonElement
+      ).click();
       fixture.detectChanges();
       const urlInput = fixture.nativeElement.querySelector(
         '[data-testid="image-input-url-field"]',
@@ -220,15 +233,20 @@ describe('ResourceFormDrawer', () => {
 
       for (let i = 0; i < 3; i++) {
         (
-          fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement
+          fixture.nativeElement.querySelector(
+            '[data-testid="gallery-add-button"]',
+          ) as HTMLButtonElement
         ).click();
         fixture.detectChanges();
       }
 
       expect(fixture.nativeElement.querySelectorAll('[data-testid="gallery-row"]')).toHaveLength(3);
       expect(
-        (fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement)
-          .disabled,
+        (
+          fixture.nativeElement.querySelector(
+            '[data-testid="gallery-add-button"]',
+          ) as HTMLButtonElement
+        ).disabled,
       ).toBe(true);
     });
   });
@@ -239,7 +257,9 @@ describe('ResourceFormDrawer', () => {
       (category) => {
         const fixture = createFixture(category);
 
-        expect(fixture.nativeElement.querySelector('input[formcontrolname="videoUrl"]')).not.toBeNull();
+        expect(
+          fixture.nativeElement.querySelector('input[formcontrolname="videoUrl"]'),
+        ).not.toBeNull();
       },
     );
 

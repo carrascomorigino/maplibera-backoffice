@@ -1,7 +1,10 @@
 import { computed, signal } from '@angular/core';
 import { Organization, OrganizationStatus } from '../models/organization.model';
 import { ContentLanguage } from '../../guide/models/content-language.model';
-import { OrganizationCreateInput, OrganizationSharedFields } from '../services/organization.service';
+import {
+  OrganizationCreateInput,
+  OrganizationSharedFields,
+} from '../services/organization.service';
 
 let nextId = 0;
 
@@ -24,6 +27,10 @@ export function makeOrganization(overrides: Partial<Organization> = {}): Organiz
 
 /** Component-level test double for OrganizationService — see FakeSectionService for rationale. */
 export class FakeOrganizationService {
+  /** Ids the test marks as having a write in flight; drives `isPending`. */
+  readonly pendingIds = signal<ReadonlySet<string>>(new Set());
+  isPending = (id: string): boolean => this.pendingIds().has(id);
+
   private readonly _orgs = signal<Organization[]>([]);
 
   readonly organizations = computed(() => [...this._orgs()].sort((a, b) => a.order - b.order));
@@ -75,17 +82,23 @@ export class FakeOrganizationService {
     },
   );
 
-  removeTranslation = vi.fn(async (id: string, language: ContentLanguage): Promise<Organization> => {
-    const current = this._orgs().find((o) => o.id === id);
-    if (!current) {
-      throw new Error(`Unknown organization id: ${id}`);
-    }
-    const translations = { ...current.translations };
-    delete translations[language];
-    const updated: Organization = { ...current, translations, updatedAt: new Date().toISOString() };
-    this.replace(updated);
-    return updated;
-  });
+  removeTranslation = vi.fn(
+    async (id: string, language: ContentLanguage): Promise<Organization> => {
+      const current = this._orgs().find((o) => o.id === id);
+      if (!current) {
+        throw new Error(`Unknown organization id: ${id}`);
+      }
+      const translations = { ...current.translations };
+      delete translations[language];
+      const updated: Organization = {
+        ...current,
+        translations,
+        updatedAt: new Date().toISOString(),
+      };
+      this.replace(updated);
+      return updated;
+    },
+  );
 
   updateSharedFields = vi.fn(
     async (id: string, sharedFields: OrganizationSharedFields): Promise<Organization> => {
@@ -121,7 +134,9 @@ export class FakeOrganizationService {
 
   reorder = vi.fn(async (orderedIds: string[]): Promise<void> => {
     const orderById = new Map(orderedIds.map((id, index) => [id, index]));
-    this._orgs.update((orgs) => orgs.map((org) => ({ ...org, order: orderById.get(org.id) ?? org.order })));
+    this._orgs.update((orgs) =>
+      orgs.map((org) => ({ ...org, order: orderById.get(org.id) ?? org.order })),
+    );
   });
 
   private async setStatus(id: string, status: OrganizationStatus): Promise<Organization> {

@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { API_BASE_URL } from '../../../core/http/api-base-url.token';
 import { firstValueFrom } from 'rxjs';
+import { PendingIds } from '../../../shared/utils/pending-ids';
 import { Section, SectionStatus, SectionTranslation } from '../models/section.model';
 import { ContentLanguage } from '../models/content-language.model';
 
@@ -19,9 +20,16 @@ export class SectionService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${inject(API_BASE_URL)}/sections`;
 
+  private readonly pending = new PendingIds();
+
   private readonly state = signal<Section[]>([]);
 
   readonly sections = computed(() => [...this.state()].sort((a, b) => a.order - b.order));
+
+  /** True while a write request for this id is in flight. */
+  isPending(id: string): boolean {
+    return this.pending.has(id);
+  }
 
   constructor() {
     void this.refresh();
@@ -39,14 +47,16 @@ export class SectionService {
   }
 
   async saveTranslation(id: string, input: SectionTranslationInput): Promise<Section> {
-    const updated = await firstValueFrom(this.http.put<Section>(`${this.baseUrl}/${id}`, input));
+    const updated = await this.pending.track(id, () =>
+      firstValueFrom(this.http.put<Section>(`${this.baseUrl}/${id}`, input)),
+    );
     this.replace(updated);
     return updated;
   }
 
   async removeTranslation(id: string, language: ContentLanguage): Promise<Section> {
-    const updated = await firstValueFrom(
-      this.http.delete<Section>(`${this.baseUrl}/${id}/translations/${language}`),
+    const updated = await this.pending.track(id, () =>
+      firstValueFrom(this.http.delete<Section>(`${this.baseUrl}/${id}/translations/${language}`)),
     );
     this.replace(updated);
     return updated;
@@ -61,7 +71,9 @@ export class SectionService {
   }
 
   async delete(id: string): Promise<void> {
-    await firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${id}`));
+    await this.pending.track(id, () =>
+      firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${id}`)),
+    );
     this.state.update((sections) => sections.filter((section) => section.id !== id));
   }
 
@@ -69,18 +81,25 @@ export class SectionService {
     await firstValueFrom(this.http.post(`${this.baseUrl}/reorder`, { orderedIds }));
     const orderById = new Map(orderedIds.map((id, index) => [id, index]));
     this.state.update((sections) =>
-      sections.map((section) => ({ ...section, order: orderById.get(section.id) ?? section.order })),
+      sections.map((section) => ({
+        ...section,
+        order: orderById.get(section.id) ?? section.order,
+      })),
     );
   }
 
   private async setStatus(id: string, status: SectionStatus): Promise<Section> {
     const action = status === 'published' ? 'publish' : 'pause';
-    const updated = await firstValueFrom(this.http.post<Section>(`${this.baseUrl}/${id}/${action}`, {}));
+    const updated = await this.pending.track(id, () =>
+      firstValueFrom(this.http.post<Section>(`${this.baseUrl}/${id}/${action}`, {})),
+    );
     this.replace(updated);
     return updated;
   }
 
   private replace(updated: Section): void {
-    this.state.update((sections) => sections.map((section) => (section.id === updated.id ? updated : section)));
+    this.state.update((sections) =>
+      sections.map((section) => (section.id === updated.id ? updated : section)),
+    );
   }
 }

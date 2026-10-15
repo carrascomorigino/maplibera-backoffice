@@ -1,6 +1,8 @@
 <div [formGroup]="form" class="flex flex-col gap-4">
   <mat-form-field class="min-w-0">
-    <mat-label>{{ language.t().professionals.specialtyFields.doctor.medicalLicenseNumberLabel }}</mat-label>
+    <mat-label>{{
+      language.t().professionals.specialtyFields.doctor.medicalLicenseNumberLabel
+    }}</mat-label>
     <input
       matInput
       data-testid="doctor-medical-license-number"
@@ -10,7 +12,9 @@
   </mat-form-field>
 
   <mat-form-field class="min-w-0">
-    <mat-label>{{ language.t().professionals.specialtyFields.doctor.medicalSpecialtyLabel }}</mat-label>
+    <mat-label>{{
+      language.t().professionals.specialtyFields.doctor.medicalSpecialtyLabel
+    }}</mat-label>
     <input
       matInput
       data-testid="doctor-medical-specialty"

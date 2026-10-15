@@ -200,7 +200,9 @@ describe('SectionFormDrawer', () => {
 
     component.form.controls.title.setValue('A title');
     component.form.controls.description.setValue('A description');
-    (fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement
+    ).click();
     fixture.detectChanges();
     const urlInput = fixture.nativeElement.querySelector(
       '[data-testid="image-input-url-field"]',
@@ -229,15 +231,20 @@ describe('SectionFormDrawer', () => {
 
     for (let i = 0; i < 3; i++) {
       (
-        fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement
+        fixture.nativeElement.querySelector(
+          '[data-testid="gallery-add-button"]',
+        ) as HTMLButtonElement
       ).click();
       fixture.detectChanges();
     }
 
     expect(fixture.nativeElement.querySelectorAll('[data-testid="gallery-row"]')).toHaveLength(3);
     expect(
-      (fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement)
-        .disabled,
+      (
+        fixture.nativeElement.querySelector(
+          '[data-testid="gallery-add-button"]',
+        ) as HTMLButtonElement
+      ).disabled,
     ).toBe(true);
   });
 
@@ -660,7 +667,9 @@ describe('SectionFormDrawer', () => {
       fixture.componentRef.setInput('targetLanguage', 'es');
       fixture.detectChanges();
 
-      expect(fixture.nativeElement.querySelector('[data-testid="preview-title-button"]')).toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="preview-title-button"]'),
+      ).toBeNull();
       expect(
         fixture.nativeElement.querySelector('[data-testid="preview-description-button"]'),
       ).toBeNull();
@@ -715,7 +724,9 @@ describe('SectionFormDrawer', () => {
       fixture.detectChanges();
 
       (
-        fixture.nativeElement.querySelector('[data-testid="preview-title-button"]') as HTMLButtonElement
+        fixture.nativeElement.querySelector(
+          '[data-testid="preview-title-button"]',
+        ) as HTMLButtonElement
       ).click();
       fixture.detectChanges();
 
@@ -752,7 +763,9 @@ describe('SectionFormDrawer', () => {
 
       expect(suggestionService.suggest).toHaveBeenCalledTimes(1);
       (
-        second.nativeElement.querySelector('[data-testid="preview-title-button"]') as HTMLButtonElement
+        second.nativeElement.querySelector(
+          '[data-testid="preview-title-button"]',
+        ) as HTMLButtonElement
       ).click();
       second.detectChanges();
       expect(
@@ -800,11 +813,15 @@ describe('SectionFormDrawer', () => {
       fixture.detectChanges();
 
       (
-        fixture.nativeElement.querySelector('[data-testid="preview-title-button"]') as HTMLButtonElement
+        fixture.nativeElement.querySelector(
+          '[data-testid="preview-title-button"]',
+        ) as HTMLButtonElement
       ).click();
       fixture.detectChanges();
       (
-        fixture.nativeElement.querySelector('[data-testid="accept-title-button"]') as HTMLButtonElement
+        fixture.nativeElement.querySelector(
+          '[data-testid="accept-title-button"]',
+        ) as HTMLButtonElement
       ).click();
 
       expect(component.form.controls.title.value).toBe('Getting started v2 (es)');
@@ -846,7 +863,9 @@ describe('SectionFormDrawer', () => {
       fixture.detectChanges();
 
       expect(snackBarOpen).toHaveBeenCalled();
-      expect(fixture.nativeElement.querySelector('[data-testid="preview-title-button"]')).toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="preview-title-button"]'),
+      ).toBeNull();
       expect(fixture.componentInstance.form.controls.title.value).toBe('Empezando');
     });
   });

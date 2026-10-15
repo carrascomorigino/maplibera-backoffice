@@ -56,7 +56,9 @@ describe('ResourceCard', () => {
   it('shows a category icon placeholder for nutrition (no image field)', () => {
     const fixture = createFixture(nutritionResource());
 
-    expect(fixture.nativeElement.querySelector('[data-testid="thumbnail-placeholder"]')).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="thumbnail-placeholder"]'),
+    ).not.toBeNull();
     expect(fixture.nativeElement.querySelector('img')).toBeNull();
   });
 
@@ -71,18 +73,20 @@ describe('ResourceCard', () => {
   it('shows the status badge', () => {
     const fixture = createFixture(nutritionResource());
 
-    expect(fixture.nativeElement.querySelector('[data-testid="status-badge"]')?.textContent?.trim()).toBe(
-      'draft',
-    );
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="status-badge"]')?.textContent?.trim(),
+    ).toBe('draft');
   });
 
   it('toggles publish/pause via the service', async () => {
     const resource = nutritionResource();
     const fixture = createFixture(resource);
 
-    (fixture.nativeElement.querySelector(
-      `[data-testid="status-action-${resource.slug}"]`,
-    ) as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector(
+        `[data-testid="status-action-${resource.slug}"]`,
+      ) as HTMLButtonElement
+    ).click();
     await Promise.resolve();
 
     expect(service.publish).toHaveBeenCalledWith(resource.id);
@@ -93,9 +97,11 @@ describe('ResourceCard', () => {
     const resource = nutritionResource();
     const fixture = createFixture(resource);
 
-    (fixture.nativeElement.querySelector(
-      `[data-testid="status-action-${resource.slug}"]`,
-    ) as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector(
+        `[data-testid="status-action-${resource.slug}"]`,
+      ) as HTMLButtonElement
+    ).click();
     await Promise.resolve();
     await Promise.resolve();
 
@@ -114,7 +120,9 @@ describe('ResourceCard', () => {
     const editRequested = vi.fn();
     fixture.componentInstance.editRequested.subscribe(editRequested);
 
-    (fixture.nativeElement.querySelector('[data-testid="edit-button"]') as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector('[data-testid="edit-button"]') as HTMLButtonElement
+    ).click();
 
     expect(editRequested).toHaveBeenCalledWith({
       resource,
@@ -127,7 +135,9 @@ describe('ResourceCard', () => {
     const resource = nutritionResource();
     const fixture = createFixture(resource);
     const dialog = TestBed.inject(MatDialog);
-    vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<MatDialog['open']>);
+    vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<
+      MatDialog['open']
+    >);
 
     fixture.componentInstance['onLanguageRemoved']('es');
     await Promise.resolve();
@@ -142,7 +152,9 @@ describe('ResourceCard', () => {
     fixture.componentInstance.selectionToggled.subscribe(selectionToggled);
 
     (
-      fixture.nativeElement.querySelector('[data-testid="select-checkbox"] input') as HTMLInputElement
+      fixture.nativeElement.querySelector(
+        '[data-testid="select-checkbox"] input',
+      ) as HTMLInputElement
     ).click();
 
     expect(selectionToggled).toHaveBeenCalled();

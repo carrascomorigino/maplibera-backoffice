@@ -37,7 +37,9 @@ describe('ConfirmDialog', () => {
     const fixture = createFixture(data);
     const nativeElement = fixture.nativeElement as HTMLElement;
 
-    (nativeElement.querySelector('[data-testid="confirm-dialog-confirm"]') as HTMLButtonElement).click();
+    (
+      nativeElement.querySelector('[data-testid="confirm-dialog-confirm"]') as HTMLButtonElement
+    ).click();
 
     expect(dialogRef.close).toHaveBeenCalledWith(true);
   });
@@ -46,7 +48,9 @@ describe('ConfirmDialog', () => {
     const fixture = createFixture(data);
     const nativeElement = fixture.nativeElement as HTMLElement;
 
-    (nativeElement.querySelector('[data-testid="confirm-dialog-cancel"]') as HTMLButtonElement).click();
+    (
+      nativeElement.querySelector('[data-testid="confirm-dialog-cancel"]') as HTMLButtonElement
+    ).click();
 
     expect(dialogRef.close).toHaveBeenCalledWith(false);
   });

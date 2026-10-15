@@ -29,7 +29,11 @@ export interface MultimediaFieldsValue {
   templateUrl: './multimedia-fields-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
-    { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => MultimediaFieldsForm), multi: true },
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => MultimediaFieldsForm),
+      multi: true,
+    },
     { provide: NG_VALIDATORS, useExisting: forwardRef(() => MultimediaFieldsForm), multi: true },
   ],
 })

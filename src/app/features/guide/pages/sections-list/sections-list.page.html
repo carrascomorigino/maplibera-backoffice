@@ -1,5 +1,11 @@
 <mat-drawer-container class="h-full">
-  <mat-drawer #drawer mode="over" position="end" [opened]="isDrawerOpen()" (closedStart)="onCancelled()">
+  <mat-drawer
+    #drawer
+    mode="over"
+    position="end"
+    [opened]="isDrawerOpen()"
+    (closedStart)="onCancelled()"
+  >
     @if (isDrawerOpen()) {
       <app-section-form-drawer
         [section]="drawerSection()"
@@ -12,9 +18,9 @@
     }
   </mat-drawer>
 
-  <mat-drawer-content class="p-6 md:p-8">
+  <mat-drawer-content class="p-4 sm:p-6 md:p-8">
     <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
-      <h1 class="text-2xl font-semibold tracking-tight text-ink-900">
+      <h1 class="font-display text-3xl uppercase tracking-wide text-ink-900">
         {{ language.t().guide.sectionsList.heading }}
       </h1>
 
@@ -37,12 +43,7 @@
         </mat-button-toggle>
       </mat-button-toggle-group>
 
-      <button
-        mat-flat-button
-        type="button"
-        data-testid="new-section-button"
-        (click)="openCreate()"
-      >
+      <button mat-flat-button type="button" data-testid="new-section-button" (click)="openCreate()">
         {{ language.t().guide.sectionsList.newSectionButton }}
       </button>
     </div>
@@ -68,7 +69,7 @@
         [cdkDropListData]="visibleSections()"
         [cdkDropListDisabled]="!reorderingEnabled()"
         class="grid gap-4"
-        style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))"
+        style="grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr))"
         (cdkDropListDropped)="onDrop($event)"
       >
         @for (

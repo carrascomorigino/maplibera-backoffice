@@ -47,4 +47,8 @@ export const ORGANIZATION_TYPES: readonly OrganizationType[] = [
   'campaign',
 ];
 
-export const ORGANIZATION_STATUSES: readonly OrganizationStatus[] = ['draft', 'published', 'paused'];
+export const ORGANIZATION_STATUSES: readonly OrganizationStatus[] = [
+  'draft',
+  'published',
+  'paused',
+];

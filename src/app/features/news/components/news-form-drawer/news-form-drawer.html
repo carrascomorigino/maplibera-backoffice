@@ -1,5 +1,6 @@
 <form
   [formGroup]="form"
+  [attr.inert]="saving() ? '' : null"
   class="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden sm:w-[26rem]"
 >
   <div class="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden p-6">
@@ -7,7 +8,10 @@
       {{ item() ? language.t().news.newsForm.editHeading : language.t().news.newsForm.newHeading }}
     </h2>
 
-    <span data-testid="working-language-indicator" class="w-fit rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700">
+    <span
+      data-testid="working-language-indicator"
+      class="w-fit rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700"
+    >
       {{ language.t().news.newsForm.workingLanguageLabel(contentLanguageLabels[targetLanguage()]) }}
     </span>
 
@@ -24,7 +28,9 @@
     }
 
     <fieldset class="flex min-w-0 flex-col gap-2">
-      <legend class="text-sm font-medium text-ink-700">{{ language.t().news.newsForm.categoryLabel }}</legend>
+      <legend class="text-sm font-medium text-ink-700">
+        {{ language.t().news.newsForm.categoryLabel }}
+      </legend>
       <label class="flex items-center gap-2">
         <input
           type="radio"
@@ -53,7 +59,9 @@
       <mat-label>{{ language.t().news.newsForm.titleLabel }}</mat-label>
       <input matInput formControlName="title" [maxlength]="titleMaxLength" />
       <mat-hint align="end">{{
-        language.t().fieldLimits.charactersRemaining(titleMaxLength - form.controls.title.value.length)
+        language
+          .t()
+          .fieldLimits.charactersRemaining(titleMaxLength - form.controls.title.value.length)
       }}</mat-hint>
     </mat-form-field>
 
@@ -71,7 +79,9 @@
       <mat-label>{{ language.t().news.newsForm.subtitleLabel }}</mat-label>
       <input matInput formControlName="subtitle" [maxlength]="subtitleMaxLength" />
       <mat-hint align="end">{{
-        language.t().fieldLimits.charactersRemaining(subtitleMaxLength - form.controls.subtitle.value.length)
+        language
+          .t()
+          .fieldLimits.charactersRemaining(subtitleMaxLength - form.controls.subtitle.value.length)
       }}</mat-hint>
     </mat-form-field>
 
@@ -154,7 +164,9 @@
       <app-string-list-editor
         formControlName="sourceLinks"
         [urlMode]="true"
-        [addButtonLabel]="language.t().stringListEditor.addRowButton(language.t().news.newsForm.sourceLinksLabel)"
+        [addButtonLabel]="
+          language.t().stringListEditor.addRowButton(language.t().news.newsForm.sourceLinksLabel)
+        "
       />
     </div>
   </div>
@@ -164,7 +176,7 @@
       mat-flat-button
       type="button"
       data-testid="save-button"
-      [disabled]="form.invalid"
+      [disabled]="form.invalid || saving()"
       (click)="save()"
     >
       {{ language.t().news.newsForm.saveButton }}
@@ -174,7 +186,7 @@
         mat-flat-button
         type="button"
         data-testid="publish-button"
-        [disabled]="form.invalid"
+        [disabled]="form.invalid || saving()"
         (click)="publish()"
       >
         {{ language.t().news.newsForm.publishButton }}
@@ -185,3 +197,7 @@
     </button>
   </div>
 </form>
+
+@if (saving()) {
+  <app-busy-overlay />
+}

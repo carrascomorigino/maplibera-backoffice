@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import {
   FormControl,
   FormGroup,
@@ -26,6 +34,7 @@ import { slugify } from '../../../../shared/utils/slugify';
 import { SLUG_PATTERN, URL_PATTERN } from '../../../../shared/utils/patterns';
 import { GALLERY_IMAGE_DESCRIPTION_MAX_LENGTH } from '../../../../shared/utils/gallery-limits';
 import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from '../../utils/field-limits';
+import { BusyOverlay } from '../../../../shared/components/busy-overlay/busy-overlay';
 import { LanguageService } from '../../../../core/i18n/language.service';
 
 type CountryScope = 'all' | 'specific';
@@ -33,6 +42,7 @@ type CountryScope = 'all' | 'specific';
 @Component({
   selector: 'app-section-form-drawer',
   imports: [
+    BusyOverlay,
     ReactiveFormsModule,
     MatButtonModule,
     MatFormFieldModule,
@@ -44,6 +54,10 @@ type CountryScope = 'all' | 'specific';
   ],
   templateUrl: './section-form-drawer.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    class: 'relative block h-full',
+    '[attr.aria-busy]': 'saving()',
+  },
 })
 export class SectionFormDrawer {
   private readonly sectionService = inject(SectionService);
@@ -65,6 +79,8 @@ export class SectionFormDrawer {
   readonly cancelled = output<void>();
 
   readonly loading = signal(false);
+  /** True while Save or Publish runs; locks the form so nobody edits what is being written. */
+  readonly saving = signal(false);
   readonly staleSuggestion = signal<SectionTranslation | undefined>(undefined);
   readonly staleSuggestionLoading = signal(false);
   readonly previewRevealed = signal(false);
@@ -98,7 +114,11 @@ export class SectionFormDrawer {
     }),
     slug: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.pattern(SLUG_PATTERN), this.duplicateSlugValidator],
+      validators: [
+        Validators.required,
+        Validators.pattern(SLUG_PATTERN),
+        this.duplicateSlugValidator,
+      ],
     }),
     description: new FormControl('', {
       nonNullable: true,
@@ -200,7 +220,8 @@ export class SectionFormDrawer {
     // form's QuestionDraft (ImageValue answer images) via JSON.stringify never matches once
     // images are involved — acceptable, low-priority cosmetic limitation (see plan notes).
     return (
-      JSON.stringify(suggestedQuestion) !== JSON.stringify(this.form.controls.question.value ?? undefined)
+      JSON.stringify(suggestedQuestion) !==
+      JSON.stringify(this.form.controls.question.value ?? undefined)
     );
   }
 
@@ -216,7 +237,10 @@ export class SectionFormDrawer {
       ...question,
       answers: question.answers.map((answer) => {
         const { imageUrl, ...rest } = answer;
-        return { ...rest, ...(imageUrl ? { imageUrl: { kind: 'url', url: imageUrl } as ImageValue } : {}) };
+        return {
+          ...rest,
+          ...(imageUrl ? { imageUrl: { kind: 'url', url: imageUrl } as ImageValue } : {}),
+        };
       }),
     };
   }
@@ -288,21 +312,33 @@ export class SectionFormDrawer {
   }
 
   protected async save(): Promise<void> {
+    if (this.saving()) {
+      return;
+    }
+    this.saving.set(true);
     try {
       await this.persist();
       this.saved.emit();
     } catch {
       this.notifyActionFailed();
+    } finally {
+      this.saving.set(false);
     }
   }
 
   protected async publish(): Promise<void> {
+    if (this.saving()) {
+      return;
+    }
+    this.saving.set(true);
     try {
       const section = await this.persist();
       await this.sectionService.publish(section.id);
       this.saved.emit();
     } catch {
       this.notifyActionFailed();
+    } finally {
+      this.saving.set(false);
     }
   }
 

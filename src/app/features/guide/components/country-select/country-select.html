@@ -31,7 +31,9 @@
       [attr.aria-controls]="inputId() + '-listbox'"
       [attr.aria-expanded]="isOpen() && filteredOptions().length > 0"
       [attr.aria-activedescendant]="
-        isOpen() && filteredOptions().length ? optionId(filteredOptions()[highlightedIndex()].code) : null
+        isOpen() && filteredOptions().length
+          ? optionId(filteredOptions()[highlightedIndex()].code)
+          : null
       "
       data-testid="country-filter-input"
       [attr.placeholder]="language.t().guide.sectionForm.countryFilterPlaceholder"

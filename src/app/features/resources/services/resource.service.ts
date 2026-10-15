@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { API_BASE_URL } from '../../../core/http/api-base-url.token';
 import { firstValueFrom } from 'rxjs';
+import { PendingIds } from '../../../shared/utils/pending-ids';
 import {
   AppTranslation,
   MultimediaTranslation,
@@ -75,9 +76,13 @@ export class ResourceService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${inject(API_BASE_URL)}/resources`;
 
+  private readonly pending = new PendingIds();
+
   private readonly state = signal<Resource[]>([]);
 
-  private readonly categoryOrder = new Map(RESOURCE_CATEGORIES.map((category, index) => [category, index]));
+  private readonly categoryOrder = new Map(
+    RESOURCE_CATEGORIES.map((category, index) => [category, index]),
+  );
 
   readonly resources = computed(() =>
     [...this.state()].sort((a, b) => {
@@ -100,6 +105,11 @@ export class ResourceService {
     return groups;
   });
 
+  /** True while a write request for this id is in flight. */
+  isPending(id: string): boolean {
+    return this.pending.has(id);
+  }
+
   constructor() {
     void this.refresh();
   }
@@ -121,24 +131,32 @@ export class ResourceService {
     translation: ResourceTranslation,
     newSlug?: string,
   ): Promise<Resource> {
-    const updated = await firstValueFrom(
-      this.http.put<Resource>(`${this.baseUrl}/${id}/translations`, { language, translation, newSlug }),
+    const updated = await this.pending.track(id, () =>
+      firstValueFrom(
+        this.http.put<Resource>(`${this.baseUrl}/${id}/translations`, {
+          language,
+          translation,
+          newSlug,
+        }),
+      ),
     );
     this.replace(updated);
     return updated;
   }
 
   async removeTranslation(id: string, language: ContentLanguage): Promise<Resource> {
-    const updated = await firstValueFrom(
-      this.http.delete<Resource>(`${this.baseUrl}/${id}/translations/${language}`),
+    const updated = await this.pending.track(id, () =>
+      firstValueFrom(this.http.delete<Resource>(`${this.baseUrl}/${id}/translations/${language}`)),
     );
     this.replace(updated);
     return updated;
   }
 
   async updateSharedFields(id: string, sharedFields: Record<string, unknown>): Promise<Resource> {
-    const updated = await firstValueFrom(
-      this.http.patch<Resource>(`${this.baseUrl}/${id}/shared-fields`, { sharedFields }),
+    const updated = await this.pending.track(id, () =>
+      firstValueFrom(
+        this.http.patch<Resource>(`${this.baseUrl}/${id}/shared-fields`, { sharedFields }),
+      ),
     );
     this.replace(updated);
     return updated;
@@ -157,7 +175,9 @@ export class ResourceService {
   }
 
   async delete(id: string): Promise<void> {
-    await firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${id}`));
+    await this.pending.track(id, () =>
+      firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${id}`)),
+    );
     this.state.update((resources) => resources.filter((resource) => resource.id !== id));
   }
 
@@ -171,7 +191,9 @@ export class ResourceService {
 
   private async setStatus(id: string, status: ResourceStatus): Promise<Resource> {
     const action = status === 'published' ? 'publish' : 'pause';
-    const updated = await firstValueFrom(this.http.post<Resource>(`${this.baseUrl}/${id}/${action}`, {}));
+    const updated = await this.pending.track(id, () =>
+      firstValueFrom(this.http.post<Resource>(`${this.baseUrl}/${id}/${action}`, {})),
+    );
     this.replace(updated);
     return updated;
   }

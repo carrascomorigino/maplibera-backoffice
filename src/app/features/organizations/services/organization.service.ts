@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { API_BASE_URL } from '../../../core/http/api-base-url.token';
 import { firstValueFrom } from 'rxjs';
+import { PendingIds } from '../../../shared/utils/pending-ids';
 import {
   Organization,
   OrganizationContactLinks,
@@ -34,9 +35,16 @@ export class OrganizationService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${inject(API_BASE_URL)}/organizations`;
 
+  private readonly pending = new PendingIds();
+
   private readonly state = signal<Organization[]>([]);
 
   readonly organizations = computed(() => [...this.state()].sort((a, b) => a.order - b.order));
+
+  /** True while a write request for this id is in flight. */
+  isPending(id: string): boolean {
+    return this.pending.has(id);
+  }
 
   constructor() {
     void this.refresh();
@@ -59,31 +67,46 @@ export class OrganizationService {
     translation: OrganizationTranslation,
     newSlug?: string,
   ): Promise<Organization> {
-    const updated = await firstValueFrom(
-      this.http.put<Organization>(`${this.baseUrl}/${id}/translations`, { language, translation, newSlug }),
+    const updated = await this.pending.track(id, () =>
+      firstValueFrom(
+        this.http.put<Organization>(`${this.baseUrl}/${id}/translations`, {
+          language,
+          translation,
+          newSlug,
+        }),
+      ),
     );
     this.replace(updated);
     return updated;
   }
 
   async removeTranslation(id: string, language: ContentLanguage): Promise<Organization> {
-    const updated = await firstValueFrom(
-      this.http.delete<Organization>(`${this.baseUrl}/${id}/translations/${language}`),
+    const updated = await this.pending.track(id, () =>
+      firstValueFrom(
+        this.http.delete<Organization>(`${this.baseUrl}/${id}/translations/${language}`),
+      ),
     );
     this.replace(updated);
     return updated;
   }
 
-  async updateSharedFields(id: string, sharedFields: OrganizationSharedFields): Promise<Organization> {
-    const updated = await firstValueFrom(
-      this.http.patch<Organization>(`${this.baseUrl}/${id}/shared-fields`, { sharedFields }),
+  async updateSharedFields(
+    id: string,
+    sharedFields: OrganizationSharedFields,
+  ): Promise<Organization> {
+    const updated = await this.pending.track(id, () =>
+      firstValueFrom(
+        this.http.patch<Organization>(`${this.baseUrl}/${id}/shared-fields`, { sharedFields }),
+      ),
     );
     this.replace(updated);
     return updated;
   }
 
   async delete(id: string): Promise<void> {
-    await firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${id}`));
+    await this.pending.track(id, () =>
+      firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${id}`)),
+    );
     this.state.update((orgs) => orgs.filter((org) => org.id !== id));
   }
 
@@ -98,12 +121,16 @@ export class OrganizationService {
   async reorder(orderedIds: string[]): Promise<void> {
     await firstValueFrom(this.http.post(`${this.baseUrl}/reorder`, { orderedIds }));
     const orderById = new Map(orderedIds.map((id, index) => [id, index]));
-    this.state.update((orgs) => orgs.map((org) => ({ ...org, order: orderById.get(org.id) ?? org.order })));
+    this.state.update((orgs) =>
+      orgs.map((org) => ({ ...org, order: orderById.get(org.id) ?? org.order })),
+    );
   }
 
   private async setStatus(id: string, status: OrganizationStatus): Promise<Organization> {
     const action = status === 'published' ? 'publish' : 'pause';
-    const updated = await firstValueFrom(this.http.post<Organization>(`${this.baseUrl}/${id}/${action}`, {}));
+    const updated = await this.pending.track(id, () =>
+      firstValueFrom(this.http.post<Organization>(`${this.baseUrl}/${id}/${action}`, {})),
+    );
     this.replace(updated);
     return updated;
   }

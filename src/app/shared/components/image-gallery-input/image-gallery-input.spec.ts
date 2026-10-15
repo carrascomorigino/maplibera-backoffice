@@ -51,7 +51,9 @@ describe('ImageGalleryInput', () => {
   }
 
   function addButton(fixture: ReturnType<typeof createFixture>) {
-    return fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement;
+    return fixture.nativeElement.querySelector(
+      '[data-testid="gallery-add-button"]',
+    ) as HTMLButtonElement;
   }
 
   function removeButton(fixture: ReturnType<typeof createFixture>, index: number) {
@@ -151,14 +153,21 @@ describe('ImageGalleryInput', () => {
   });
 
   it('shows a live image count indicator', () => {
-    const fixture = createFixture([{ image: { kind: 'url', url: 'https://example.com/a.jpg' } }], 3);
+    const fixture = createFixture(
+      [{ image: { kind: 'url', url: 'https://example.com/a.jpg' } }],
+      3,
+    );
 
-    expect(fixture.nativeElement.textContent).toContain(language.t().imageGalleryInput.imageCountLabel(1, 3));
+    expect(fixture.nativeElement.textContent).toContain(
+      language.t().imageGalleryInput.imageCountLabel(1, 3),
+    );
 
     addButton(fixture).click();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain(language.t().imageGalleryInput.imageCountLabel(2, 3));
+    expect(fixture.nativeElement.textContent).toContain(
+      language.t().imageGalleryInput.imageCountLabel(2, 3),
+    );
   });
 
   describe('description character limit', () => {

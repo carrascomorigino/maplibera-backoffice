@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { NgOptimizedImage } from '@angular/common';
 import { CdkDragHandle } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,6 +21,7 @@ import {
 } from '../../../guide/models/content-language.model';
 import { countryDisplayName } from '../../../../shared/models/country.model';
 import { ProfessionalService } from '../../services/professional.service';
+import { BusyOverlay } from '../../../../shared/components/busy-overlay/busy-overlay';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { LanguageTags } from '../../../../shared/components/language-tags/language-tags';
 import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/confirm-dialog';
@@ -38,12 +47,21 @@ interface ContactLinkEntry {
 
 @Component({
   selector: 'app-professional-card',
-  imports: [NgOptimizedImage, CdkDragHandle, MatButtonModule, MatIconModule, LanguageTags],
+  imports: [
+    BusyOverlay,
+    NgOptimizedImage,
+    CdkDragHandle,
+    MatButtonModule,
+    MatIconModule,
+    LanguageTags,
+  ],
   templateUrl: './professional-card.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
+    '[attr.inert]': 'busy() ? "" : null',
+    '[attr.aria-busy]': 'busy()',
     class:
-      'flex flex-col gap-2 rounded-xl border border-ink-100 bg-surface-card p-3 shadow-[0_1px_2px_-1px_rgba(23,21,31,0.06),0_1px_3px_rgba(23,21,31,0.04)] transition-shadow hover:shadow-[0_2px_4px_-1px_rgba(23,21,31,0.08),0_4px_8px_rgba(23,21,31,0.05)]',
+      'relative flex min-w-0 flex-col gap-2 rounded-2xl border border-ink-100 bg-surface-card p-3 sm:p-4 shadow-[0_1px_2px_-1px_rgba(23,21,31,0.06),0_1px_3px_rgba(23,21,31,0.04)] transition-shadow hover:shadow-[0_2px_4px_-1px_rgba(23,21,31,0.08),0_4px_8px_rgba(23,21,31,0.05)]',
   },
 })
 export class ProfessionalCard {
@@ -55,6 +73,11 @@ export class ProfessionalCard {
   protected readonly contentLanguageLabels = CONTENT_LANGUAGE_LABELS;
 
   readonly professional = input.required<Professional>();
+
+  /** Locks the card while a save or delete for this item is in flight. */
+  protected readonly busy = computed(() =>
+    this.professionalService.isPending(this.professional().id),
+  );
 
   readonly editRequested = output<ProfessionalEditRequestedEvent>();
   readonly translateRequested = output<ProfessionalTranslateRequestedEvent>();
@@ -68,7 +91,10 @@ export class ProfessionalCard {
   readonly translation = computed(() => this.professional().translations[this.selectedLanguage()]);
 
   readonly availableLanguages = computed(
-    () => this.contentLanguages.filter((lang) => this.professional().translations[lang]) as ContentLanguage[],
+    () =>
+      this.contentLanguages.filter(
+        (lang) => this.professional().translations[lang],
+      ) as ContentLanguage[],
   );
 
   readonly specialtyBadgeLabel = computed<string>(() => {
@@ -102,7 +128,12 @@ export class ProfessionalCard {
     const labels = this.language.t().professionals.professionalsList;
     const entries: ContactLinkEntry[] = [];
     if (links.website) {
-      entries.push({ key: 'website', url: links.website, ariaLabel: labels.contactLinkWebsiteAria, icon: 'language' });
+      entries.push({
+        key: 'website',
+        url: links.website,
+        ariaLabel: labels.contactLinkWebsiteAria,
+        icon: 'language',
+      });
     }
     if (links.instagram) {
       entries.push({
@@ -113,10 +144,20 @@ export class ProfessionalCard {
       });
     }
     if (links.telegram) {
-      entries.push({ key: 'telegram', url: links.telegram, ariaLabel: labels.contactLinkTelegramAria, icon: 'send' });
+      entries.push({
+        key: 'telegram',
+        url: links.telegram,
+        ariaLabel: labels.contactLinkTelegramAria,
+        icon: 'send',
+      });
     }
     if (links.whatsapp) {
-      entries.push({ key: 'whatsapp', url: links.whatsapp, ariaLabel: labels.contactLinkWhatsappAria, icon: 'chat' });
+      entries.push({
+        key: 'whatsapp',
+        url: links.whatsapp,
+        ariaLabel: labels.contactLinkWhatsappAria,
+        icon: 'chat',
+      });
     }
     if (links.bookingUrl) {
       entries.push({

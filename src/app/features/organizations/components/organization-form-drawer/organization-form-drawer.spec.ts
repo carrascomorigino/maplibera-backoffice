@@ -49,7 +49,9 @@ describe('OrganizationFormDrawer', () => {
       publish: fixture.nativeElement.querySelector(
         '[data-testid="publish-button"]',
       ) as HTMLButtonElement | null,
-      cancel: fixture.nativeElement.querySelector('[data-testid="cancel-button"]') as HTMLButtonElement,
+      cancel: fixture.nativeElement.querySelector(
+        '[data-testid="cancel-button"]',
+      ) as HTMLButtonElement,
     };
   }
 
@@ -247,7 +249,9 @@ describe('OrganizationFormDrawer', () => {
     await settle();
 
     const updated = service.organizations()[0];
-    expect(updated.images).toEqual([{ url: 'https://example.com/new-logo.png', description: undefined }]);
+    expect(updated.images).toEqual([
+      { url: 'https://example.com/new-logo.png', description: undefined },
+    ]);
     expect(updated.scopeType).toBe('country');
     expect(updated.countryCode).toBe('AR');
     expect(updated.contactLinks.website).toBe('https://example.org');
@@ -307,15 +311,20 @@ describe('OrganizationFormDrawer', () => {
 
       for (let i = 0; i < 3; i++) {
         (
-          fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement
+          fixture.nativeElement.querySelector(
+            '[data-testid="gallery-add-button"]',
+          ) as HTMLButtonElement
         ).click();
         fixture.detectChanges();
       }
 
       expect(fixture.nativeElement.querySelectorAll('[data-testid="gallery-row"]')).toHaveLength(3);
       expect(
-        (fixture.nativeElement.querySelector('[data-testid="gallery-add-button"]') as HTMLButtonElement)
-          .disabled,
+        (
+          fixture.nativeElement.querySelector(
+            '[data-testid="gallery-add-button"]',
+          ) as HTMLButtonElement
+        ).disabled,
       ).toBe(true);
     });
   });

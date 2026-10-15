@@ -27,7 +27,11 @@ export interface NutritionistFieldsValue {
   templateUrl: './nutritionist-fields-form.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
-    { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => NutritionistFieldsForm), multi: true },
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => NutritionistFieldsForm),
+      multi: true,
+    },
     { provide: NG_VALIDATORS, useExisting: forwardRef(() => NutritionistFieldsForm), multi: true },
   ],
 })

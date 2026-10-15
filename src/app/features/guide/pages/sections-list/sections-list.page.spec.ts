@@ -37,7 +37,8 @@ describe('SectionsListPage', () => {
 
   beforeEach(() => {
     FakeIntersectionObserver.instances = [];
-    global.IntersectionObserver = FakeIntersectionObserver as unknown as typeof IntersectionObserver;
+    global.IntersectionObserver =
+      FakeIntersectionObserver as unknown as typeof IntersectionObserver;
     service = new FakeSectionService();
     TestBed.configureTestingModule({
       providers: [
@@ -82,9 +83,9 @@ describe('SectionsListPage', () => {
 
     const fixture = createFixture();
 
-    const titles = Array.from(fixture.nativeElement.querySelectorAll('[data-testid="section-title"]')).map(
-      (el) => (el as HTMLElement).textContent?.trim(),
-    );
+    const titles = Array.from(
+      fixture.nativeElement.querySelectorAll('[data-testid="section-title"]'),
+    ).map((el) => (el as HTMLElement).textContent?.trim());
     expect(titles).toEqual(['Second', 'First']);
   });
 
@@ -98,7 +99,9 @@ describe('SectionsListPage', () => {
     service.seed([seedSection('a', 'A', { order: 0 }), seedSection('b', 'B', { order: 1 })]);
     const fixture = createFixture();
 
-    const dropList = fixture.debugElement.query(By.directive(CdkDropList)).injector.get(CdkDropList);
+    const dropList = fixture.debugElement
+      .query(By.directive(CdkDropList))
+      .injector.get(CdkDropList);
 
     expect(dropList.data).toEqual(service.sections());
   });
@@ -146,7 +149,9 @@ describe('SectionsListPage', () => {
     editButton.click();
     fixture.detectChanges();
 
-    const titleInput = fixture.nativeElement.querySelector('input[formcontrolname="title"]') as HTMLInputElement;
+    const titleInput = fixture.nativeElement.querySelector(
+      'input[formcontrolname="title"]',
+    ) as HTMLInputElement;
     expect(titleInput.value).toBe('Editable');
   });
 
@@ -197,7 +202,9 @@ describe('SectionsListPage', () => {
     fixture.nativeElement.querySelector('[data-testid="new-section-button"]').click();
     fixture.detectChanges();
 
-    (fixture.nativeElement.querySelector('[data-testid="cancel-button"]') as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector('[data-testid="cancel-button"]') as HTMLButtonElement
+    ).click();
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-section-form-drawer')).toBeNull();
@@ -219,10 +226,14 @@ describe('SectionsListPage', () => {
 
     expect(fixture.nativeElement.querySelector('app-section-form-drawer')).not.toBeNull();
 
-    (fixture.nativeElement.querySelector('[data-testid="cancel-button"]') as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector('[data-testid="cancel-button"]') as HTMLButtonElement
+    ).click();
     fixture.detectChanges();
 
-    const enTag = fixture.nativeElement.querySelector('[data-testid="language-tag-en"]') as HTMLElement;
+    const enTag = fixture.nativeElement.querySelector(
+      '[data-testid="language-tag-en"]',
+    ) as HTMLElement;
     expect(enTag.className).toContain('ring');
   });
 
@@ -239,7 +250,9 @@ describe('SectionsListPage', () => {
       const fixture = createFixture();
 
       (
-        fixture.nativeElement.querySelector('[data-testid="select-checkbox"] input') as HTMLInputElement
+        fixture.nativeElement.querySelector(
+          '[data-testid="select-checkbox"] input',
+        ) as HTMLInputElement
       ).click();
       fixture.detectChanges();
 
@@ -253,7 +266,9 @@ describe('SectionsListPage', () => {
       service.seed([a, b]);
       const fixture = createFixture();
       const dialog = TestBed.inject(MatDialog);
-      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<MatDialog['open']>);
+      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<
+        MatDialog['open']
+      >);
 
       fixture.componentInstance['toggleSelection'](a.id);
       fixture.componentInstance['requestBulkDelete']();
@@ -269,7 +284,9 @@ describe('SectionsListPage', () => {
       service.seed([a]);
       const fixture = createFixture();
       const dialog = TestBed.inject(MatDialog);
-      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(false) } as ReturnType<MatDialog['open']>);
+      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(false) } as ReturnType<
+        MatDialog['open']
+      >);
 
       fixture.componentInstance['toggleSelection'](a.id);
       fixture.componentInstance['requestBulkDelete']();
@@ -283,7 +300,9 @@ describe('SectionsListPage', () => {
       service.delete.mockRejectedValueOnce(new Error('network error'));
       const fixture = createFixture();
       const dialog = TestBed.inject(MatDialog);
-      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<MatDialog['open']>);
+      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<
+        MatDialog['open']
+      >);
       const snackBar = TestBed.inject(MatSnackBar);
 
       fixture.componentInstance['toggleSelection'](a.id);
@@ -299,7 +318,9 @@ describe('SectionsListPage', () => {
   describe('status filter', () => {
     it('narrows the rendered grid to the selected status', () => {
       const draftSection = seedSection('draft-section', 'Draft', { status: 'draft' });
-      const publishedSection = seedSection('published-section', 'Published', { status: 'published' });
+      const publishedSection = seedSection('published-section', 'Published', {
+        status: 'published',
+      });
       service.seed([draftSection, publishedSection]);
       const fixture = createFixture();
 
@@ -322,7 +343,9 @@ describe('SectionsListPage', () => {
       fixture.componentInstance['statusFilter'].set('draft');
       fixture.detectChanges();
 
-      const dropList = fixture.debugElement.query(By.directive(CdkDropList)).injector.get(CdkDropList);
+      const dropList = fixture.debugElement
+        .query(By.directive(CdkDropList))
+        .injector.get(CdkDropList);
       expect(dropList.disabled).toBe(true);
 
       const moveUpButton = fixture.nativeElement.querySelector(
@@ -335,7 +358,9 @@ describe('SectionsListPage', () => {
       service.seed([seedSection('a', 'A', { order: 0 }), seedSection('b', 'B', { order: 1 })]);
       const fixture = createFixture();
 
-      const dropList = fixture.debugElement.query(By.directive(CdkDropList)).injector.get(CdkDropList);
+      const dropList = fixture.debugElement
+        .query(By.directive(CdkDropList))
+        .injector.get(CdkDropList);
       expect(dropList.disabled).toBe(false);
 
       const moveDownButtons = fixture.nativeElement.querySelectorAll(
@@ -417,7 +442,9 @@ describe('SectionsListPage', () => {
       seedMany(30);
       const fixture = createFixture();
 
-      expect(fixture.nativeElement.querySelectorAll('[data-testid="section-title"]').length).toBe(24);
+      expect(fixture.nativeElement.querySelectorAll('[data-testid="section-title"]').length).toBe(
+        24,
+      );
     });
 
     it('renders more sections when the sentinel reports it is near the end', () => {
@@ -427,7 +454,9 @@ describe('SectionsListPage', () => {
       fixture.componentInstance['onNearEnd']();
       fixture.detectChanges();
 
-      expect(fixture.nativeElement.querySelectorAll('[data-testid="section-title"]').length).toBe(30);
+      expect(fixture.nativeElement.querySelectorAll('[data-testid="section-title"]').length).toBe(
+        30,
+      );
     });
 
     it('does not reset the visible window when the underlying data changes without a filter change', async () => {

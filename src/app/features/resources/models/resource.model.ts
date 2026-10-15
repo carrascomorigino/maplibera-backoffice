@@ -84,10 +84,7 @@ export interface AppResource extends ResourceBase {
 export type Resource = NutritionResource | RecipeResource | MultimediaResource | AppResource;
 
 export type ResourceTranslation =
-  | NutritionTranslation
-  | RecipeTranslation
-  | MultimediaTranslation
-  | AppTranslation;
+  NutritionTranslation | RecipeTranslation | MultimediaTranslation | AppTranslation;
 
 export const RESOURCE_CATEGORIES: readonly ResourceCategory[] = [
   'nutrition',

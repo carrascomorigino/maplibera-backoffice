@@ -9,7 +9,9 @@
       (blur)="onBlur()"
     />
     <mat-hint align="end">{{
-      language.t().fieldLimits.charactersRemaining(questionTextMaxLength - form.controls.text.value.length)
+      language
+        .t()
+        .fieldLimits.charactersRemaining(questionTextMaxLength - form.controls.text.value.length)
     }}</mat-hint>
   </mat-form-field>
 
@@ -31,7 +33,9 @@
         formControlName="type"
         class="w-full min-w-0 rounded-lg border border-ink-300 bg-surface-sunken p-2 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
       >
-        <option value="" disabled>{{ language.t().guide.questionEditor.selectTypePlaceholder }}</option>
+        <option value="" disabled>
+          {{ language.t().guide.questionEditor.selectTypePlaceholder }}
+        </option>
         <option value="yes-no">{{ language.t().guide.questionEditor.typeYesNo }}</option>
         <option value="single">{{ language.t().guide.questionEditor.typeSingle }}</option>
         <option value="multiple">{{ language.t().guide.questionEditor.typeMultiple }}</option>
@@ -40,9 +44,9 @@
 
     @if (form.controls.type.value === 'yes-no') {
       <fieldset class="flex min-w-0 flex-col gap-2">
-        <legend class="text-sm font-medium text-ink-700">{{
-          language.t().guide.questionEditor.correctAnswerLegend
-        }}</legend>
+        <legend class="text-sm font-medium text-ink-700">
+          {{ language.t().guide.questionEditor.correctAnswerLegend }}
+        </legend>
         <label class="flex items-center gap-2">
           <input
             type="radio"
@@ -104,9 +108,11 @@
                   [maxlength]="answerTextMaxLength"
                 />
                 <mat-hint align="end">{{
-                  language.t().fieldLimits.charactersRemaining(
-                    answerTextMaxLength - row.controls.text.value.length
-                  )
+                  language
+                    .t()
+                    .fieldLimits.charactersRemaining(
+                      answerTextMaxLength - row.controls.text.value.length
+                    )
                 }}</mat-hint>
               </mat-form-field>
 
@@ -128,7 +134,9 @@
               [attr.data-testid]="'answer-image-' + i"
             />
             @if (row.controls.imageUrl.hasError('imageRequired')) {
-              <p class="text-sm text-red-700">{{ language.t().guide.questionEditor.imageRequiredError }}</p>
+              <p class="text-sm text-red-700">
+                {{ language.t().guide.questionEditor.imageRequiredError }}
+              </p>
             }
           </div>
         }

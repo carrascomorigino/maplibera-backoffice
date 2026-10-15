@@ -34,7 +34,10 @@ export class DoctorFieldsForm implements ControlValueAccessor, Validator {
   protected readonly language = inject(LanguageService);
 
   readonly form = new FormGroup({
-    medicalLicenseNumber: new FormControl('', { nonNullable: true, validators: Validators.required }),
+    medicalLicenseNumber: new FormControl('', {
+      nonNullable: true,
+      validators: Validators.required,
+    }),
     medicalSpecialty: new FormControl('', { nonNullable: true, validators: Validators.required }),
   });
 

@@ -76,9 +76,7 @@ export class ImageGalleryInput implements ControlValueAccessor, Validator, After
   constructor() {
     this.rows.valueChanges.subscribe((values) => {
       const galleryValues = values
-        .filter(
-          (row): row is { image: ImageValue; description: string } => row.image !== undefined,
-        )
+        .filter((row): row is { image: ImageValue; description: string } => row.image !== undefined)
         .map((row) => {
           const description = row.description.trim();
           return description ? { image: row.image, description } : { image: row.image };
