@@ -31,6 +31,10 @@ export function makeProfessional(overrides: Partial<Professional> = {}): Profess
 
 /** Component-level test double for ProfessionalService — see FakeSectionService for rationale. */
 export class FakeProfessionalService {
+  /** Ids the test marks as having a write in flight; drives `isPending`. */
+  readonly pendingIds = signal<ReadonlySet<string>>(new Set());
+  isPending = (id: string): boolean => this.pendingIds().has(id);
+
   private readonly _professionals = signal<Professional[]>([]);
   private readonly specialtyOrder = new Map(
     PROFESSIONAL_SPECIALTIES.map((specialty, index) => [specialty, index]),
@@ -44,18 +48,20 @@ export class FakeProfessionalService {
     }),
   );
 
-  readonly professionalsBySpecialty = computed<Record<ProfessionalSpecialty, Professional[]>>(() => {
-    const groups: Record<ProfessionalSpecialty, Professional[]> = {
-      nutritionist: [],
-      doctor: [],
-      dentist: [],
-      coach: [],
-    };
-    for (const professional of this.professionals()) {
-      groups[professional.specialty].push(professional);
-    }
-    return groups;
-  });
+  readonly professionalsBySpecialty = computed<Record<ProfessionalSpecialty, Professional[]>>(
+    () => {
+      const groups: Record<ProfessionalSpecialty, Professional[]> = {
+        nutritionist: [],
+        doctor: [],
+        dentist: [],
+        coach: [],
+      };
+      for (const professional of this.professionals()) {
+        groups[professional.specialty].push(professional);
+      }
+      return groups;
+    },
+  );
 
   seed(professionals: Professional[]): void {
     this._professionals.set(professionals);
@@ -101,17 +107,23 @@ export class FakeProfessionalService {
     },
   );
 
-  removeTranslation = vi.fn(async (id: string, language: ContentLanguage): Promise<Professional> => {
-    const current = this._professionals().find((p) => p.id === id);
-    if (!current) {
-      throw new Error(`Unknown professional id: ${id}`);
-    }
-    const translations = { ...current.translations };
-    delete translations[language];
-    const updated = { ...current, translations, updatedAt: new Date().toISOString() } as Professional;
-    this.replace(updated);
-    return updated;
-  });
+  removeTranslation = vi.fn(
+    async (id: string, language: ContentLanguage): Promise<Professional> => {
+      const current = this._professionals().find((p) => p.id === id);
+      if (!current) {
+        throw new Error(`Unknown professional id: ${id}`);
+      }
+      const translations = { ...current.translations };
+      delete translations[language];
+      const updated = {
+        ...current,
+        translations,
+        updatedAt: new Date().toISOString(),
+      } as Professional;
+      this.replace(updated);
+      return updated;
+    },
+  );
 
   updateSharedFields = vi.fn(
     async (id: string, sharedFields: Record<string, unknown>): Promise<Professional> => {

@@ -37,7 +37,9 @@ describe('SectionService', () => {
 
   async function setup(initial: Section[] = []): Promise<void> {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(),
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: API_BASE_URL, useValue: '/backend' },
       ],
     });
@@ -80,9 +82,14 @@ describe('SectionService', () => {
   describe('saveTranslation', () => {
     it('PUTs to /:id and replaces the matching section in the list', async () => {
       await setup([section()]);
-      const updated = section({ translations: { en: { title: 'Updated', description: 'Intro section' } } });
+      const updated = section({
+        translations: { en: { title: 'Updated', description: 'Intro section' } },
+      });
 
-      const promise = service.saveTranslation('s1', input({ translation: updated.translations.en! }));
+      const promise = service.saveTranslation(
+        's1',
+        input({ translation: updated.translations.en! }),
+      );
       const req = httpMock.expectOne(`${BASE_URL}/s1`);
       expect(req.request.method).toBe('PUT');
       req.flush(updated);
@@ -95,7 +102,9 @@ describe('SectionService', () => {
   describe('removeTranslation', () => {
     it('DELETEs /:id/translations/:language and replaces the section', async () => {
       await setup([section()]);
-      const updated = section({ translations: { en: { title: 'Getting started', description: 'Intro section' } } });
+      const updated = section({
+        translations: { en: { title: 'Getting started', description: 'Intro section' } },
+      });
 
       const promise = service.removeTranslation('s1', 'es');
       const req = httpMock.expectOne(`${BASE_URL}/s1/translations/es`);

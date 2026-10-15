@@ -8,7 +8,11 @@ import { NEWS_CATEGORIES, NewsCategory, NewsItem } from '../../models/news-item.
 import { ContentLanguage } from '../../../guide/models/content-language.model';
 import { NewsItemService } from '../../services/news-item.service';
 import { NewsFormDrawer } from '../../components/news-form-drawer/news-form-drawer';
-import { NewsCard, NewsEditRequestedEvent, NewsTranslateRequestedEvent } from '../../components/news-card/news-card';
+import {
+  NewsCard,
+  NewsEditRequestedEvent,
+  NewsTranslateRequestedEvent,
+} from '../../components/news-card/news-card';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/confirm-dialog';
 import { SelectionToolbar } from '../../../../shared/components/selection-toolbar/selection-toolbar';
@@ -21,7 +25,12 @@ type DrawerContext =
       targetLanguage: ContentLanguage;
       staleSourceLanguage?: ContentLanguage;
     }
-  | { mode: 'translate'; item: NewsItem; targetLanguage: ContentLanguage; sourceLanguage: ContentLanguage };
+  | {
+      mode: 'translate';
+      item: NewsItem;
+      targetLanguage: ContentLanguage;
+      sourceLanguage: ContentLanguage;
+    };
 
 @Component({
   selector: 'app-news-list',

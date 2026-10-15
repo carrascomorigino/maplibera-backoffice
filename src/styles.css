@@ -3,47 +3,59 @@
 @import 'tailwindcss';
 
 @theme {
-  /* Brand teal — sampled from mapagino.com (nav gradient #41B7CB, app icon #40B0D0) */
-  --color-brand-50: #eefaf9;
-  --color-brand-100: #d2f1ef;
-  --color-brand-200: #a6e3e1;
-  --color-brand-300: #72cdcc;
-  --color-brand-400: #43b3b9;
-  --color-brand-500: #279aa8;
-  --color-brand-600: #1c7c8c;
-  --color-brand-700: #196374;
-  --color-brand-800: #184e5c;
-  --color-brand-900: #17414d;
+  /* Mapagino design system (claude.ai artifact "Mapagino", tokens.json).
+     brand = celeste ramp; 700 is the `link` token (#0b6575, AA on light grounds). */
+  --color-brand-50: #eef8fa;
+  --color-brand-100: #e5f2f5; /* hielo */
+  --color-brand-200: #bfe6ee;
+  --color-brand-300: #8cd2df;
+  --color-brand-400: #41b7cb; /* celeste */
+  --color-brand-500: #2a9bb0;
+  --color-brand-600: #137e91;
+  --color-brand-700: #0b6575; /* link */
+  --color-brand-800: #0a4f5b;
+  --color-brand-900: #083d46;
 
-  /* Gold accent — sampled from mapagino.com's app icon coin motif (#F0E030) */
-  --color-gold-50: #fdf8e9;
-  --color-gold-100: #faedc0;
-  --color-gold-200: #f5db8a;
-  --color-gold-300: #edc251;
-  --color-gold-400: #dea52c;
-  --color-gold-500: #c1861b;
-  --color-gold-600: #9a6816;
-  --color-gold-700: #7a5316;
-  --color-gold-800: #634418;
-  --color-gold-900: #533a19;
+  /* Gold = amarillo. Fill only, never text on light grounds. */
+  --color-gold-50: #fdfbe6;
+  --color-gold-100: #fbf5c2;
+  --color-gold-200: #f7ec8c;
+  --color-gold-300: #f3e25a;
+  --color-gold-400: #f0da32; /* amarillo */
+  --color-gold-500: #d2bd1a;
+  --color-gold-600: #a69413;
+  --color-gold-700: #7c6e11;
+  --color-gold-800: #5c5212;
+  --color-gold-900: #463e12;
 
-  /* Ink — warm charcoal-navy neutral, echoes the mapagino wordmark (#202030) */
-  --color-ink-50: #f7f7fa;
-  --color-ink-100: #eeedf2;
-  --color-ink-200: #dcdae3;
-  --color-ink-300: #bfbcc9;
-  --color-ink-400: #918da0;
-  --color-ink-500: #6c6879;
-  --color-ink-600: #4f4c5c;
-  --color-ink-700: #3a3745;
-  --color-ink-800: #262432;
-  --color-ink-900: #17151f;
+  /* Burgundy = borgona, the primary action color. */
+  --color-primary: #730c35;
+  --color-on-primary: #f8f7db;
 
-  /* Warm surfaces — canvas/card/sunken, echoes the mapagino cream background (#F8F7DB) */
-  --color-surface: #faf9f5;
+  /* Ink = carbon ramp. 500+ meets 4.5:1 on crema and white. */
+  --color-ink-50: #f5f5f3;
+  --color-ink-100: #e8e7df;
+  --color-ink-200: #d4d3ca;
+  --color-ink-300: #a9aaa8;
+  --color-ink-400: #6f7279; /* border-strong */
+  --color-ink-500: #4b4e55; /* ink-muted */
+  --color-ink-600: #3f4248;
+  --color-ink-700: #33363c;
+  --color-ink-800: #2b2d33;
+  --color-ink-900: #25272c; /* carbon */
+
+  /* Surfaces: crema page, white cards, hielo tint. */
+  --color-surface: #f8f7db;
   --color-surface-card: #ffffff;
-  --color-surface-sunken: #f1efe6;
-  --color-surface-muted: #f2f1ec;
+  --color-surface-sunken: #e5f2f5;
+  --color-surface-muted: #f1f0d6;
+
+  --font-sans: 'Roboto', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Anton', Impact, 'Arial Narrow', sans-serif;
+
+  --radius-xl: 12px; /* radius-md */
+  --radius-2xl: 16px; /* radius-lg: cards */
+  --radius-3xl: 24px; /* radius-xl: dialogs */
 }
 
 html {
@@ -76,4 +88,10 @@ body {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Mapagino focus ring: solid 2px borgona with 2px offset. */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }

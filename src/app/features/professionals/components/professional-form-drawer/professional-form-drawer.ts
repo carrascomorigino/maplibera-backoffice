@@ -1,5 +1,19 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import {
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -10,7 +24,10 @@ import {
   ProfessionalSpecialty,
   ProfessionalTranslation,
 } from '../../models/professional.model';
-import { ContentLanguage, CONTENT_LANGUAGE_LABELS } from '../../../guide/models/content-language.model';
+import {
+  ContentLanguage,
+  CONTENT_LANGUAGE_LABELS,
+} from '../../../guide/models/content-language.model';
 import { COUNTRY_CODES, countryDisplayName } from '../../../../shared/models/country.model';
 import { ProfessionalCreateInput, ProfessionalService } from '../../services/professional.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
@@ -27,7 +44,12 @@ import { resolveImagePayload } from '../../../../shared/utils/image-payload';
 import { slugify } from '../../../../shared/utils/slugify';
 import { URL_PATTERN, SLUG_PATTERN } from '../../../../shared/utils/patterns';
 import { GALLERY_IMAGE_DESCRIPTION_MAX_LENGTH } from '../../../../shared/utils/gallery-limits';
-import { BIO_MAX_LENGTH, CREDENTIALS_TITLE_MAX_LENGTH, NAME_MAX_LENGTH } from '../../utils/field-limits';
+import {
+  BIO_MAX_LENGTH,
+  CREDENTIALS_TITLE_MAX_LENGTH,
+  NAME_MAX_LENGTH,
+} from '../../utils/field-limits';
+import { BusyOverlay } from '../../../../shared/components/busy-overlay/busy-overlay';
 import { LanguageService } from '../../../../core/i18n/language.service';
 
 const SHARED_FIELD_KEYS: Record<ProfessionalSpecialty, readonly string[]> = {
@@ -47,6 +69,7 @@ const DEFAULT_SPECIALTY_FIELDS: Record<ProfessionalSpecialty, Record<string, unk
 @Component({
   selector: 'app-professional-form-drawer',
   imports: [
+    BusyOverlay,
     ReactiveFormsModule,
     MatButtonModule,
     MatFormFieldModule,
@@ -60,6 +83,10 @@ const DEFAULT_SPECIALTY_FIELDS: Record<ProfessionalSpecialty, Record<string, unk
   ],
   templateUrl: './professional-form-drawer.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    class: 'relative block h-full',
+    '[attr.aria-busy]': 'saving()',
+  },
 })
 export class ProfessionalFormDrawer {
   private readonly professionalService = inject(ProfessionalService);
@@ -86,6 +113,8 @@ export class ProfessionalFormDrawer {
   readonly cancelled = output<void>();
 
   readonly loading = signal(false);
+  /** True while Save or Publish runs; locks the form so nobody edits what is being written. */
+  readonly saving = signal(false);
   readonly staleSuggestion = signal<Record<string, unknown> | undefined>(undefined);
   readonly staleSuggestionLoading = signal(false);
   readonly previewRevealed = signal(false);
@@ -102,7 +131,10 @@ export class ProfessionalFormDrawer {
     const currentSlug = this.professional()?.slug;
     const isDuplicate = this.professionalService
       .professionals()
-      .some((professional) => professional.slug !== currentSlug && professional.slug.toLowerCase() === slug);
+      .some(
+        (professional) =>
+          professional.slug !== currentSlug && professional.slug.toLowerCase() === slug,
+      );
     return isDuplicate ? { duplicateSlug: true } : null;
   };
 
@@ -112,13 +144,19 @@ export class ProfessionalFormDrawer {
       : null;
 
   private readonly cityRequiredValidator: ValidatorFn = (control) =>
-    control.parent?.get('scopeType')?.value === 'city' && !control.value ? { cityRequired: true } : null;
+    control.parent?.get('scopeType')?.value === 'city' && !control.value
+      ? { cityRequired: true }
+      : null;
 
   readonly form = new FormGroup({
     name: new FormControl('', { nonNullable: true, validators: Validators.required }),
     slug: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.pattern(SLUG_PATTERN), this.duplicateSlugValidator],
+      validators: [
+        Validators.required,
+        Validators.pattern(SLUG_PATTERN),
+        this.duplicateSlugValidator,
+      ],
     }),
     credentialsTitle: new FormControl('', { nonNullable: true, validators: Validators.required }),
     bio: new FormControl('', { nonNullable: true, validators: Validators.required }),
@@ -128,13 +166,30 @@ export class ProfessionalFormDrawer {
       validators: Validators.pattern(URL_PATTERN),
     }),
     scopeType: new FormControl<ProfessionalScopeType>('global', { nonNullable: true }),
-    countryCode: new FormControl<string | null>(null, { validators: this.countryCodeRequiredValidator }),
+    countryCode: new FormControl<string | null>(null, {
+      validators: this.countryCodeRequiredValidator,
+    }),
     city: new FormControl<string | null>(null, { validators: this.cityRequiredValidator }),
-    website: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
-    instagram: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
-    telegram: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
-    whatsapp: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
-    bookingUrl: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
+    website: new FormControl('', {
+      nonNullable: true,
+      validators: Validators.pattern(URL_PATTERN),
+    }),
+    instagram: new FormControl('', {
+      nonNullable: true,
+      validators: Validators.pattern(URL_PATTERN),
+    }),
+    telegram: new FormControl('', {
+      nonNullable: true,
+      validators: Validators.pattern(URL_PATTERN),
+    }),
+    whatsapp: new FormControl('', {
+      nonNullable: true,
+      validators: Validators.pattern(URL_PATTERN),
+    }),
+    bookingUrl: new FormControl('', {
+      nonNullable: true,
+      validators: Validators.pattern(URL_PATTERN),
+    }),
     specialtyFields: new FormControl<Record<string, unknown>>({}, { nonNullable: true }),
   });
 
@@ -215,7 +270,12 @@ export class ProfessionalFormDrawer {
         const sourceTranslation = professional.translations[staleSource];
         if (sourceTranslation) {
           this.staleSuggestionRequested = true;
-          this.loadStaleSuggestion(professional.slug, targetLanguage, staleSource, sourceTranslation);
+          this.loadStaleSuggestion(
+            professional.slug,
+            targetLanguage,
+            staleSource,
+            sourceTranslation,
+          );
         }
       }
     });
@@ -253,21 +313,33 @@ export class ProfessionalFormDrawer {
   }
 
   protected async save(): Promise<void> {
+    if (this.saving()) {
+      return;
+    }
+    this.saving.set(true);
     try {
       await this.persist();
       this.saved.emit();
     } catch {
       this.notifyActionFailed();
+    } finally {
+      this.saving.set(false);
     }
   }
 
   protected async publish(): Promise<void> {
+    if (this.saving()) {
+      return;
+    }
+    this.saving.set(true);
     try {
       const professional = await this.persist();
       await this.professionalService.publish(professional.id);
       this.saved.emit();
     } catch {
       this.notifyActionFailed();
+    } finally {
+      this.saving.set(false);
     }
   }
 
@@ -299,7 +371,10 @@ export class ProfessionalFormDrawer {
           return;
         }
         const professionalForm = this.language.t().professionals.professionalForm;
-        this.snackBar.open(professionalForm.suggestionFailedNotice, professionalForm.suggestionFailedDismiss);
+        this.snackBar.open(
+          professionalForm.suggestionFailedNotice,
+          professionalForm.suggestionFailedDismiss,
+        );
         this.applySuggestionToForm({ ...sourceTranslation });
       })
       .finally(() => {
@@ -334,7 +409,10 @@ export class ProfessionalFormDrawer {
       })
       .catch(() => {
         const professionalForm = this.language.t().professionals.professionalForm;
-        this.snackBar.open(professionalForm.suggestionFailedNotice, professionalForm.suggestionFailedDismiss);
+        this.snackBar.open(
+          professionalForm.suggestionFailedNotice,
+          professionalForm.suggestionFailedDismiss,
+        );
       })
       .finally(() => {
         this.staleSuggestionLoading.set(false);
@@ -401,7 +479,12 @@ export class ProfessionalFormDrawer {
     const existing = this.professional();
     if (existing) {
       await this.professionalService.updateSharedFields(existing.id, sharedFields);
-      return this.professionalService.saveTranslation(existing.id, this.targetLanguage(), translation, slug);
+      return this.professionalService.saveTranslation(
+        existing.id,
+        this.targetLanguage(),
+        translation,
+        slug,
+      );
     }
 
     const createInput = {

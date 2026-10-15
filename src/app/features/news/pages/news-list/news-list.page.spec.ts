@@ -17,7 +17,10 @@ describe('NewsListPage', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: NewsItemService, useValue: service },
-        { provide: TranslationSuggestionService, useValue: { suggest: vi.fn(() => new Promise(() => {})) } },
+        {
+          provide: TranslationSuggestionService,
+          useValue: { suggest: vi.fn(() => new Promise(() => {})) },
+        },
         { provide: MatSnackBar, useValue: { open: vi.fn() } },
       ],
     });
@@ -78,7 +81,9 @@ describe('NewsListPage', () => {
   it('opens the drawer in create mode with no locked category when "+ Agregar" is clicked', () => {
     const fixture = createFixture();
 
-    (fixture.nativeElement.querySelector('[data-testid="add-button"]') as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector('[data-testid="add-button"]') as HTMLButtonElement
+    ).click();
     fixture.detectChanges();
 
     const drawer = fixture.nativeElement.querySelector('app-news-form-drawer');
@@ -96,7 +101,9 @@ describe('NewsListPage', () => {
 
   it('closes the drawer when the form emits saved', () => {
     const fixture = createFixture();
-    (fixture.nativeElement.querySelector('[data-testid="add-button"]') as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector('[data-testid="add-button"]') as HTMLButtonElement
+    ).click();
     fixture.detectChanges();
 
     fixture.componentInstance['onSaved']();
@@ -111,7 +118,9 @@ describe('NewsListPage', () => {
       service.seed([a]);
       const fixture = createFixture();
       const dialog = TestBed.inject(MatDialog);
-      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<MatDialog['open']>);
+      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<
+        MatDialog['open']
+      >);
 
       fixture.componentInstance['toggleSelection'](a.id);
       fixture.componentInstance['requestBulkDelete']();
@@ -127,7 +136,9 @@ describe('NewsListPage', () => {
       service.seed([a]);
       const fixture = createFixture();
       const dialog = TestBed.inject(MatDialog);
-      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(false) } as ReturnType<MatDialog['open']>);
+      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(false) } as ReturnType<
+        MatDialog['open']
+      >);
 
       fixture.componentInstance['toggleSelection'](a.id);
       fixture.componentInstance['requestBulkDelete']();

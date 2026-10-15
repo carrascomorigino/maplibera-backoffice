@@ -1,11 +1,28 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import {
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { NewsCategory, NewsItem, NewsTranslation } from '../../models/news-item.model';
-import { ContentLanguage, CONTENT_LANGUAGE_LABELS } from '../../../guide/models/content-language.model';
+import {
+  ContentLanguage,
+  CONTENT_LANGUAGE_LABELS,
+} from '../../../guide/models/content-language.model';
 import { NewsItemService } from '../../services/news-item.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { StaleTranslationSuggestionCache } from '../../../../shared/services/stale-translation-suggestion-cache.service';
@@ -19,7 +36,12 @@ import { atLeastOneGalleryImage } from '../../../../shared/utils/gallery-validat
 import { slugify } from '../../../../shared/utils/slugify';
 import { SLUG_PATTERN, URL_PATTERN } from '../../../../shared/utils/patterns';
 import { GALLERY_IMAGE_DESCRIPTION_MAX_LENGTH } from '../../../../shared/utils/gallery-limits';
-import { TITLE_MAX_LENGTH, SUBTITLE_MAX_LENGTH, DESCRIPTION_MAX_LENGTH } from '../../utils/field-limits';
+import {
+  TITLE_MAX_LENGTH,
+  SUBTITLE_MAX_LENGTH,
+  DESCRIPTION_MAX_LENGTH,
+} from '../../utils/field-limits';
+import { BusyOverlay } from '../../../../shared/components/busy-overlay/busy-overlay';
 import { LanguageService } from '../../../../core/i18n/language.service';
 
 function todayIso(): string {
@@ -29,6 +51,7 @@ function todayIso(): string {
 @Component({
   selector: 'app-news-form-drawer',
   imports: [
+    BusyOverlay,
     ReactiveFormsModule,
     MatButtonModule,
     MatFormFieldModule,
@@ -39,6 +62,10 @@ function todayIso(): string {
   ],
   templateUrl: './news-form-drawer.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    class: 'relative block h-full',
+    '[attr.aria-busy]': 'saving()',
+  },
 })
 export class NewsFormDrawer {
   private readonly newsItemService = inject(NewsItemService);
@@ -61,6 +88,8 @@ export class NewsFormDrawer {
   readonly cancelled = output<void>();
 
   readonly loading = signal(false);
+  /** True while Save or Publish runs; locks the form so nobody edits what is being written. */
+  readonly saving = signal(false);
   readonly staleSuggestion = signal<NewsTranslation | undefined>(undefined);
   readonly staleSuggestionLoading = signal(false);
   readonly previewRevealed = signal(false);
@@ -94,7 +123,11 @@ export class NewsFormDrawer {
     }),
     slug: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.pattern(SLUG_PATTERN), this.duplicateSlugValidator],
+      validators: [
+        Validators.required,
+        Validators.pattern(SLUG_PATTERN),
+        this.duplicateSlugValidator,
+      ],
     }),
     subtitle: new FormControl('', {
       nonNullable: true,
@@ -113,7 +146,9 @@ export class NewsFormDrawer {
       validators: Validators.pattern(URL_PATTERN),
     }),
     publishedAt: new FormControl('', { nonNullable: true, validators: Validators.required }),
-    eventDate: new FormControl<string | null>(null, { validators: this.eventDateRequiredValidator }),
+    eventDate: new FormControl<string | null>(null, {
+      validators: this.eventDateRequiredValidator,
+    }),
     sourceLinks: new FormControl<string[]>([], { nonNullable: true }),
   });
 
@@ -211,27 +246,43 @@ export class NewsFormDrawer {
       return;
     }
     this.form.patchValue(
-      { title: suggestion.title, subtitle: suggestion.subtitle, description: suggestion.description },
+      {
+        title: suggestion.title,
+        subtitle: suggestion.subtitle,
+        description: suggestion.description,
+      },
       { emitEvent: false },
     );
   }
 
   protected async save(): Promise<void> {
+    if (this.saving()) {
+      return;
+    }
+    this.saving.set(true);
     try {
       await this.persist();
       this.saved.emit();
     } catch {
       this.notifyActionFailed();
+    } finally {
+      this.saving.set(false);
     }
   }
 
   protected async publish(): Promise<void> {
+    if (this.saving()) {
+      return;
+    }
+    this.saving.set(true);
     try {
       const item = await this.persist();
       await this.newsItemService.publish(item.id);
       this.saved.emit();
     } catch {
       this.notifyActionFailed();
+    } finally {
+      this.saving.set(false);
     }
   }
 
@@ -308,7 +359,11 @@ export class NewsFormDrawer {
 
   private applySuggestionToForm(result: NewsTranslation): void {
     this.form.patchValue(
-      { title: result.title ?? '', subtitle: result.subtitle ?? '', description: result.description ?? '' },
+      {
+        title: result.title ?? '',
+        subtitle: result.subtitle ?? '',
+        description: result.description ?? '',
+      },
       { emitEvent: false },
     );
   }
@@ -346,7 +401,12 @@ export class NewsFormDrawer {
     const existing = this.item();
     if (existing) {
       await this.newsItemService.updateSharedFields(existing.id, sharedFields);
-      return this.newsItemService.saveTranslation(existing.id, this.targetLanguage(), translation, slug);
+      return this.newsItemService.saveTranslation(
+        existing.id,
+        this.targetLanguage(),
+        translation,
+        slug,
+      );
     }
 
     return this.newsItemService.create({

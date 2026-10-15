@@ -23,6 +23,10 @@ export function makeNewsItem(overrides: Partial<NewsItem> = {}): NewsItem {
 
 /** Component-level test double for NewsItemService — see FakeSectionService for rationale. */
 export class FakeNewsItemService {
+  /** Ids the test marks as having a write in flight; drives `isPending`. */
+  readonly pendingIds = signal<ReadonlySet<string>>(new Set());
+  isPending = (id: string): boolean => this.pendingIds().has(id);
+
   private readonly _items = signal<NewsItem[]>([]);
 
   readonly items = computed(() =>
@@ -89,27 +93,29 @@ export class FakeNewsItemService {
     return updated;
   });
 
-  updateSharedFields = vi.fn(async (id: string, sharedFields: NewsItemSharedFields): Promise<NewsItem> => {
-    const current = this._items().find((i) => i.id === id);
-    if (!current) {
-      throw new Error(`Unknown news item id: ${id}`);
-    }
-    const { images, videoUrl, publishedAt, eventDate, sourceLinks } = sharedFields;
-    const updated: NewsItem = {
-      ...current,
-      images: (images ?? []).map((image) => ({
-        url: image.url ?? image.data ?? '',
-        description: image.description,
-      })),
-      videoUrl,
-      publishedAt,
-      eventDate,
-      sourceLinks,
-      updatedAt: new Date().toISOString(),
-    };
-    this.replace(updated);
-    return updated;
-  });
+  updateSharedFields = vi.fn(
+    async (id: string, sharedFields: NewsItemSharedFields): Promise<NewsItem> => {
+      const current = this._items().find((i) => i.id === id);
+      if (!current) {
+        throw new Error(`Unknown news item id: ${id}`);
+      }
+      const { images, videoUrl, publishedAt, eventDate, sourceLinks } = sharedFields;
+      const updated: NewsItem = {
+        ...current,
+        images: (images ?? []).map((image) => ({
+          url: image.url ?? image.data ?? '',
+          description: image.description,
+        })),
+        videoUrl,
+        publishedAt,
+        eventDate,
+        sourceLinks,
+        updatedAt: new Date().toISOString(),
+      };
+      this.replace(updated);
+      return updated;
+    },
+  );
 
   delete = vi.fn(async (id: string): Promise<void> => {
     this._items.update((items) => items.filter((i) => i.id !== id));

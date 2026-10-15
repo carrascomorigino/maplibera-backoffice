@@ -8,13 +8,22 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
+import {
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Resource, ResourceCategory, ResourceTranslation } from '../../models/resource.model';
-import { ContentLanguage, CONTENT_LANGUAGE_LABELS } from '../../../guide/models/content-language.model';
+import {
+  ContentLanguage,
+  CONTENT_LANGUAGE_LABELS,
+} from '../../../guide/models/content-language.model';
 import { ResourceCreateInput, ResourceService } from '../../services/resource.service';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { StaleTranslationSuggestionCache } from '../../../../shared/services/stale-translation-suggestion-cache.service';
@@ -31,6 +40,7 @@ import { SLUG_PATTERN, URL_PATTERN } from '../../../../shared/utils/patterns';
 import { GALLERY_IMAGE_DESCRIPTION_MAX_LENGTH } from '../../../../shared/utils/gallery-limits';
 import { SHORT_DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from '../../utils/field-limits';
 import { categoryLabel } from '../../utils/category-labels';
+import { BusyOverlay } from '../../../../shared/components/busy-overlay/busy-overlay';
 import { LanguageService } from '../../../../core/i18n/language.service';
 
 /** Category-scoped shared (non-translated) field keys living inside `categoryFields`. Images and
@@ -59,6 +69,7 @@ const DEFAULT_CATEGORY_FIELDS: Record<ResourceCategory, Record<string, unknown>>
 @Component({
   selector: 'app-resource-form-drawer',
   imports: [
+    BusyOverlay,
     ReactiveFormsModule,
     MatButtonModule,
     MatFormFieldModule,
@@ -71,6 +82,10 @@ const DEFAULT_CATEGORY_FIELDS: Record<ResourceCategory, Record<string, unknown>>
   ],
   templateUrl: './resource-form-drawer.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    class: 'relative block h-full',
+    '[attr.aria-busy]': 'saving()',
+  },
 })
 export class ResourceFormDrawer {
   private readonly resourceService = inject(ResourceService);
@@ -93,6 +108,8 @@ export class ResourceFormDrawer {
   readonly cancelled = output<void>();
 
   readonly loading = signal(false);
+  /** True while Save or Publish runs; locks the form so nobody edits what is being written. */
+  readonly saving = signal(false);
   readonly staleSuggestion = signal<Record<string, unknown> | undefined>(undefined);
   readonly staleSuggestionLoading = signal(false);
   readonly previewRevealed = signal(false);
@@ -124,7 +141,11 @@ export class ResourceFormDrawer {
     }),
     slug: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.pattern(SLUG_PATTERN), this.duplicateSlugValidator],
+      validators: [
+        Validators.required,
+        Validators.pattern(SLUG_PATTERN),
+        this.duplicateSlugValidator,
+      ],
     }),
     shortDescription: new FormControl('', {
       nonNullable: true,
@@ -154,7 +175,8 @@ export class ResourceFormDrawer {
       const targetLanguage = this.targetLanguage();
       const sourceLanguage = this.sourceLanguage();
       const staleSource = this.staleSourceLanguage();
-      const existing = resource?.translations[targetLanguage] as Record<string, unknown> | undefined;
+      const existing = resource?.translations[targetLanguage] as
+        Record<string, unknown> | undefined;
 
       this.slugManuallyEdited.set(false);
       this.staleSuggestion.set(undefined);
@@ -185,15 +207,18 @@ export class ResourceFormDrawer {
             description: image.description,
           })),
           videoUrl: (resource as unknown as { videoUrl?: string } | undefined)?.videoUrl ?? '',
-          categoryFields: { ...DEFAULT_CATEGORY_FIELDS[category], ...sharedValues, ...translatedValues },
+          categoryFields: {
+            ...DEFAULT_CATEGORY_FIELDS[category],
+            ...sharedValues,
+            ...translatedValues,
+          },
         },
         { emitEvent: false },
       );
 
       if (!existing && resource && sourceLanguage && !this.suggestionRequested) {
         const sourceTranslation = resource.translations[sourceLanguage] as
-          | Record<string, unknown>
-          | undefined;
+          Record<string, unknown> | undefined;
         if (sourceTranslation) {
           this.suggestionRequested = true;
           this.requestSuggestion(category, targetLanguage, sourceLanguage, sourceTranslation);
@@ -202,11 +227,16 @@ export class ResourceFormDrawer {
 
       if (existing && resource && staleSource && !this.staleSuggestionRequested) {
         const sourceTranslation = resource.translations[staleSource] as
-          | Record<string, unknown>
-          | undefined;
+          Record<string, unknown> | undefined;
         if (sourceTranslation) {
           this.staleSuggestionRequested = true;
-          this.loadStaleSuggestion(resource.slug, category, targetLanguage, staleSource, sourceTranslation);
+          this.loadStaleSuggestion(
+            resource.slug,
+            category,
+            targetLanguage,
+            staleSource,
+            sourceTranslation,
+          );
         }
       }
     });
@@ -250,21 +280,33 @@ export class ResourceFormDrawer {
   }
 
   protected async save(): Promise<void> {
+    if (this.saving()) {
+      return;
+    }
+    this.saving.set(true);
     try {
       await this.persist();
       this.saved.emit();
     } catch {
       this.notifyActionFailed();
+    } finally {
+      this.saving.set(false);
     }
   }
 
   protected async publish(): Promise<void> {
+    if (this.saving()) {
+      return;
+    }
+    this.saving.set(true);
     try {
       const resource = await this.persist();
       await this.resourceService.publish(resource.id);
       this.saved.emit();
     } catch {
       this.notifyActionFailed();
+    } finally {
+      this.saving.set(false);
     }
   }
 
@@ -285,7 +327,10 @@ export class ResourceFormDrawer {
   ): void {
     this.loading.set(true);
     this.translationSuggestionService
-      .suggest({ language: sourceLanguage, fields: this.translatableFields(category, sourceTranslation) }, target)
+      .suggest(
+        { language: sourceLanguage, fields: this.translatableFields(category, sourceTranslation) },
+        target,
+      )
       .then((result) => {
         if (this.targetLanguage() !== target) {
           return;
@@ -297,7 +342,10 @@ export class ResourceFormDrawer {
           return;
         }
         const resourceForm = this.language.t().resources.resourceForm;
-        this.snackBar.open(resourceForm.suggestionFailedNotice, resourceForm.suggestionFailedDismiss);
+        this.snackBar.open(
+          resourceForm.suggestionFailedNotice,
+          resourceForm.suggestionFailedDismiss,
+        );
         this.applySuggestionToForm(category, sourceTranslation);
       })
       .finally(() => {
@@ -336,7 +384,10 @@ export class ResourceFormDrawer {
       })
       .catch(() => {
         const resourceForm = this.language.t().resources.resourceForm;
-        this.snackBar.open(resourceForm.suggestionFailedNotice, resourceForm.suggestionFailedDismiss);
+        this.snackBar.open(
+          resourceForm.suggestionFailedNotice,
+          resourceForm.suggestionFailedDismiss,
+        );
       })
       .finally(() => {
         this.staleSuggestionLoading.set(false);
@@ -379,7 +430,8 @@ export class ResourceFormDrawer {
   }
 
   private async persist(): Promise<Resource> {
-    const { title, slug, shortDescription, images, videoUrl, categoryFields } = this.form.getRawValue();
+    const { title, slug, shortDescription, images, videoUrl, categoryFields } =
+      this.form.getRawValue();
     const category = this.category();
     const sharedKeys = SHARED_FIELD_KEYS[category];
     const sharedFields: Record<string, unknown> = {};

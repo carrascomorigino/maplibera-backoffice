@@ -27,7 +27,8 @@ describe('ImageCarousel', () => {
 
   beforeEach(() => {
     FakeIntersectionObserver.instances = [];
-    global.IntersectionObserver = FakeIntersectionObserver as unknown as typeof IntersectionObserver;
+    global.IntersectionObserver =
+      FakeIntersectionObserver as unknown as typeof IntersectionObserver;
     Element.prototype.scrollIntoView = vi.fn();
     TestBed.configureTestingModule({});
     language = TestBed.inject(LanguageService);
@@ -72,10 +73,7 @@ describe('ImageCarousel', () => {
   });
 
   it('updates the active dot and scrolls to the slide when a dot is clicked', () => {
-    const images = [
-      { url: 'https://example.com/a.jpg' },
-      { url: 'https://example.com/b.jpg' },
-    ];
+    const images = [{ url: 'https://example.com/a.jpg' }, { url: 'https://example.com/b.jpg' }];
     const fixture = createFixture(images);
 
     const dots = fixture.nativeElement.querySelectorAll(
@@ -103,7 +101,9 @@ describe('ImageCarousel', () => {
     const previous = fixture.nativeElement.querySelector(
       '[data-testid="carousel-previous"]',
     ) as HTMLButtonElement;
-    const next = fixture.nativeElement.querySelector('[data-testid="carousel-next"]') as HTMLButtonElement;
+    const next = fixture.nativeElement.querySelector(
+      '[data-testid="carousel-next"]',
+    ) as HTMLButtonElement;
     expect(previous.getAttribute('aria-label')).toBe(language.t().imageCarousel.previousImageAria);
     expect(next.getAttribute('aria-label')).toBe(language.t().imageCarousel.nextImageAria);
     expect(previous.disabled).toBe(true);

@@ -21,7 +21,9 @@ describe('LanguageTags', () => {
   }
 
   function tag(fixture: ReturnType<typeof createFixture>, lang: ContentLanguage) {
-    return fixture.nativeElement.querySelector(`[data-testid="language-tag-${lang}"]`) as HTMLElement;
+    return fixture.nativeElement.querySelector(
+      `[data-testid="language-tag-${lang}"]`,
+    ) as HTMLElement;
   }
 
   function removeButton(fixture: ReturnType<typeof createFixture>, lang: ContentLanguage) {

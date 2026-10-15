@@ -35,8 +35,14 @@ export class AppFieldsForm implements ControlValueAccessor, Validator {
   protected readonly language = inject(LanguageService);
 
   readonly form = new FormGroup({
-    appStoreUrl: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
-    playStoreUrl: new FormControl('', { nonNullable: true, validators: Validators.pattern(URL_PATTERN) }),
+    appStoreUrl: new FormControl('', {
+      nonNullable: true,
+      validators: Validators.pattern(URL_PATTERN),
+    }),
+    playStoreUrl: new FormControl('', {
+      nonNullable: true,
+      validators: Validators.pattern(URL_PATTERN),
+    }),
   });
 
   private onChange: (value: AppFieldsValue) => void = () => {};

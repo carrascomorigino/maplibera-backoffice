@@ -63,17 +63,21 @@ describe('StringListEditor', () => {
     ) as HTMLInputElement[];
   }
 
-  function addButton(fixture: ReturnType<typeof createFixture> | ReturnType<typeof createImageFixture>) {
-    return fixture.nativeElement.querySelector('[data-testid="string-list-add-button"]') as HTMLButtonElement;
+  function addButton(
+    fixture: ReturnType<typeof createFixture> | ReturnType<typeof createImageFixture>,
+  ) {
+    return fixture.nativeElement.querySelector(
+      '[data-testid="string-list-add-button"]',
+    ) as HTMLButtonElement;
   }
 
   function removeButton(
     fixture: ReturnType<typeof createFixture> | ReturnType<typeof createImageFixture>,
     index: number,
   ) {
-    return fixture.nativeElement.querySelectorAll(
-      '[data-testid="string-list-remove-button"]',
-    )[index] as HTMLButtonElement;
+    return fixture.nativeElement.querySelectorAll('[data-testid="string-list-remove-button"]')[
+      index
+    ] as HTMLButtonElement;
   }
 
   it('renders one row per initial value', () => {
@@ -153,7 +157,9 @@ describe('StringListEditor', () => {
       const rowsRendered = imageRows(fixture);
 
       expect(rowsRendered).toHaveLength(2);
-      expect(rowsRendered.every((row) => row.tagName.toLowerCase() === 'app-image-input')).toBe(true);
+      expect(rowsRendered.every((row) => row.tagName.toLowerCase() === 'app-image-input')).toBe(
+        true,
+      );
       expect(fixture.nativeElement.querySelector('mat-form-field.min-w-0.flex-1')).toBeNull();
     });
 

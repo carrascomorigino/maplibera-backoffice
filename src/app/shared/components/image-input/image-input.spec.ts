@@ -218,9 +218,7 @@ describe('ImageInput', () => {
 
   it('shows an object url preview for an upload value', () => {
     const file = new File(['hello'], 'hello.png', { type: 'image/png' });
-    const createObjectUrlSpy = vi
-      .spyOn(URL, 'createObjectURL')
-      .mockReturnValue('blob:mock-url');
+    const createObjectUrlSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
 
     const fixture = createFixture({ kind: 'upload', file });
 

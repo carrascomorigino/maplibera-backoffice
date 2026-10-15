@@ -6,7 +6,11 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { of } from 'rxjs';
 import { OrganizationsListPage } from './organizations-list.page';
 import { OrganizationService } from '../../services/organization.service';
-import { Organization, OrganizationStatus, OrganizationType } from '../../models/organization.model';
+import {
+  Organization,
+  OrganizationStatus,
+  OrganizationType,
+} from '../../models/organization.model';
 import { TranslationSuggestionService } from '../../../../shared/services/translation-suggestion.service';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { FakeOrganizationService, makeOrganization } from '../../testing/fake-organization-service';
@@ -32,12 +36,16 @@ describe('OrganizationsListPage', () => {
   let language: LanguageService;
 
   beforeEach(() => {
-    global.IntersectionObserver = FakeIntersectionObserver as unknown as typeof IntersectionObserver;
+    global.IntersectionObserver =
+      FakeIntersectionObserver as unknown as typeof IntersectionObserver;
     service = new FakeOrganizationService();
     TestBed.configureTestingModule({
       providers: [
         { provide: OrganizationService, useValue: service },
-        { provide: TranslationSuggestionService, useValue: { suggest: vi.fn(() => new Promise(() => {})) } },
+        {
+          provide: TranslationSuggestionService,
+          useValue: { suggest: vi.fn(() => new Promise(() => {})) },
+        },
         { provide: MatSnackBar, useValue: { open: vi.fn() } },
       ],
     });
@@ -131,7 +139,9 @@ describe('OrganizationsListPage', () => {
   it('opens the drawer in create mode with no locked type when "+ Agregar" is clicked', () => {
     const fixture = createFixture();
 
-    (fixture.nativeElement.querySelector('[data-testid="add-button"]') as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector('[data-testid="add-button"]') as HTMLButtonElement
+    ).click();
     fixture.detectChanges();
 
     const drawer = fixture.nativeElement.querySelector('app-organization-form-drawer');
@@ -141,7 +151,9 @@ describe('OrganizationsListPage', () => {
 
   it('closes the drawer when the form emits saved', () => {
     const fixture = createFixture();
-    (fixture.nativeElement.querySelector('[data-testid="add-button"]') as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector('[data-testid="add-button"]') as HTMLButtonElement
+    ).click();
     fixture.detectChanges();
 
     fixture.componentInstance['onSaved']();
@@ -154,7 +166,9 @@ describe('OrganizationsListPage', () => {
     service.seed([orgFixture('local-group', 'a', 0), orgFixture('ngo', 'b', 1)]);
     const fixture = createFixture();
 
-    const dropList = fixture.debugElement.query(By.directive(CdkDropList)).injector.get(CdkDropList);
+    const dropList = fixture.debugElement
+      .query(By.directive(CdkDropList))
+      .injector.get(CdkDropList);
 
     expect(dropList.data).toEqual(service.organizations());
   });
@@ -186,18 +200,25 @@ describe('OrganizationsListPage', () => {
     fixture.componentInstance['activeFilter'].set('ngo');
     fixture.detectChanges();
 
-    const dropList = fixture.debugElement.query(By.directive(CdkDropList)).injector.get(CdkDropList);
+    const dropList = fixture.debugElement
+      .query(By.directive(CdkDropList))
+      .injector.get(CdkDropList);
     expect(dropList.disabled).toBe(true);
   });
 
   it('disables the drop list when a specific status filter is active', () => {
-    service.seed([orgFixture('local-group', 'a', 0, 'draft'), orgFixture('ngo', 'b', 1, 'published')]);
+    service.seed([
+      orgFixture('local-group', 'a', 0, 'draft'),
+      orgFixture('ngo', 'b', 1, 'published'),
+    ]);
     const fixture = createFixture();
 
     fixture.componentInstance['statusFilter'].set('published');
     fixture.detectChanges();
 
-    const dropList = fixture.debugElement.query(By.directive(CdkDropList)).injector.get(CdkDropList);
+    const dropList = fixture.debugElement
+      .query(By.directive(CdkDropList))
+      .injector.get(CdkDropList);
     expect(dropList.disabled).toBe(true);
   });
 
@@ -205,7 +226,9 @@ describe('OrganizationsListPage', () => {
     service.seed([orgFixture('local-group', 'a', 0)]);
     const fixture = createFixture();
 
-    const dropList = fixture.debugElement.query(By.directive(CdkDropList)).injector.get(CdkDropList);
+    const dropList = fixture.debugElement
+      .query(By.directive(CdkDropList))
+      .injector.get(CdkDropList);
     expect(dropList.disabled).toBe(false);
   });
 
@@ -348,7 +371,9 @@ describe('OrganizationsListPage', () => {
       service.seed([a]);
       const fixture = createFixture();
       const dialog = TestBed.inject(MatDialog);
-      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<MatDialog['open']>);
+      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<
+        MatDialog['open']
+      >);
 
       fixture.componentInstance['toggleSelection'](a.id);
       fixture.componentInstance['requestBulkDelete']();
@@ -364,7 +389,9 @@ describe('OrganizationsListPage', () => {
       service.seed([a]);
       const fixture = createFixture();
       const dialog = TestBed.inject(MatDialog);
-      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(false) } as ReturnType<MatDialog['open']>);
+      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(false) } as ReturnType<
+        MatDialog['open']
+      >);
 
       fixture.componentInstance['toggleSelection'](a.id);
       fixture.componentInstance['requestBulkDelete']();

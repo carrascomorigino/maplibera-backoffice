@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { CdkDragHandle } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -12,6 +20,7 @@ import {
   CONTENT_LANGUAGE_LABELS,
 } from '../../../guide/models/content-language.model';
 import { ResourceService } from '../../services/resource.service';
+import { BusyOverlay } from '../../../../shared/components/busy-overlay/busy-overlay';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { LanguageTags } from '../../../../shared/components/language-tags/language-tags';
 import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/confirm-dialog';
@@ -30,12 +39,21 @@ export interface ResourceTranslateRequestedEvent {
 
 @Component({
   selector: 'app-resource-card',
-  imports: [CdkDragHandle, MatButtonModule, MatCheckboxModule, MatIconModule, LanguageTags],
+  imports: [
+    BusyOverlay,
+    CdkDragHandle,
+    MatButtonModule,
+    MatCheckboxModule,
+    MatIconModule,
+    LanguageTags,
+  ],
   templateUrl: './resource-card.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
+    '[attr.inert]': 'busy() ? "" : null',
+    '[attr.aria-busy]': 'busy()',
     class:
-      'flex flex-col gap-2 rounded-xl border border-ink-100 bg-surface-card p-3 shadow-[0_1px_2px_-1px_rgba(23,21,31,0.06),0_1px_3px_rgba(23,21,31,0.04)] transition-shadow hover:shadow-[0_2px_4px_-1px_rgba(23,21,31,0.08),0_4px_8px_rgba(23,21,31,0.05)]',
+      'relative flex min-w-0 flex-col gap-2 rounded-2xl border border-ink-100 bg-surface-card p-3 sm:p-4 shadow-[0_1px_2px_-1px_rgba(23,21,31,0.06),0_1px_3px_rgba(23,21,31,0.04)] transition-shadow hover:shadow-[0_2px_4px_-1px_rgba(23,21,31,0.08),0_4px_8px_rgba(23,21,31,0.05)]',
   },
 })
 export class ResourceCard {
@@ -47,6 +65,9 @@ export class ResourceCard {
   protected readonly contentLanguageLabels = CONTENT_LANGUAGE_LABELS;
 
   readonly resource = input.required<Resource>();
+
+  /** Locks the card while a save or delete for this item is in flight. */
+  protected readonly busy = computed(() => this.resourceService.isPending(this.resource().id));
   readonly selected = input<boolean>(false);
 
   readonly editRequested = output<ResourceEditRequestedEvent>();
@@ -60,11 +81,16 @@ export class ResourceCard {
   );
 
   readonly translation = computed(
-    () => this.resource().translations[this.selectedLanguage()] as { title: string; shortDescription: string } | undefined,
+    () =>
+      this.resource().translations[this.selectedLanguage()] as
+        { title: string; shortDescription: string } | undefined,
   );
 
   readonly availableLanguages = computed(
-    () => this.contentLanguages.filter((lang) => this.resource().translations[lang]) as ContentLanguage[],
+    () =>
+      this.contentLanguages.filter(
+        (lang) => this.resource().translations[lang],
+      ) as ContentLanguage[],
   );
 
   readonly thumbnailUrl = computed<string | undefined>(() => this.resource().images?.[0]?.url);
@@ -104,7 +130,9 @@ export class ResourceCard {
     });
     dialogRef.afterClosed().subscribe((confirmed) => {
       if (confirmed) {
-        this.resourceService.removeTranslation(this.resource().id, lang).catch(() => this.notifyActionFailed());
+        this.resourceService
+          .removeTranslation(this.resource().id, lang)
+          .catch(() => this.notifyActionFailed());
       }
     });
   }
@@ -125,7 +153,10 @@ export class ResourceCard {
 
   protected onStatusAction(): void {
     const resource = this.resource();
-    const action = resource.status === 'published' ? this.resourceService.pause(resource.id) : this.resourceService.publish(resource.id);
+    const action =
+      resource.status === 'published'
+        ? this.resourceService.pause(resource.id)
+        : this.resourceService.publish(resource.id);
     action.catch(() => this.notifyActionFailed());
   }
 

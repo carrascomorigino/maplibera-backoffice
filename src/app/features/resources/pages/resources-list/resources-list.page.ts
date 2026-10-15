@@ -27,7 +27,12 @@ type DrawerContext =
       targetLanguage: ContentLanguage;
       staleSourceLanguage?: ContentLanguage;
     }
-  | { mode: 'translate'; resource: Resource; targetLanguage: ContentLanguage; sourceLanguage: ContentLanguage };
+  | {
+      mode: 'translate';
+      resource: Resource;
+      targetLanguage: ContentLanguage;
+      sourceLanguage: ContentLanguage;
+    };
 
 @Component({
   selector: 'app-resources-list',

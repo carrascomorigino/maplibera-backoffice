@@ -4,7 +4,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDrawer, MatDrawerContainer, MatDrawerContent } from '@angular/material/sidenav';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { PROFESSIONAL_SPECIALTIES, Professional, ProfessionalSpecialty } from '../../models/professional.model';
+import {
+  PROFESSIONAL_SPECIALTIES,
+  Professional,
+  ProfessionalSpecialty,
+} from '../../models/professional.model';
 import { ContentLanguage } from '../../../guide/models/content-language.model';
 import { ProfessionalService } from '../../services/professional.service';
 import { ProfessionalFormDrawer } from '../../components/professional-form-drawer/professional-form-drawer';

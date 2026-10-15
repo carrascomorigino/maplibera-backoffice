@@ -1,5 +1,6 @@
 <form
   [formGroup]="form"
+  [attr.inert]="saving() ? '' : null"
   class="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden sm:w-[26rem]"
 >
   <div class="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden p-6">
@@ -11,8 +12,15 @@
       }}
     </h2>
 
-    <span data-testid="working-language-indicator" class="w-fit rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700">
-      {{ language.t().resources.resourceForm.workingLanguageLabel(contentLanguageLabels[targetLanguage()]) }}
+    <span
+      data-testid="working-language-indicator"
+      class="w-fit rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700"
+    >
+      {{
+        language
+          .t()
+          .resources.resourceForm.workingLanguageLabel(contentLanguageLabels[targetLanguage()])
+      }}
     </span>
 
     @if (loading()) {
@@ -31,7 +39,9 @@
       <mat-label>{{ language.t().resources.resourceForm.titleLabel }}</mat-label>
       <input matInput formControlName="title" [maxlength]="titleMaxLength" />
       <mat-hint align="end">{{
-        language.t().fieldLimits.charactersRemaining(titleMaxLength - form.controls.title.value.length)
+        language
+          .t()
+          .fieldLimits.charactersRemaining(titleMaxLength - form.controls.title.value.length)
       }}</mat-hint>
     </mat-form-field>
 
@@ -54,9 +64,11 @@
         [maxlength]="shortDescriptionMaxLength"
       ></textarea>
       <mat-hint align="end">{{
-        language.t().fieldLimits.charactersRemaining(
-          shortDescriptionMaxLength - form.controls.shortDescription.value.length
-        )
+        language
+          .t()
+          .fieldLimits.charactersRemaining(
+            shortDescriptionMaxLength - form.controls.shortDescription.value.length
+          )
       }}</mat-hint>
     </mat-form-field>
 
@@ -130,7 +142,7 @@
       mat-flat-button
       type="button"
       data-testid="save-button"
-      [disabled]="form.invalid"
+      [disabled]="form.invalid || saving()"
       (click)="save()"
     >
       {{ language.t().resources.resourceForm.saveButton }}
@@ -140,7 +152,7 @@
         mat-flat-button
         type="button"
         data-testid="publish-button"
-        [disabled]="form.invalid"
+        [disabled]="form.invalid || saving()"
         (click)="publish()"
       >
         {{ language.t().resources.resourceForm.publishButton }}
@@ -151,3 +163,7 @@
     </button>
   </div>
 </form>
+
+@if (saving()) {
+  <app-busy-overlay />
+}

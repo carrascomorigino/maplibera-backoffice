@@ -35,7 +35,8 @@ describe('SectionListItem', () => {
 
   beforeEach(() => {
     FakeIntersectionObserver.instances = [];
-    global.IntersectionObserver = FakeIntersectionObserver as unknown as typeof IntersectionObserver;
+    global.IntersectionObserver =
+      FakeIntersectionObserver as unknown as typeof IntersectionObserver;
     service = new FakeSectionService();
     snackBarOpen = vi.fn();
     TestBed.configureTestingModule({
@@ -55,7 +56,9 @@ describe('SectionListItem', () => {
   }
 
   function languageTag(fixture: ReturnType<typeof createFixture>, lang: string) {
-    return fixture.nativeElement.querySelector(`[data-testid="language-tag-${lang}"]`) as HTMLElement;
+    return fixture.nativeElement.querySelector(
+      `[data-testid="language-tag-${lang}"]`,
+    ) as HTMLElement;
   }
 
   function twoLanguageSection(overrides: Partial<Section> = {}): Section {
@@ -223,7 +226,9 @@ describe('SectionListItem', () => {
 
       const fixture = createFixture(section);
 
-      const title = fixture.nativeElement.querySelector('[data-testid="section-title"]') as HTMLElement;
+      const title = fixture.nativeElement.querySelector(
+        '[data-testid="section-title"]',
+      ) as HTMLElement;
       const questionText = fixture.nativeElement.querySelector(
         '[data-testid="question-text"]',
       ) as HTMLElement;
@@ -282,7 +287,9 @@ describe('SectionListItem', () => {
       const editRequested = vi.fn();
       fixture.componentInstance.editRequested.subscribe(editRequested);
 
-      (fixture.nativeElement.querySelector('[data-testid="edit-button"]') as HTMLButtonElement).click();
+      (
+        fixture.nativeElement.querySelector('[data-testid="edit-button"]') as HTMLButtonElement
+      ).click();
 
       expect(editRequested).toHaveBeenCalledWith({
         section,
@@ -305,7 +312,9 @@ describe('SectionListItem', () => {
       fixture.componentInstance.editRequested.subscribe(editRequested);
 
       expect(fixture.componentInstance.selectedLanguage()).toBe('en');
-      (fixture.nativeElement.querySelector('[data-testid="edit-button"]') as HTMLButtonElement).click();
+      (
+        fixture.nativeElement.querySelector('[data-testid="edit-button"]') as HTMLButtonElement
+      ).click();
 
       expect(editRequested).toHaveBeenCalledWith({
         section,
@@ -387,7 +396,9 @@ describe('SectionListItem', () => {
       fixture.componentInstance.selectionToggled.subscribe(selectionToggled);
 
       (
-        fixture.nativeElement.querySelector('[data-testid="select-checkbox"] input') as HTMLInputElement
+        fixture.nativeElement.querySelector(
+          '[data-testid="select-checkbox"] input',
+        ) as HTMLInputElement
       ).click();
 
       expect(selectionToggled).toHaveBeenCalled();
@@ -400,7 +411,9 @@ describe('SectionListItem', () => {
 
       const fixture = createFixture(section);
 
-      expect(fixture.nativeElement.querySelector('[data-testid="thumbnail-placeholder"]')).not.toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="thumbnail-placeholder"]'),
+      ).not.toBeNull();
       expect(fixture.nativeElement.querySelector('img')).toBeNull();
     });
 
@@ -413,7 +426,9 @@ describe('SectionListItem', () => {
 
       const fixture = createFixture(section);
 
-      expect(fixture.nativeElement.querySelector('[data-testid="thumbnail-placeholder"]')).toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="thumbnail-placeholder"]'),
+      ).toBeNull();
       expect(fixture.nativeElement.querySelector('img')).not.toBeNull();
     });
 
@@ -577,7 +592,9 @@ describe('SectionListItem', () => {
       const fixture = createFixture(section);
 
       expect(fixture.nativeElement.querySelector('app-image-carousel')).not.toBeNull();
-      expect(fixture.nativeElement.querySelector('[data-testid="thumbnail-placeholder"]')).toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="thumbnail-placeholder"]'),
+      ).toBeNull();
     });
   });
 
@@ -610,9 +627,17 @@ describe('SectionListItem', () => {
       fixture.componentInstance.moveUpRequested.subscribe(moveUp);
       fixture.componentInstance.moveDownRequested.subscribe(moveDown);
 
-      (fixture.nativeElement.querySelector('[data-testid="move-to-top-button"]') as HTMLButtonElement).click();
-      (fixture.nativeElement.querySelector('[data-testid="move-up-button"]') as HTMLButtonElement).click();
-      (fixture.nativeElement.querySelector('[data-testid="move-down-button"]') as HTMLButtonElement).click();
+      (
+        fixture.nativeElement.querySelector(
+          '[data-testid="move-to-top-button"]',
+        ) as HTMLButtonElement
+      ).click();
+      (
+        fixture.nativeElement.querySelector('[data-testid="move-up-button"]') as HTMLButtonElement
+      ).click();
+      (
+        fixture.nativeElement.querySelector('[data-testid="move-down-button"]') as HTMLButtonElement
+      ).click();
 
       expect(moveToTop).toHaveBeenCalled();
       expect(moveUp).toHaveBeenCalled();
@@ -624,15 +649,22 @@ describe('SectionListItem', () => {
       const fixture = createReorderFixture(section, { isFirst: true });
 
       expect(
-        (fixture.nativeElement.querySelector('[data-testid="move-to-top-button"]') as HTMLButtonElement)
+        (
+          fixture.nativeElement.querySelector(
+            '[data-testid="move-to-top-button"]',
+          ) as HTMLButtonElement
+        ).disabled,
+      ).toBe(true);
+      expect(
+        (fixture.nativeElement.querySelector('[data-testid="move-up-button"]') as HTMLButtonElement)
           .disabled,
       ).toBe(true);
       expect(
-        (fixture.nativeElement.querySelector('[data-testid="move-up-button"]') as HTMLButtonElement).disabled,
-      ).toBe(true);
-      expect(
-        (fixture.nativeElement.querySelector('[data-testid="move-down-button"]') as HTMLButtonElement)
-          .disabled,
+        (
+          fixture.nativeElement.querySelector(
+            '[data-testid="move-down-button"]',
+          ) as HTMLButtonElement
+        ).disabled,
       ).toBe(false);
     });
 
@@ -641,8 +673,11 @@ describe('SectionListItem', () => {
       const fixture = createReorderFixture(section, { isLast: true });
 
       expect(
-        (fixture.nativeElement.querySelector('[data-testid="move-down-button"]') as HTMLButtonElement)
-          .disabled,
+        (
+          fixture.nativeElement.querySelector(
+            '[data-testid="move-down-button"]',
+          ) as HTMLButtonElement
+        ).disabled,
       ).toBe(true);
     });
 
@@ -651,15 +686,22 @@ describe('SectionListItem', () => {
       const fixture = createReorderFixture(section, { reorderingDisabled: true });
 
       expect(
-        (fixture.nativeElement.querySelector('[data-testid="move-to-top-button"]') as HTMLButtonElement)
+        (
+          fixture.nativeElement.querySelector(
+            '[data-testid="move-to-top-button"]',
+          ) as HTMLButtonElement
+        ).disabled,
+      ).toBe(true);
+      expect(
+        (fixture.nativeElement.querySelector('[data-testid="move-up-button"]') as HTMLButtonElement)
           .disabled,
       ).toBe(true);
       expect(
-        (fixture.nativeElement.querySelector('[data-testid="move-up-button"]') as HTMLButtonElement).disabled,
-      ).toBe(true);
-      expect(
-        (fixture.nativeElement.querySelector('[data-testid="move-down-button"]') as HTMLButtonElement)
-          .disabled,
+        (
+          fixture.nativeElement.querySelector(
+            '[data-testid="move-down-button"]',
+          ) as HTMLButtonElement
+        ).disabled,
       ).toBe(true);
     });
   });

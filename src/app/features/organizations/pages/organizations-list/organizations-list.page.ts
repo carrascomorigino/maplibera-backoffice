@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -91,7 +98,9 @@ export class OrganizationsListPage {
     this.filteredOrganizations().slice(0, this.visibleCount()),
   );
 
-  protected readonly hasMore = computed(() => this.visibleCount() < this.filteredOrganizations().length);
+  protected readonly hasMore = computed(
+    () => this.visibleCount() < this.filteredOrganizations().length,
+  );
 
   protected readonly reorderingEnabled = computed(
     () => this.activeFilter() === 'all' && this.statusFilter() === 'all',

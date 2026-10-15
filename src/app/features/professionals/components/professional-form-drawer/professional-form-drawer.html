@@ -1,5 +1,6 @@
 <form
   [formGroup]="form"
+  [attr.inert]="saving() ? '' : null"
   class="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden sm:w-[26rem]"
 >
   <div class="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden p-6">
@@ -11,8 +12,17 @@
       }}
     </h2>
 
-    <span data-testid="working-language-indicator" class="w-fit rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700">
-      {{ language.t().professionals.professionalForm.workingLanguageLabel(contentLanguageLabels[targetLanguage()]) }}
+    <span
+      data-testid="working-language-indicator"
+      class="w-fit rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700"
+    >
+      {{
+        language
+          .t()
+          .professionals.professionalForm.workingLanguageLabel(
+            contentLanguageLabels[targetLanguage()]
+          )
+      }}
     </span>
 
     @if (loading()) {
@@ -31,7 +41,9 @@
       <mat-label>{{ language.t().professionals.professionalForm.nameLabel }}</mat-label>
       <input matInput formControlName="name" [maxlength]="nameMaxLength" />
       <mat-hint align="end">{{
-        language.t().fieldLimits.charactersRemaining(nameMaxLength - form.controls.name.value.length)
+        language
+          .t()
+          .fieldLimits.charactersRemaining(nameMaxLength - form.controls.name.value.length)
       }}</mat-hint>
     </mat-form-field>
 
@@ -105,7 +117,9 @@
     </mat-form-field>
 
     <fieldset class="flex min-w-0 flex-col gap-2">
-      <legend class="text-sm font-medium text-ink-700">{{ language.t().professionals.professionalForm.scopeLabel }}</legend>
+      <legend class="text-sm font-medium text-ink-700">
+        {{ language.t().professionals.professionalForm.scopeLabel }}
+      </legend>
       <label class="flex items-center gap-2">
         <input
           type="radio"
@@ -142,14 +156,21 @@
           <label class="text-sm font-medium text-ink-700" for="country-select">{{
             language.t().professionals.professionalForm.countryLabel
           }}</label>
-          <select id="country-select" data-testid="country-select" formControlName="countryCode" class="rounded-lg border border-ink-300 bg-surface-sunken p-2 text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200">
+          <select
+            id="country-select"
+            data-testid="country-select"
+            formControlName="countryCode"
+            class="rounded-lg border border-ink-300 bg-surface-sunken p-2 text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+          >
             <option [value]="null"></option>
             @for (option of countryOptions; track option.code) {
               <option [value]="option.code">{{ option.label }}</option>
             }
           </select>
           @if (form.controls.countryCode.hasError('countryCodeRequired')) {
-            <mat-error>{{ language.t().professionals.professionalForm.countryRequiredError }}</mat-error>
+            <mat-error>{{
+              language.t().professionals.professionalForm.countryRequiredError
+            }}</mat-error>
           }
         </div>
       }
@@ -159,7 +180,9 @@
           <mat-label>{{ language.t().professionals.professionalForm.cityLabel }}</mat-label>
           <input matInput formControlName="city" data-testid="city-input" />
           @if (form.controls.city.hasError('cityRequired')) {
-            <mat-error>{{ language.t().professionals.professionalForm.cityRequiredError }}</mat-error>
+            <mat-error>{{
+              language.t().professionals.professionalForm.cityRequiredError
+            }}</mat-error>
           }
         </mat-form-field>
       }
@@ -226,7 +249,7 @@
       mat-flat-button
       type="button"
       data-testid="save-button"
-      [disabled]="form.invalid"
+      [disabled]="form.invalid || saving()"
       (click)="save()"
     >
       {{ language.t().professionals.professionalForm.saveButton }}
@@ -236,7 +259,7 @@
         mat-flat-button
         type="button"
         data-testid="publish-button"
-        [disabled]="form.invalid"
+        [disabled]="form.invalid || saving()"
         (click)="publish()"
       >
         {{ language.t().professionals.professionalForm.publishButton }}
@@ -247,3 +270,7 @@
     </button>
   </div>
 </form>
+
+@if (saving()) {
+  <app-busy-overlay />
+}

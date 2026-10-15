@@ -27,11 +27,17 @@
 </div>
 
 @if (item().images?.[0]?.url; as thumbnailUrl) {
-  <img [src]="thumbnailUrl" alt="" class="h-32 w-full rounded-lg object-cover" />
+  <img [src]="thumbnailUrl" alt="" class="aspect-[4/3] w-full rounded-xl object-cover" />
 }
 
-<p data-testid="news-title" class="font-medium text-ink-900">{{ translation()?.title }}</p>
-<p class="line-clamp-2 text-sm text-ink-500">{{ translation()?.subtitle }}</p>
+<p
+  data-testid="news-title"
+  class="line-clamp-2 break-words font-medium text-ink-900"
+  [attr.title]="translation()?.title"
+>
+  {{ translation()?.title }}
+</p>
+<p class="line-clamp-3 break-words text-sm text-ink-500">{{ translation()?.subtitle }}</p>
 
 <p data-testid="published-at" class="text-xs text-ink-400">
   {{ language.t().news.newsList.publishedAtIndicator(item().publishedAt) }}
@@ -52,7 +58,7 @@
   (languageRemoved)="onLanguageRemoved($event)"
 />
 
-<div class="mt-auto flex gap-2">
+<div class="mt-auto flex flex-wrap gap-2">
   <button mat-stroked-button type="button" data-testid="edit-button" (click)="onEdit()">
     {{ language.t().news.newsList.editButton }}
   </button>
@@ -65,3 +71,7 @@
     {{ statusActionLabel(item().status) }}
   </button>
 </div>
+
+@if (busy()) {
+  <app-busy-overlay />
+}

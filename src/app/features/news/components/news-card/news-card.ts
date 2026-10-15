@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
@@ -10,6 +18,7 @@ import {
   CONTENT_LANGUAGE_LABELS,
 } from '../../../guide/models/content-language.model';
 import { NewsItemService } from '../../services/news-item.service';
+import { BusyOverlay } from '../../../../shared/components/busy-overlay/busy-overlay';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { LanguageTags } from '../../../../shared/components/language-tags/language-tags';
 import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/confirm-dialog';
@@ -28,12 +37,14 @@ export interface NewsTranslateRequestedEvent {
 
 @Component({
   selector: 'app-news-card',
-  imports: [MatButtonModule, MatCheckboxModule, LanguageTags],
+  imports: [BusyOverlay, MatButtonModule, MatCheckboxModule, LanguageTags],
   templateUrl: './news-card.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
+    '[attr.inert]': 'busy() ? "" : null',
+    '[attr.aria-busy]': 'busy()',
     class:
-      'flex flex-col gap-2 rounded-xl border border-ink-100 bg-surface-card p-3 shadow-[0_1px_2px_-1px_rgba(23,21,31,0.06),0_1px_3px_rgba(23,21,31,0.04)] transition-shadow hover:shadow-[0_2px_4px_-1px_rgba(23,21,31,0.08),0_4px_8px_rgba(23,21,31,0.05)]',
+      'relative flex min-w-0 flex-col gap-2 rounded-2xl border border-ink-100 bg-surface-card p-3 sm:p-4 shadow-[0_1px_2px_-1px_rgba(23,21,31,0.06),0_1px_3px_rgba(23,21,31,0.04)] transition-shadow hover:shadow-[0_2px_4px_-1px_rgba(23,21,31,0.08),0_4px_8px_rgba(23,21,31,0.05)]',
   },
 })
 export class NewsCard {
@@ -45,6 +56,9 @@ export class NewsCard {
   protected readonly contentLanguageLabels = CONTENT_LANGUAGE_LABELS;
 
   readonly item = input.required<NewsItem>();
+
+  /** Locks the card while a save or delete for this item is in flight. */
+  protected readonly busy = computed(() => this.newsItemService.isPending(this.item().id));
   readonly selected = input<boolean>(false);
 
   readonly editRequested = output<NewsEditRequestedEvent>();
@@ -60,7 +74,8 @@ export class NewsCard {
   readonly translation = computed(() => this.item().translations[this.selectedLanguage()]);
 
   readonly availableLanguages = computed(
-    () => this.contentLanguages.filter((lang) => this.item().translations[lang]) as ContentLanguage[],
+    () =>
+      this.contentLanguages.filter((lang) => this.item().translations[lang]) as ContentLanguage[],
   );
 
   protected onLanguageSelected(newLanguage: ContentLanguage): void {
@@ -98,7 +113,9 @@ export class NewsCard {
     });
     dialogRef.afterClosed().subscribe((confirmed) => {
       if (confirmed) {
-        this.newsItemService.removeTranslation(this.item().id, lang).catch(() => this.notifyActionFailed());
+        this.newsItemService
+          .removeTranslation(this.item().id, lang)
+          .catch(() => this.notifyActionFailed());
       }
     });
   }
@@ -119,7 +136,10 @@ export class NewsCard {
 
   protected onStatusAction(): void {
     const item = this.item();
-    const action = item.status === 'published' ? this.newsItemService.pause(item.id) : this.newsItemService.publish(item.id);
+    const action =
+      item.status === 'published'
+        ? this.newsItemService.pause(item.id)
+        : this.newsItemService.publish(item.id);
     action.catch(() => this.notifyActionFailed());
   }
 

@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, forwardRef, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  forwardRef,
+  inject,
+} from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -161,7 +167,7 @@ export class QuestionEditor implements ControlValueAccessor, Validator {
       this.setAnswersCorrectDisabled(
         Boolean(
           this.form.controls.allOfTheAboveCorrect.value ||
-            this.form.controls.noneOfTheAboveCorrect.value,
+          this.form.controls.noneOfTheAboveCorrect.value,
         ),
       );
       this.cdr.markForCheck();
@@ -218,7 +224,10 @@ export class QuestionEditor implements ControlValueAccessor, Validator {
 
     const wasCorrected = question?.type === 'single' && this.enforceSingleCorrect();
     this.setAnswersCorrectDisabled(
-      Boolean(this.form.controls.allOfTheAboveCorrect.value || this.form.controls.noneOfTheAboveCorrect.value),
+      Boolean(
+        this.form.controls.allOfTheAboveCorrect.value ||
+        this.form.controls.noneOfTheAboveCorrect.value,
+      ),
     );
     if (wasCorrected) {
       // Deferred: writeValue runs reentrantly inside the outer control's own

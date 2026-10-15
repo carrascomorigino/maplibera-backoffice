@@ -70,6 +70,9 @@ export const en: Translations = {
     removeRowAria: 'Remove image',
     imageCountLabel: (current, max) => `${current}/${max} images`,
   },
+  busyOverlay: {
+    label: 'Saving changes',
+  },
   imageCarousel: {
     goToImageAria: (index) => `Go to image ${index}`,
     previousImageAria: 'Previous image',

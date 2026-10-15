@@ -1,6 +1,8 @@
 <div [formGroup]="form" class="flex flex-col gap-4">
   <mat-form-field class="min-w-0">
-    <mat-label>{{ language.t().resources.categoryFields.recipes.preparationMinutesLabel }}</mat-label>
+    <mat-label>{{
+      language.t().resources.categoryFields.recipes.preparationMinutesLabel
+    }}</mat-label>
     <input
       matInput
       type="number"
@@ -18,9 +20,11 @@
       formControlName="ingredients"
       [rowMaxLength]="listItemMaxLength"
       [addButtonLabel]="
-        language.t().stringListEditor.addRowButton(
-          language.t().resources.categoryFields.recipes.ingredientsLabel
-        )
+        language
+          .t()
+          .stringListEditor.addRowButton(
+            language.t().resources.categoryFields.recipes.ingredientsLabel
+          )
       "
     />
   </div>
@@ -33,9 +37,9 @@
       formControlName="steps"
       [rowMaxLength]="listItemMaxLength"
       [addButtonLabel]="
-        language.t().stringListEditor.addRowButton(
-          language.t().resources.categoryFields.recipes.stepsLabel
-        )
+        language
+          .t()
+          .stringListEditor.addRowButton(language.t().resources.categoryFields.recipes.stepsLabel)
       "
     />
   </div>

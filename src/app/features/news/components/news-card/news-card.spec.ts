@@ -38,7 +38,9 @@ describe('NewsCard', () => {
       slug: 'new-visitor-center',
       images: [{ url: 'https://example.com/banner.jpg' }],
       publishedAt: '2026-08-01',
-      translations: { en: { title: 'New visitor center', subtitle: 'Now open', description: 'Details' } },
+      translations: {
+        en: { title: 'New visitor center', subtitle: 'Now open', description: 'Details' },
+      },
     });
   }
 
@@ -49,7 +51,9 @@ describe('NewsCard', () => {
       images: [{ url: 'https://example.com/festival.jpg' }],
       publishedAt: '2026-07-01',
       eventDate: '2026-08-15',
-      translations: { en: { title: 'Summer festival', subtitle: 'Join us', description: 'Details' } },
+      translations: {
+        en: { title: 'Summer festival', subtitle: 'Join us', description: 'Details' },
+      },
     });
   }
 
@@ -64,25 +68,25 @@ describe('NewsCard', () => {
   it('shows the status badge', () => {
     const fixture = createFixture(newsItem());
 
-    expect(fixture.nativeElement.querySelector('[data-testid="status-badge"]')?.textContent?.trim()).toBe(
-      'draft',
-    );
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="status-badge"]')?.textContent?.trim(),
+    ).toBe('draft');
   });
 
   it('shows the category badge for news', () => {
     const fixture = createFixture(newsItem());
 
-    expect(fixture.nativeElement.querySelector('[data-testid="category-badge"]')?.textContent?.trim()).toBe(
-      language.t().news.newsList.categoryBadgeNews,
-    );
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="category-badge"]')?.textContent?.trim(),
+    ).toBe(language.t().news.newsList.categoryBadgeNews);
   });
 
   it('shows the category badge and event date for an event', () => {
     const fixture = createFixture(eventItem());
 
-    expect(fixture.nativeElement.querySelector('[data-testid="category-badge"]')?.textContent?.trim()).toBe(
-      language.t().news.newsList.categoryBadgeEvent,
-    );
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="category-badge"]')?.textContent?.trim(),
+    ).toBe(language.t().news.newsList.categoryBadgeEvent);
     expect(fixture.nativeElement.querySelector('[data-testid="event-date"]')).not.toBeNull();
   });
 
@@ -102,9 +106,11 @@ describe('NewsCard', () => {
     const item = newsItem();
     const fixture = createFixture(item);
 
-    (fixture.nativeElement.querySelector(
-      `[data-testid="status-action-${item.slug}"]`,
-    ) as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector(
+        `[data-testid="status-action-${item.slug}"]`,
+      ) as HTMLButtonElement
+    ).click();
     await Promise.resolve();
 
     expect(service.publish).toHaveBeenCalledWith(item.id);
@@ -115,9 +121,11 @@ describe('NewsCard', () => {
     const item = newsItem();
     const fixture = createFixture(item);
 
-    (fixture.nativeElement.querySelector(
-      `[data-testid="status-action-${item.slug}"]`,
-    ) as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector(
+        `[data-testid="status-action-${item.slug}"]`,
+      ) as HTMLButtonElement
+    ).click();
     await Promise.resolve();
     await Promise.resolve();
 
@@ -130,7 +138,9 @@ describe('NewsCard', () => {
     const editRequested = vi.fn();
     fixture.componentInstance.editRequested.subscribe(editRequested);
 
-    (fixture.nativeElement.querySelector('[data-testid="edit-button"]') as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector('[data-testid="edit-button"]') as HTMLButtonElement
+    ).click();
 
     expect(editRequested).toHaveBeenCalledWith({
       item,
@@ -143,7 +153,9 @@ describe('NewsCard', () => {
     const item = newsItem();
     const fixture = createFixture(item);
     const dialog = TestBed.inject(MatDialog);
-    vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<MatDialog['open']>);
+    vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<
+      MatDialog['open']
+    >);
 
     fixture.componentInstance['onLanguageRemoved']('es');
     await Promise.resolve();
@@ -158,9 +170,32 @@ describe('NewsCard', () => {
     fixture.componentInstance.selectionToggled.subscribe(selectionToggled);
 
     (
-      fixture.nativeElement.querySelector('[data-testid="select-checkbox"] input') as HTMLInputElement
+      fixture.nativeElement.querySelector(
+        '[data-testid="select-checkbox"] input',
+      ) as HTMLInputElement
     ).click();
 
     expect(selectionToggled).toHaveBeenCalled();
+  });
+
+  describe('busy lock', () => {
+    it('shows no overlay and stays interactive while idle', () => {
+      const fixture = createFixture(newsItem());
+
+      expect(fixture.nativeElement.querySelector('[data-testid="busy-overlay"]')).toBeNull();
+      expect(fixture.nativeElement.hasAttribute('inert')).toBe(false);
+    });
+
+    it('covers the card with an overlay and makes it inert while its item is saving', () => {
+      const item = newsItem();
+      const fixture = createFixture(item);
+
+      service.pendingIds.set(new Set([item.id]));
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-testid="busy-overlay"]')).not.toBeNull();
+      expect(fixture.nativeElement.hasAttribute('inert')).toBe(true);
+      expect(fixture.nativeElement.getAttribute('aria-busy')).toBe('true');
+    });
   });
 });

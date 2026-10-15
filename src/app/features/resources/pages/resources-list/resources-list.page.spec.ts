@@ -18,7 +18,10 @@ describe('ResourcesListPage', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: ResourceService, useValue: service },
-        { provide: TranslationSuggestionService, useValue: { suggest: vi.fn(() => new Promise(() => {})) } },
+        {
+          provide: TranslationSuggestionService,
+          useValue: { suggest: vi.fn(() => new Promise(() => {})) },
+        },
         { provide: MatSnackBar, useValue: { open: vi.fn() } },
       ],
     });
@@ -51,9 +54,9 @@ describe('ResourcesListPage', () => {
   it('shows an empty-category state for each category with no resources', () => {
     const fixture = createFixture();
 
-    expect(
-      fixture.nativeElement.querySelectorAll('[data-testid^="empty-category-"]').length,
-    ).toBe(4);
+    expect(fixture.nativeElement.querySelectorAll('[data-testid^="empty-category-"]').length).toBe(
+      4,
+    );
   });
 
   it('groups resources into their category section', () => {
@@ -61,7 +64,8 @@ describe('ResourcesListPage', () => {
     const fixture = createFixture();
 
     expect(
-      fixture.nativeElement.querySelector('[data-testid="category-section-nutrition"]')?.textContent,
+      fixture.nativeElement.querySelector('[data-testid="category-section-nutrition"]')
+        ?.textContent,
     ).toContain('omega-3');
     expect(
       fixture.nativeElement.querySelector('[data-testid="category-section-recipes"]')?.textContent,
@@ -75,21 +79,30 @@ describe('ResourcesListPage', () => {
     fixture.componentInstance['activeFilter'].set('nutrition');
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('[data-testid="category-section-nutrition"]')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('[data-testid="category-section-recipes"]')).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="category-section-nutrition"]'),
+    ).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="category-section-recipes"]'),
+    ).toBeNull();
   });
 
   it('opens the drawer with the category locked when an "add" button is clicked', () => {
     const fixture = createFixture();
 
     (
-      fixture.nativeElement.querySelector('[data-testid="add-nutrition-button"]') as HTMLButtonElement
+      fixture.nativeElement.querySelector(
+        '[data-testid="add-nutrition-button"]',
+      ) as HTMLButtonElement
     ).click();
     fixture.detectChanges();
 
     const drawer = fixture.nativeElement.querySelector('app-resource-form-drawer');
     expect(drawer).not.toBeNull();
-    expect(fixture.componentInstance['drawerContext']()).toEqual({ mode: 'create', category: 'nutrition' });
+    expect(fixture.componentInstance['drawerContext']()).toEqual({
+      mode: 'create',
+      category: 'nutrition',
+    });
   });
 
   it('reorders resources within a category via drag-and-drop without touching other categories', async () => {
@@ -119,7 +132,9 @@ describe('ResourcesListPage', () => {
   it('closes the drawer when the form emits saved', () => {
     const fixture = createFixture();
     (
-      fixture.nativeElement.querySelector('[data-testid="add-nutrition-button"]') as HTMLButtonElement
+      fixture.nativeElement.querySelector(
+        '[data-testid="add-nutrition-button"]',
+      ) as HTMLButtonElement
     ).click();
     fixture.detectChanges();
 
@@ -135,7 +150,9 @@ describe('ResourcesListPage', () => {
       service.seed([a]);
       const fixture = createFixture();
       const dialog = TestBed.inject(MatDialog);
-      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<MatDialog['open']>);
+      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(true) } as ReturnType<
+        MatDialog['open']
+      >);
 
       fixture.componentInstance['toggleSelection'](a.id);
       fixture.componentInstance['requestBulkDelete']();
@@ -151,7 +168,9 @@ describe('ResourcesListPage', () => {
       service.seed([a]);
       const fixture = createFixture();
       const dialog = TestBed.inject(MatDialog);
-      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(false) } as ReturnType<MatDialog['open']>);
+      vi.spyOn(dialog, 'open').mockReturnValue({ afterClosed: () => of(false) } as ReturnType<
+        MatDialog['open']
+      >);
 
       fixture.componentInstance['toggleSelection'](a.id);
       fixture.componentInstance['requestBulkDelete']();

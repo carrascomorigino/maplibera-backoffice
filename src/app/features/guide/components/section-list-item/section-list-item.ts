@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { CdkDragHandle } from '@angular/cdk/drag-drop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -6,8 +15,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Question, QuestionType, Section, SectionStatus } from '../../models/section.model';
-import { ContentLanguage, CONTENT_LANGUAGES, CONTENT_LANGUAGE_LABELS } from '../../models/content-language.model';
+import {
+  ContentLanguage,
+  CONTENT_LANGUAGES,
+  CONTENT_LANGUAGE_LABELS,
+} from '../../models/content-language.model';
 import { SectionService } from '../../services/section.service';
+import { BusyOverlay } from '../../../../shared/components/busy-overlay/busy-overlay';
 import { LanguageService } from '../../../../core/i18n/language.service';
 import { LanguageTags } from '../../../../shared/components/language-tags/language-tags';
 import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/confirm-dialog';
@@ -33,12 +47,22 @@ export interface ResetSelectionRequest {
 
 @Component({
   selector: 'app-section-list-item',
-  imports: [CdkDragHandle, MatButtonModule, MatCheckboxModule, MatIconModule, LanguageTags, ImageCarousel],
+  imports: [
+    BusyOverlay,
+    CdkDragHandle,
+    MatButtonModule,
+    MatCheckboxModule,
+    MatIconModule,
+    LanguageTags,
+    ImageCarousel,
+  ],
   templateUrl: './section-list-item.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
+    '[attr.inert]': 'busy() ? "" : null',
+    '[attr.aria-busy]': 'busy()',
     class:
-      'flex flex-col gap-2 rounded-xl border border-ink-100 bg-surface-card p-3 shadow-[0_1px_2px_-1px_rgba(23,21,31,0.06),0_1px_3px_rgba(23,21,31,0.04)] transition-shadow hover:shadow-[0_2px_4px_-1px_rgba(23,21,31,0.08),0_4px_8px_rgba(23,21,31,0.05)]',
+      'relative flex min-w-0 flex-col gap-2 rounded-2xl border border-ink-100 bg-surface-card p-3 sm:p-4 shadow-[0_1px_2px_-1px_rgba(23,21,31,0.06),0_1px_3px_rgba(23,21,31,0.04)] transition-shadow hover:shadow-[0_2px_4px_-1px_rgba(23,21,31,0.08),0_4px_8px_rgba(23,21,31,0.05)]',
   },
 })
 export class SectionListItem {
@@ -51,6 +75,9 @@ export class SectionListItem {
   protected readonly contentLanguageLabels = CONTENT_LANGUAGE_LABELS;
 
   readonly section = input.required<Section>();
+
+  /** Locks the card while a save or delete for this item is in flight. */
+  protected readonly busy = computed(() => this.sectionService.isPending(this.section().id));
   readonly resetRequest = input<ResetSelectionRequest | undefined>(undefined);
   readonly selected = input<boolean>(false);
   readonly isFirst = input<boolean>(false);
@@ -73,7 +100,10 @@ export class SectionListItem {
   readonly translation = computed(() => this.section().translations[this.selectedLanguage()]);
 
   readonly availableLanguages = computed(
-    () => this.contentLanguages.filter((lang) => this.section().translations[lang]) as ContentLanguage[],
+    () =>
+      this.contentLanguages.filter(
+        (lang) => this.section().translations[lang],
+      ) as ContentLanguage[],
   );
 
   constructor() {
@@ -121,7 +151,9 @@ export class SectionListItem {
     });
     dialogRef.afterClosed().subscribe((confirmed) => {
       if (confirmed) {
-        this.sectionService.removeTranslation(this.section().id, lang).catch(() => this.notifyActionFailed());
+        this.sectionService
+          .removeTranslation(this.section().id, lang)
+          .catch(() => this.notifyActionFailed());
       }
     });
   }
@@ -142,7 +174,10 @@ export class SectionListItem {
 
   protected onStatusAction(): void {
     const section = this.section();
-    const action = section.status === 'published' ? this.sectionService.pause(section.id) : this.sectionService.publish(section.id);
+    const action =
+      section.status === 'published'
+        ? this.sectionService.pause(section.id)
+        : this.sectionService.publish(section.id);
     action.catch(() => this.notifyActionFailed());
   }
 

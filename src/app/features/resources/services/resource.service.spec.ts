@@ -41,7 +41,9 @@ describe('ResourceService', () => {
 
   async function setup(initial: Resource[] = []): Promise<void> {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(),
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: API_BASE_URL, useValue: '/backend' },
       ],
     });
@@ -178,7 +180,9 @@ describe('ResourceService', () => {
     await setup([]);
 
     const promise = service.create(createInput());
-    httpMock.expectOne(BASE_URL).flush({ error: 'ConflictError' }, { status: 409, statusText: 'Conflict' });
+    httpMock
+      .expectOne(BASE_URL)
+      .flush({ error: 'ConflictError' }, { status: 409, statusText: 'Conflict' });
 
     await expect(promise).rejects.toBeTruthy();
   });

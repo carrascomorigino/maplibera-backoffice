@@ -23,16 +23,26 @@ html {
   // Warm surface overrides so Material components sit on the same cream/ink
   // world as the rest of the app, instead of Material's default cool neutrals —
   // sampled from mapagino.com's cream background (#F8F7DB) and navy wordmark (#202030).
-  --mat-sys-surface: #faf9f5;
+  // Mapagino design system: crema ground, carbon ink, borgona primary.
+  --mat-sys-primary: #730c35;
+  --mat-sys-on-primary: #f8f7db;
+  --mat-sys-primary-container: #f6dfe7;
+  --mat-sys-on-primary-container: #4a0721;
+  --mat-sys-secondary: #0b6575;
+  --mat-sys-on-secondary: #ffffff;
+  --mat-sys-surface: #f8f7db;
   --mat-sys-surface-container-lowest: #ffffff;
-  --mat-sys-surface-container-low: #f8f7f2;
-  --mat-sys-surface-container: #f2f1ec;
-  --mat-sys-surface-container-high: #ebe9e1;
-  --mat-sys-surface-container-highest: #e4e2d8;
-  --mat-sys-on-surface: #17151f;
-  --mat-sys-on-surface-variant: #4f4c5c;
-  --mat-sys-outline: #918da0;
-  --mat-sys-outline-variant: #dcdae3;
+  --mat-sys-surface-container-low: #fbfaea;
+  --mat-sys-surface-container: #f1f0d6;
+  --mat-sys-surface-container-high: #e5f2f5;
+  --mat-sys-surface-container-highest: #dde9ec;
+  --mat-sys-on-surface: #25272c;
+  --mat-sys-on-surface-variant: #4b4e55;
+  --mat-sys-outline: #6f7279;
+  --mat-sys-outline-variant: #d4d3ca;
+  --mat-sys-corner-full: 999px;
+  --mdc-outlined-button-container-shape: 12px;
+  --mdc-filled-button-container-shape: 12px;
 }
 
 body {

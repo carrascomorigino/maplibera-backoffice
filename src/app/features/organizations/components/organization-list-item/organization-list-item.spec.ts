@@ -59,7 +59,9 @@ describe('OrganizationListItem', () => {
     const moveToTopRequested = vi.fn();
     fixture.componentInstance.moveToTopRequested.subscribe(moveToTopRequested);
 
-    (fixture.nativeElement.querySelector('[data-testid="move-to-top-button"]') as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector('[data-testid="move-to-top-button"]') as HTMLButtonElement
+    ).click();
 
     expect(moveToTopRequested).toHaveBeenCalled();
   });
@@ -69,7 +71,9 @@ describe('OrganizationListItem', () => {
     const moveUpRequested = vi.fn();
     fixture.componentInstance.moveUpRequested.subscribe(moveUpRequested);
 
-    (fixture.nativeElement.querySelector('[data-testid="move-up-button"]') as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector('[data-testid="move-up-button"]') as HTMLButtonElement
+    ).click();
 
     expect(moveUpRequested).toHaveBeenCalled();
   });
@@ -79,7 +83,9 @@ describe('OrganizationListItem', () => {
     const moveDownRequested = vi.fn();
     fixture.componentInstance.moveDownRequested.subscribe(moveDownRequested);
 
-    (fixture.nativeElement.querySelector('[data-testid="move-down-button"]') as HTMLButtonElement).click();
+    (
+      fixture.nativeElement.querySelector('[data-testid="move-down-button"]') as HTMLButtonElement
+    ).click();
 
     expect(moveDownRequested).toHaveBeenCalled();
   });
@@ -88,13 +94,19 @@ describe('OrganizationListItem', () => {
     const fixture = createFixture(makeOrganization({ slug: 'group' }), { isFirst: true });
 
     expect(
-      (fixture.nativeElement.querySelector('[data-testid="move-to-top-button"]') as HTMLButtonElement).disabled,
+      (
+        fixture.nativeElement.querySelector(
+          '[data-testid="move-to-top-button"]',
+        ) as HTMLButtonElement
+      ).disabled,
     ).toBe(true);
     expect(
-      (fixture.nativeElement.querySelector('[data-testid="move-up-button"]') as HTMLButtonElement).disabled,
+      (fixture.nativeElement.querySelector('[data-testid="move-up-button"]') as HTMLButtonElement)
+        .disabled,
     ).toBe(true);
     expect(
-      (fixture.nativeElement.querySelector('[data-testid="move-down-button"]') as HTMLButtonElement).disabled,
+      (fixture.nativeElement.querySelector('[data-testid="move-down-button"]') as HTMLButtonElement)
+        .disabled,
     ).toBe(false);
   });
 
@@ -102,21 +114,30 @@ describe('OrganizationListItem', () => {
     const fixture = createFixture(makeOrganization({ slug: 'group' }), { isLast: true });
 
     expect(
-      (fixture.nativeElement.querySelector('[data-testid="move-down-button"]') as HTMLButtonElement).disabled,
+      (fixture.nativeElement.querySelector('[data-testid="move-down-button"]') as HTMLButtonElement)
+        .disabled,
     ).toBe(true);
   });
 
   it('disables all move buttons when reorderingDisabled is true', () => {
-    const fixture = createFixture(makeOrganization({ slug: 'group' }), { reorderingDisabled: true });
+    const fixture = createFixture(makeOrganization({ slug: 'group' }), {
+      reorderingDisabled: true,
+    });
 
     expect(
-      (fixture.nativeElement.querySelector('[data-testid="move-to-top-button"]') as HTMLButtonElement).disabled,
+      (
+        fixture.nativeElement.querySelector(
+          '[data-testid="move-to-top-button"]',
+        ) as HTMLButtonElement
+      ).disabled,
     ).toBe(true);
     expect(
-      (fixture.nativeElement.querySelector('[data-testid="move-up-button"]') as HTMLButtonElement).disabled,
+      (fixture.nativeElement.querySelector('[data-testid="move-up-button"]') as HTMLButtonElement)
+        .disabled,
     ).toBe(true);
     expect(
-      (fixture.nativeElement.querySelector('[data-testid="move-down-button"]') as HTMLButtonElement).disabled,
+      (fixture.nativeElement.querySelector('[data-testid="move-down-button"]') as HTMLButtonElement)
+        .disabled,
     ).toBe(true);
   });
 });

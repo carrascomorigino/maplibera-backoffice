@@ -26,6 +26,10 @@ export function makeSection(overrides: Partial<Section> = {}): Section {
  * server-side and is covered by the backend's own tests, not here.
  */
 export class FakeSectionService {
+  /** Ids the test marks as having a write in flight; drives `isPending`. */
+  readonly pendingIds = signal<ReadonlySet<string>>(new Set());
+  isPending = (id: string): boolean => this.pendingIds().has(id);
+
   private readonly _sections = signal<Section[]>([]);
 
   readonly sections = computed(() => [...this._sections()].sort((a, b) => a.order - b.order));
@@ -93,7 +97,10 @@ export class FakeSectionService {
   reorder = vi.fn(async (orderedIds: string[]): Promise<void> => {
     const orderById = new Map(orderedIds.map((id, index) => [id, index]));
     this._sections.update((sections) =>
-      sections.map((section) => ({ ...section, order: orderById.get(section.id) ?? section.order })),
+      sections.map((section) => ({
+        ...section,
+        order: orderById.get(section.id) ?? section.order,
+      })),
     );
   });
 

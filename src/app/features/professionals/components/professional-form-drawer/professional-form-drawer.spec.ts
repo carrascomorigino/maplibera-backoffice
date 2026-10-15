@@ -51,7 +51,9 @@ describe('ProfessionalFormDrawer', () => {
       publish: fixture.nativeElement.querySelector(
         '[data-testid="publish-button"]',
       ) as HTMLButtonElement | null,
-      cancel: fixture.nativeElement.querySelector('[data-testid="cancel-button"]') as HTMLButtonElement,
+      cancel: fixture.nativeElement.querySelector(
+        '[data-testid="cancel-button"]',
+      ) as HTMLButtonElement,
     };
   }
 

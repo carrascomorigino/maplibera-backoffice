@@ -69,10 +69,7 @@ export interface CoachProfessional extends ProfessionalBase {
 }
 
 export type Professional =
-  | NutritionistProfessional
-  | DoctorProfessional
-  | DentistProfessional
-  | CoachProfessional;
+  NutritionistProfessional | DoctorProfessional | DentistProfessional | CoachProfessional;
 
 export const PROFESSIONAL_SPECIALTIES: readonly ProfessionalSpecialty[] = [
   'nutritionist',
