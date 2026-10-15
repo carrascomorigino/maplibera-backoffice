@@ -21,6 +21,8 @@ export interface NewsItem {
   publishedAt: string;
   eventDate?: string;
   sourceLinks: string[];
+  /** ISO 3166-1 alpha-2 codes. Omitted/undefined means available in all countries. */
+  availableCountries?: string[];
   createdAt: string;
   updatedAt: string;
   translations: Partial<Record<ContentLanguage, NewsTranslation>>;

@@ -169,6 +169,44 @@
         "
       />
     </div>
+
+    <fieldset class="flex min-w-0 flex-col gap-2">
+      <legend class="text-sm font-medium text-ink-700">
+        {{ language.t().news.newsForm.countryScopeLabel }}
+      </legend>
+      <label class="flex items-center gap-2">
+        <input
+          type="radio"
+          name="countryScope"
+          data-testid="country-scope-all"
+          [checked]="form.controls.countryScope.value === 'all'"
+          (change)="form.controls.countryScope.setValue('all')"
+        />
+        {{ language.t().news.newsForm.countryScopeAllOption }}
+      </label>
+      <label class="flex items-center gap-2">
+        <input
+          type="radio"
+          name="countryScope"
+          data-testid="country-scope-specific"
+          [checked]="form.controls.countryScope.value === 'specific'"
+          (change)="form.controls.countryScope.setValue('specific')"
+        />
+        {{ language.t().news.newsForm.countryScopeSpecificOption }}
+      </label>
+
+      @if (form.controls.countryScope.value === 'specific') {
+        <div class="flex min-w-0 flex-col gap-1">
+          <label class="text-sm font-medium text-ink-700" for="countries-select">{{
+            language.t().news.newsForm.countriesLabel
+          }}</label>
+          <app-country-select id="countries-select" formControlName="countries" />
+          @if (form.controls.countries.hasError('countriesRequired')) {
+            <mat-error>{{ language.t().news.newsForm.countriesRequiredError }}</mat-error>
+          }
+        </div>
+      }
+    </fieldset>
   </div>
 
   <div class="flex gap-2 border-t border-ink-100 bg-surface-muted p-6">

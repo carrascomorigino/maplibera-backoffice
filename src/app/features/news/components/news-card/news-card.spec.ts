@@ -96,6 +96,33 @@ describe('NewsCard', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="event-date"]')).toBeNull();
   });
 
+  it('shows the worldwide availability when no countries are set', () => {
+    const fixture = createFixture(newsItem());
+
+    expect(
+      fixture.nativeElement
+        .querySelector('[data-testid="country-availability-indicator"]')
+        ?.textContent?.trim(),
+    ).toBe(
+      language
+        .t()
+        .news.newsList.countryAvailabilityIndicator(
+          language.t().news.newsList.countryAvailabilityWorldwide,
+        ),
+    );
+  });
+
+  it('shows the localized country names when countries are set', () => {
+    language.setLanguage('en');
+    const fixture = createFixture({ ...eventItem(), availableCountries: ['PE', 'GB'] });
+
+    expect(
+      fixture.nativeElement
+        .querySelector('[data-testid="country-availability-indicator"]')
+        ?.textContent?.trim(),
+    ).toBe(language.t().news.newsList.countryAvailabilityIndicator('Peru, United Kingdom'));
+  });
+
   it('has no drag handle', () => {
     const fixture = createFixture(newsItem());
 

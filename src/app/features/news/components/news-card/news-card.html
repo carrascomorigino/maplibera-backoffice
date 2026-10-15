@@ -48,6 +48,10 @@
   </p>
 }
 
+<p data-testid="country-availability-indicator" class="text-xs text-ink-400">
+  {{ countryAvailabilityIndicator() }}
+</p>
+
 <app-language-tags
   [languages]="contentLanguages"
   [translatedLanguages]="availableLanguages()"
